@@ -47,8 +47,8 @@ function candidates(save: Pick<Save, "training" | "upgrades" | "goals">, run: Pi
  * `factors` (STAIRS' card tree) multiply each group's chance, and
  * `chances` (HEAL's and DOOR's, in hundredths of a percent) add to it, so a group may
  * give a level with no ranks of its own. */
-export function rollFreeTraining(save: Pick<Save, "training" | "upgrades" | "goals" | "relics">, run: Pick<RunCore, "seed" | "freeRolls" | "training" | "hand">, boonChance = 0, factors?: Record<FreeGroup, number>, chances?: Partial<Record<FreeGroup, number>>, won?: { rolls: number }): TrainingId[] {
-  const now = { upgrades: save.upgrades, training: ranksInRun(save, run), relics: save.relics };
+export function rollFreeTraining(save: Pick<Save, "training" | "upgrades" | "goals" | "relics" | "gifts">, run: Pick<RunCore, "seed" | "freeRolls" | "training" | "hand">, boonChance = 0, factors?: Record<FreeGroup, number>, chances?: Partial<Record<FreeGroup, number>>, won?: { rolls: number }): TrainingId[] {
+  const now = { upgrades: save.upgrades, training: ranksInRun(save, run), relics: save.relics, gifts: save.gifts };
   const picked: TrainingId[] = [];
   for (const group of FREE_GROUPS) {
     // A run's Free Up Chance boons add to every group's chance, in hundredths of a percent.

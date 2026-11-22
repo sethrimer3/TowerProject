@@ -24,13 +24,15 @@ export type Entitlement = {
   trainers?: number;
   /** The unique relic it gives (economy/relic-catalog.ts `SHOP_RELICS`). */
   relic?: string;
+  /** The gifts it gives, once (economy/gifts.ts). */
+  gifts?: number;
 };
 
 export const ENTITLEMENTS: Record<EntitlementId, Entitlement> = {
   adFree: { name: "Permanent Ad-Disable", goldFactor: 1.5, adsOff: true, permanentBoost: true },
   coins2: { name: "Special Gold Bundle", goldFactor: 2, trainingRate: 2 },
   // Champion Status (shop/champion.ts) and its Club.
-  coins3: { name: "Champion's Bundle", goldFactor: 3, trainingRate: 3, relic: "shop.coins3" },
+  coins3: { name: "Champion's Bundle", goldFactor: 3, trainingRate: 3, relic: "shop.coins3", gifts: 10 },
   // The Premium Passes open the Goals screen's premium rewards (goals.ts),
   // each in its set of three towers.
   pass1: { name: "Premium Pass 1", goldFactor: 1 },
@@ -63,6 +65,8 @@ export const premiumArchivists = (save: Owner) => owned(save).reduce((n, e) => n
 /** Trainers the entitlements add. */
 export const premiumTrainers = (save: Owner) => owned(save).reduce((n, e) => n + (e.trainers ?? 0), 0);
 /** The relics the entitlements give. */
+/** The gifts each owned entitlement gives once, by its id. */
+export const entitlementGifts = (save: Owner) => save.entitlements.flatMap((id) => (ENTITLEMENTS[id]?.gifts ? [[id, ENTITLEMENTS[id]!.gifts!] as const] : []));
 export const entitlementRelics = (save: Owner) => owned(save).flatMap((e) => (e.relic ? [e.relic] : []));
 /** The boost's end while it runs for good: never. */
 export const BOOST_FOREVER = Number.MAX_SAFE_INTEGER;

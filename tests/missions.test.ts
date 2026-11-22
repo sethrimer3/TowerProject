@@ -249,6 +249,8 @@ test("every 5 missions claimed in the week opens a weekly reward, claimed once, 
   assert.equal(trainingPoints(g.save).left, points + 1);
   assert.deepEqual([g.save.gold, g.save.gems, g.save.medals, g.save.arcanite], [4000, 15, 10, 0]);
   assert.equal(paid.medals, 10);
+  assert.equal(paid.gifts?.reduce((n, x) => n + x.count, 0), 1, "each weekly reward gives a gift, last");
+  assert.equal(Object.values(g.save.gifts.owned).reduce((n: number, k) => n + (k ?? 0), 0), 1);
   assert.equal(g.missions.claimWeekly(1), null, "once a week");
   assert.equal(g.missions.claimWeekly(2), null, "not before it is reached");
   assert.ok(g.missions.waiting, "reward 0 still waits");

@@ -14,7 +14,8 @@ import { stubServer, type ShopServer } from "../shop/server.ts";
 import { availableAgain, priceText, refusal, soldOut, timesBought, type Refusal } from "../shop/transactions.ts";
 import type { AppContext } from "./app.ts";
 import { el, gemIcon, goldIcon, medalIcon, arcaniteIcon, relicIcon, vipIcon } from "./dom.ts";
-import { offerShown, revealReward } from "./reward-reveal.ts";
+import { giftsShown, offerShown, revealReward } from "./reward-reveal.ts";
+import { giftsSince } from "../economy/gifts.ts";
 
 /** Gem prices from this up ask the player to confirm first. */
 export const CONFIRM_GEMS = 200;
@@ -200,7 +201,7 @@ export class ShopPage {
   private card(o: ShopOffer) {
     const r = RARITIES[o.rarity], a = this.action(o), ends = o.endTime !== undefined && o.endTime > this.now;
     return `<article class="shop-card${o.category === "limited" ? " shop-banner" : ""}" style="--rarity: ${r.color}">
-      <button class="shop-card-face" data-detail="${o.id}" aria-label="${o.name}: details"><small class="shop-rarity">${r.displayName}</small><b class="shop-name">${o.name}</b>${o.badge ? `<span class="shop-badge">${o.badge}</span>` : ""}${rewards(o, priceOf(this.ctx.game.save, o, this.now), isChampion(this.ctx.game.save))}${o.effects.length ? `<span class="shop-effects">${o.effects.join(" · ")}</span>` : ""}${this.discount(o)}${ends ? `<small class="shop-expires">Expires in <span data-countdown="${o.id}">${countdown(o.endTime! - this.now)}</span></small>` : ""}</button>
+      <button class="shop-card-face" data-detail="${o.id}" aria-label="${o.name}: details"><small class="shop-rarity">${r.displayName}</small><b class="shop-name">${o.name}</b>${o.badge ? `<span class="shop-badge">${o.badge}</span>` : ""}${rewards(o, priceOf(this.ctx.game.save, o, this.now), isChampion(this.ctx.game.save))}${o.effects.length ? `<span class="shop-effects${o.effectLines ? " lines" : ""}">${o.effects.join(o.effectLines ? "<br>" : " · ")}</span>` : ""}${this.discount(o)}${ends ? `<small class="shop-expires">Expires in <span data-countdown="${o.id}">${countdown(o.endTime! - this.now)}</span></small>` : ""}</button>
       <button class="shop-buy${this.waiting(o) ? " notify" : ""}" data-buy="${o.id}" ${a.disabled ? "disabled" : ""}>${a.label}</button>${a.why ? `<small class="shop-why">${a.why}</small>` : ""}</article>`;
   }
 
@@ -299,12 +300,17 @@ export class ShopPage {
       // A store payment is granted even offline: the store has the money.
       const now = (await this.server.time()) ?? (paid ? this.now : null);
       if (now === null) return this.say("Can't reach the server. Try again when you're online.");
+      const before = this.ctx.game.save.gifts.owned;
       const refused = this.ctx.game.shop.buy(o.id, now, paid);
       this.say(refused ? REFUSALS[refused] : `${o.name}: ${o.price.kind === "free" ? "claimed" : "purchased"}!`);
       this.ctx.update();
-      const reward = refused ? null : offerShown(o);
-      if (reward) revealReward(reward, this.ctx.game.save.settings.reduceMotion, after);
-      shown = !!reward;
+      // The gifts it gave, if any, show together after the offer's own reveal.
+      const reward = refused ? null : offerShown(o), reduce = this.ctx.game.save.settings.reduceMotion;
+      const gifts = refused ? null : giftsShown(giftsSince(before, this.ctx.game.save.gifts.owned), "PURCHASED");
+      const third = gifts ? () => revealReward(gifts, reduce, after) : after;
+      if (reward) revealReward(reward, reduce, third);
+      else if (gifts) third?.();
+      shown = !!(reward || gifts);
       return this.message;
     } finally {
       this.busy = false;

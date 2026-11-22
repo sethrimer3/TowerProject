@@ -1,3 +1,4 @@
+import { giftAmount } from "../economy/gift-effects.ts";
 import { extraStellarFloor } from "../shop/champion.ts";
 import { researched } from "../progression/archives.ts";
 import { ENEMY_GOLD, FAST_GOLD, PICKUP_GOLD, RANGED_GOLD, SHIELDED_GOLD, ARMORED_GOLD, silverForKill } from "../economy/kill-pay.ts";
@@ -28,7 +29,7 @@ import { foeStat, powerBonus, powerFactor } from "../cards/powers.ts";
 import { tileRandom } from "../random.ts";
 
 /** The salt a boss's extra Ruby rolls with (BOSS ENEMY's Boss Rubies). */
-const BOSS_RUBY_SALT = 0x2b7e9;
+const BOSS_RUBY_SALT = 0x2b7e9, DROP3_SALT = 0xd3093, DROP5_SALT = 0xd5095;
 import { floorChances, hasEnvironment, STELLAR_FACTOR, type FloorBloom } from "../environments.ts";
 
 /** The tiles whose Pickup Gold a skipped floor counts, beside its lit torches. */
@@ -102,7 +103,7 @@ export class RunPurse {
 
   /** The upgrades owned and the Training ranks that count now. */
   private get trainingNow() {
-    return { upgrades: this.save.upgrades, training: ranksInRun(this.save, this.run), relics: this.save.relics, gear: this.worn };
+    return { upgrades: this.save.upgrades, training: ranksInRun(this.save, this.run), relics: this.save.relics, gifts: this.save.gifts, gear: this.worn };
   }
 
   /** `base` raised by the research `target`'s percent. */
@@ -153,10 +154,12 @@ export class RunPurse {
    * when it is a Golden Floor: from ×1, what the Golden Floors skill and its
    * Golden Floor Multiplier research raise it to, and what Aurum Bloom's Bonus
    * raises it to, added, then all of it by Aurum Bloom's augment boon; read
-   * now so a level researched mid-run counts at once. 1 on any other floor. */
+   * now so a level researched mid-run counts at once. Relics' and gifts'
+   * Golden Floor chance (the run's own `goldenFloor`, without the skill)
+   * pays the research's multiplier too. 1 on any other floor. */
   golden(floor: number) {
     if (!hasEnvironment(this.environments, "golden", floor)) return 1;
-    const skill = this.save.upgrades.goldenFloors ? researched(this.save.archives, "goldenFloorMultiplier") / 10 : 1;
+    const skill = this.save.upgrades.goldenFloors || this.run.goldenFloor ? researched(this.save.archives, "goldenFloorMultiplier") / 10 : 1;
     return snap((skill + (this.bloom ? this.bloom.bonus - 1 : 0)) * (this.bloom?.golden ?? 1));
   }
 
@@ -296,28 +299,40 @@ export class RunPurse {
    * by their Salvage chance (Instakill Salvage's too for an `instakill`),
    * and an Equipment Chest's piece by their Equipment Drop chance, once
    * Equipment is open. `spotlight` is Overseer Gold Bonus's factor for a
-   * kill in Overseer's beams (`Game.spotlightGold`), its Gold alone. */
-  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false, spring?: { gold: number; cells: number }, spotlight = 1): { gold: number; cells: number; rubies: number; equipment: EquipmentLoot[] } {
+   * kill in Overseer's beams (`Game.spotlightGold`), its Gold alone.
+   * `drops` (the gifts' ×3 and ×5, `dropMultiplier`) multiplies all of it:
+   * the Gold, Cells and Rubies, and the chances of each Equipment drop. */
+  enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false, spring?: { gold: number; cells: number }, spotlight = 1, drops = 1): { gold: number; cells: number; rubies: number; equipment: EquipmentLoot[] } {
     if (!this.loot(this.killKey(enemy, x, y))) return { gold: 0, cells: 0, rubies: 0, equipment: [] };
     // Effective or Dampen on the card that took the fight scales it; `gold`
     // then adds the tier's bonus and the other Gold multipliers.
-    const base = this.withCombo(this.killGold(enemy, instakill)), raised = snap(base * scale * (spring?.gold ?? 1) * spotlight);
-    const gold = this.gold(raised, this.payAt(x, y)), more = foeStat(this.tree, enemy, "Cells");
-    const cells = enemy.strength === "greaterBoss" ? this.cells(scale, more) : more ? this.bankCells(snap(more * scale)) : 0;
+    const base = this.withCombo(this.killGold(enemy, instakill)), raised = snap(base * scale * drops * (spring?.gold ?? 1) * spotlight);
+    const gold = this.gold(raised, this.payAt(x, y)), more = foeStat(this.tree, enemy, "Cells"), scaled = snap(scale * drops);
+    const cells = enemy.strength === "greaterBoss" ? this.cells(scaled, more) : more ? this.bankCells(snap(more * scaled)) : 0;
     // Lifespring's Cell Bonus: more of the Cells an enemy it touched drops, if it drops any.
     const extra = cells && spring?.cells ? this.bankCells(snap(cells * spring.cells)) : 0;
-    return { gold, cells: snap(cells + extra), rubies: this.bossRubies(enemy, x, y), equipment: this.killDrops(enemy, instakill) };
+    return { gold, cells: snap(cells + extra), rubies: this.bossRubies(enemy, x, y, drops), equipment: this.killDrops(enemy, instakill, drops) };
+  }
+
+  /** What the gifts' ×3 and ×5 Drop Chance make a kill at (x, y) drop: ×3,
+   * ×5, or both together, ×15, each rolled by the tile's fixed number (so a
+   * replay finds the same); 1 without either. */
+  dropMultiplier(x: number, y: number) {
+    const three = giftAmount(this.save, "drop3"), five = giftAmount(this.save, "drop5");
+    if (!three && !five) return 1;
+    const roll = (salt: number, chance: number) => chance > 0 && tileRandom(x, y, (this.run.seed ^ salt) | 0) * 100 < chance;
+    return (roll(DROP3_SALT, three) ? 3 : 1) * (roll(DROP5_SALT, five) ? 5 : 1);
   }
 
   /** The Rubies a kill of `enemy` at (x, y) banks: a boss's or Greater
    * Boss's, the tier's number (1 in Tower I, 9 in Tower IX), and BOSS
    * ENEMY's Boss Rubies more, a fraction of one a chance by the tile's
    * fixed number, so a replay finds the same; none for any other enemy. */
-  private bossRubies(enemy: Enemy, x: number, y: number) {
+  private bossRubies(enemy: Enemy, x: number, y: number, drops = 1) {
     if (enemy.strength !== "boss" && enemy.strength !== "greaterBoss") return 0;
     const more = this.tree.bossRubies, whole = Math.floor(more), part = snap(more - whole);
     const lucky = part > 0 && tileRandom(x, y, (this.run.seed ^ BOSS_RUBY_SALT) | 0) < part ? 1 : 0;
-    return this.bankRubies(this.tier + whole + lucky);
+    return this.bankRubies((this.tier + whole + lucky) * drops);
   }
 
   /** The Rubies a floor of the tier pays, as a boss does: STAIRS' Ruby Chance's. */
@@ -337,11 +352,11 @@ export class RunPurse {
    * (`BOSS_DROPS`) and the enemy cards' trees', added together, and a
    * boss's Common piece by Common Drop Chance research, each rolled on
    * Equipment's stream, only when there is one. */
-  private killDrops(enemy: Enemy, instakill: boolean): EquipmentLoot[] {
+  private killDrops(enemy: Enemy, instakill: boolean, drops = 1): EquipmentLoot[] {
     if (!this.save.equipment.unlocked) return [];
     const tree = this.tree, found: EquipmentLoot[] = [], boss = enemy.strength === "boss" || enemy.strength === "greaterBoss";
-    // The worn Fortune's Eye substats raise both chances, a kind of their own.
-    const eye = (100 + this.worn.dropChance) / 100;
+    // The worn Fortune's Eye substats raise both chances, a kind of their own, and the gifts' ×3 and ×5 multiply them.
+    const eye = ((100 + this.worn.dropChance) / 100) * drops;
     const material = snap(((boss ? BOSS_DROPS.material : 0) + foeStat(tree, enemy, "Material") + (instakill ? foeStat(tree, enemy, "InstakillMaterial") : 0)) * eye);
     const piece = snap(((boss ? BOSS_DROPS.equipment : 0) + foeStat(tree, enemy, "Equipment")) * relicFactor(this.save, "equipmentDrops") * eye);
     if (material && this.equipmentRng() * 100 < material) found.push(this.chestEquipment("supply"));

@@ -1,3 +1,4 @@
+import { giftAmount, giftFactor } from "./economy/gift-effects.ts";
 import { LakeWorld, FISHERMAN_DIALOGUE, onDock } from "./lakeside.ts";
 import { CHAMPION_XP, championValue, extraStellarFloor, isChampion } from "./shop/champion.ts";
 import { entrance, floorFor } from "./delve/labyrinth.ts";
@@ -1486,8 +1487,9 @@ export class Game {
     const treasure = snap(tree.treasureFloor + relicAmount(this.save, "treasureFloor"));
     if (treasure) this.run.treasureFloor = Math.min(100, treasure);
     else delete this.run.treasureFloor;
-    // Golden Floor Chance research (and relics) makes floors Golden Floors, fixed for the run.
-    const golden = this.save.upgrades.goldenFloors ? Math.min(100, snap(researched(this.save.archives, "goldenFloorChance") / 10 + relicAmount(this.save, "goldenFloor"))) : 0;
+    // Golden Floor Chance research (once Golden Floors are owned), relics and gifts make floors Golden Floors, fixed for the run.
+    const research = this.save.upgrades.goldenFloors ? researched(this.save.archives, "goldenFloorChance") / 10 : 0;
+    const golden = Math.min(100, snap(research + relicAmount(this.save, "goldenFloor") + giftAmount(this.save, "goldenFloor")));
     if (golden) this.run.goldenFloor = golden;
     else delete this.run.goldenFloor;
     this.applyHandPowers(tree);
@@ -1582,7 +1584,7 @@ export class Game {
   get goldContext(): GoldContext {
     const p = this.run.player, purse = this.purse, floor = this.run.outside ? 0 : this.floorOf(p.x, p.y);
     const bloom = this.arcana.owned.includes("aurumBloom") || !!this.arcana.aurumBloom();
-    const golden = this.save.upgrades.goldenFloors || bloom ? (floor ? purse.golden(floor) : 1) : undefined;
+    const golden = this.save.upgrades.goldenFloors || bloom || this.run.goldenFloor ? (floor ? purse.golden(floor) : 1) : undefined;
     const stellar = bloom || extraStellarFloor(this.save) > 0 ? (floor ? purse.stellar(floor) : 1) : undefined;
     const jackpot = jackpotFactor(this.worn, this.run.gear);
     return { save: this.save, mode: this.mode, tier: this.tier, now: this.clock(), shrine: this.shrine.open ? this.boons?.gold ?? 1 : undefined, golden, stellar, ...(jackpot === undefined ? {} : { jackpot }), ...(this.run.levelBoostUntil === undefined ? {} : { levelBoostUntil: this.run.levelBoostUntil }) };
@@ -1657,13 +1659,19 @@ export class Game {
     if (Object.keys(gear).length) this.run.gear = gear;
     else delete this.run.gear;
   }
-  /** Mobius Cipher's yields on the pickups a step takes now, each kind's
-   * factor from those already picked up this run; none unless it is worn. */
+  /** What each kind of pickup yields more now: Mobius Cipher's factor
+   * from those already picked up this run (while it is worn), times the
+   * gifts' Potions, Shards and Keys; none when every one is 1. */
   private get pickupYields() {
     const per = powerOf(this.worn, "mobiusCipher", "perPickup"), picked = this.run.gear?.yields;
-    if (!per || !picked) return undefined;
-    const kinds = (["potion", "attack", "defense", ...KEY_ORDER] as const).filter((k) => picked[k]);
-    return kinds.length ? Object.fromEntries(kinds.map((k) => [k, yieldFactor(per, picked[k])])) : undefined;
+    // The gifts' Potions, Shards and Keys are factors of their own on the same pickups.
+    const gifts = { potion: giftFactor(this.save, "potions"), attack: giftFactor(this.save, "shards"), defense: giftFactor(this.save, "shards"), key: giftFactor(this.save, "keys") };
+    const yields: Partial<Record<"potion" | "attack" | "defense" | KeyColor, number>> = {};
+    for (const k of ["potion", "attack", "defense", ...KEY_ORDER] as const) {
+      const cipher = per && picked?.[k] ? yieldFactor(per, picked[k]) : 1, gift = k === "potion" || k === "attack" || k === "defense" ? gifts[k] : gifts.key;
+      if (cipher !== 1 || gift !== 1) yields[k] = snap(cipher * gift);
+    }
+    return Object.keys(yields).length ? yields : undefined;
   }
   /** What the powers make of a pickup just taken: Mobius Cipher counts it
    * for its kind, and Chrono Strider's potion speeds the arcana. */
@@ -1774,7 +1782,7 @@ export class Game {
    * own, and those this run bought with Silver; and what the mode's hero
    * wears, which raises some rows (equipment/gear-rows.ts). */
   private get trainingNow() {
-    return { upgrades: this.save.upgrades, training: ranksInRun(this.save, this.run), relics: this.save.relics, gear: this.worn };
+    return { upgrades: this.save.upgrades, training: ranksInRun(this.save, this.run), relics: this.save.relics, gifts: this.save.gifts, gear: this.worn };
   }
   /** Silver spent on run training since the page loaded, so the purse's
    * Silver rate counts only what was found (not saved). */
@@ -1819,26 +1827,29 @@ export class Game {
     return id === "heal" ? undefined : this.run.boosts?.[PROVISION_BOOSTS[id]];
   }
   /** Uses provision `id` at once, after any fight still playing out: the
-   * Traveler's elixir fills HP to max HP (`full`, and kept, when HP is
-   * there already), and a Vanguard Banner or Aegis charm raises ATK or DEF by
-   * the percent, for the turns, its research gives now (`provisionBoost`; `active`,
-   * and kept, while one is going on). It is no turn of its own. */
+   * Traveler's elixir fills HP to max HP, and past it by the gifts'
+   * Provisions percent (`full`, and kept, when HP is there already), and a
+   * Vanguard Banner or Aegis charm raises ATK or DEF by the percent, for the
+   * turns, its research gives now (`provisionBoost`), raised by the gifts'
+   * Provisions (`active`, and kept, while one is going on). It is no turn of its own. */
   useProvision(id: UsedProvision): "used" | "full" | "active" | "spent" | "unavailable" {
     if (!this.save.provisions[id] || this.run.outside || this.fallen) return "unavailable";
     if (this.provisionsLeft(id) < 1) return "spent";
     this.fights.finish();
     if (this.fallen) return "unavailable";
     const run = this.run, p = run.player;
+    const more = giftFactor(this.save, "provisions");
     if (id === "heal") {
-      if (p.hp >= p.maxHp) return "full";
-      const healed = snap(p.maxHp - p.hp);
-      p.hp = p.maxHp;
+      const full = snap(p.maxHp * more);
+      if (p.hp >= full) return "full";
+      const healed = snap(full - p.hp);
+      p.hp = full;
       this.recordHeal(healed);
       this.message = "Traveler's elixir · HP full";
     } else {
       const stat = PROVISION_BOOSTS[id];
       if (this.run.boosts?.[stat]) return "active";
-      const { percent, turns } = provisionBoost(this.save.archives, id);
+      const boost = provisionBoost(this.save.archives, id), percent = snap(boost.percent * more), turns = boost.turns;
       const amount = snap((p[stat] * percent) / 100), word = stat === "attack" ? "ATK" : "DEF";
       p[stat] = snap(p[stat] + amount);
       run.boosts = { ...run.boosts, [stat]: { amount, turns } };
@@ -1880,10 +1891,11 @@ export class Game {
     const owned = this.save.provisions.yellowKey, run = this.run;
     if (!owned || (run.keyFloor !== undefined && floor < run.keyFloor + PROVISION_KEY_FLOORS)) return;
     run.keyFloor = floor;
-    const p = run.player;
-    p.keys.yellow = snap(p.keys.yellow + owned);
-    noteKey(run, "yellow", owned);
-    this.gain(p.x, p.y, `+${owned} gold key${owned === 1 ? "" : "s"}`, { tile: { kind: "key", color: "yellow" } });
+    // The gifts' Provisions make each one worth more than a key: 1.01 keys at +1%.
+    const p = run.player, keys = snap(owned * giftFactor(this.save, "provisions"));
+    p.keys.yellow = snap(p.keys.yellow + keys);
+    noteKey(run, "yellow", keys);
+    this.gain(p.x, p.y, `+${wholeChange(keys)} gold key${keys === 1 ? "" : "s"}`, { tile: { kind: "key", color: "yellow" } });
   }
   /** Whether the hero has `c` at all: Ignore's or Target's skill, or a Bomb provision. */
   private owns(c: Armed) {
@@ -1955,7 +1967,7 @@ export class Game {
   /** What the Bomb just thrown at `enemy` on (x, y) deals: its rolls are a
    * fixed number per run, tile and Bomb, so a replay lands the same. */
   private bombStrike(x: number, y: number, enemy: Enemy) {
-    const { player, seed, bombsUsed } = this.run, crit = critAgainst(this.crit, player, enemy), striker = this.striker, attack = snap(taggedDamage(striker, enemy, shockedAttack(striker, enemy, player.attack)) * this.beamFactorAt({ x, y }));
+    const { player, seed, bombsUsed } = this.run, crit = critAgainst(this.crit, player, enemy), striker = this.striker, attack = snap(taggedDamage(striker, enemy, shockedAttack(striker, enemy, player.attack)) * this.beamFactorAt({ x, y }) * giftFactor(this.save, "provisions"));
     if (!crit) return { damage: attack, applications: 0, superCrit: false };
     const rolls = (seed ^ BOMB_SALT ^ Math.imul(bombsUsed ?? 0, 0x85ebca6b)) | 0;
     const sure = guaranteedCrits(crit.chance), rest = snap(crit.chance - 100 * sure);
@@ -2228,9 +2240,9 @@ export class Game {
   gainXp(enemy: Enemy, floor: number, scale = 1) {
     // Worn Equipment's XP Gain and the card trees' (ENEMY's, and the enemy cards' covering it, added up), each its own factor.
     const bonus = this.powerBonus, xp = tierXp(this.tier, xpForKill(enemy.strength, floor)), gain = this.worn.xpGain, tree = snap(bonus.killXp + foeStat(bonus, enemy, "KillXp"));
-    // Relics' XP is its own factor too, and so is Champion Status's.
-    const relic = relicAmount(this.save, "xp"), champion = isChampion(this.save) ? CHAMPION_XP : 0;
-    const raisedXp = gain || tree || relic || champion ? Math.round((xp * (100 + gain) * (100 + tree) * (100 + relic) * (100 + champion)) / 100_000_000) : xp;
+    // Relics' XP is its own factor too, and so are the gifts' and Champion Status's.
+    const relic = relicAmount(this.save, "xp"), gift = giftAmount(this.save, "xp"), champion = isChampion(this.save) ? CHAMPION_XP : 0;
+    const raisedXp = gain || tree || relic || gift || champion ? Math.round((xp * (100 + gain) * (100 + tree) * (100 + relic) * (100 + gift) * (100 + champion)) / 10_000_000_000) : xp;
     this.addXp(scale === 1 ? raisedXp : Math.round(raisedXp * scale));
   }
   /** Adds `xp` to the hero's and the run's, raising the level-up burst

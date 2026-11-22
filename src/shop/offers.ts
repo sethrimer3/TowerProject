@@ -68,6 +68,9 @@ export type ShopOffer = {
    * its item grants and its Gold multiplier (the page shows those as icons). Randomized items will
    * list their possible effects apart from these. */
   effects: string[];
+  /** Whether its card lists each effect on a line of its own (a long list,
+   * easier to read so), rather than run together. */
+  effectLines?: true;
   /** A highlight on its card ("10% bonus!"). */
   badge?: string;
   tags: string[];
@@ -124,8 +127,9 @@ export const OFFERS: readonly ShopOffer[] = [
       "×3 training speed forever", "Champion Status and the Champion's Club", "VIP Points raise permanent bonuses",
       "+5% Offline Gold rate and Offline Gems", "×2 Offline time max", "+25% XP gain",
       "Unique legendary relic: Champion's Cape, +5% ATK and +5% DEF", "−20s Gem button cooldown",
-      "Daily Training Points", "See the next two Premium Offers",
+      "Daily Training Points", "See the next two Premium Offers", "10 Gifts",
     ],
+    effectLines: true,
     tags: ["oneTime"],
   },
   {

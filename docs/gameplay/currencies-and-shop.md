@@ -101,10 +101,33 @@ Under the limited packs, **Premium Offers** sells one-time offers at $9.99, each
 What they give is kept by Erase All.
 Every real-money purchase also pays **VIP Points** (a brass crown), 16 for each dollar of its price: 80 for a $4.99 Gem pack or the half-price Ad-Disable, 160 for a $9.99 offer, 480 for a $29.99 one; each card shows its points beside what it grants.
 They are kept for good, Erase All included; nothing spends them.
+The Champion's Bundle's card lists each of its bonuses on a line of its own.
 The Champion's Bundle can be bought once Permanent Ad-Disable and the Special Gold Bundle are both owned (until then its button is greyed out and says so).
-It makes you a **Champion**: a green *Champion Status* banner tops the Shop, VIP Points show (on the cards, in the banner and in the currencies list), the next two Premium Offers show instead of one, and you get ×2 the offline time paid (Offline Gold even without its skill), +25% XP, the legendary Champion's Cape (+5% ATK and DEF), 20 seconds off the Gem button's cooldown and **Daily Training Points** (1 a day on the Training page, 2, 3 or 5 when a Club tier's chance multiplies it, from 00:00 GMT).
+It makes you a **Champion**: a green *Champion Status* banner tops the Shop, VIP Points show (on the cards, in the banner and in the currencies list), the next two Premium Offers show instead of one, and you get ×2 the offline time paid (Offline Gold even without its skill), +25% XP, the legendary Champion's Cape (+5% ATK and DEF), 20 seconds off the Gem button's cooldown, 10 [gifts](#gifts) and **Daily Training Points** (1 a day on the Training page, 2, 3 or 5 when a Club tier's chance multiplies it, from 00:00 GMT).
 The **Champion's Club** button under the banner lists its tiers, each opened by VIP Points earned in all: Offline Gold and Offline Gems with the bundle, then chances to multiply the daily points, a shorter Gem button cooldown, more Gold, Silver, Golden Gems, a bigger Gem bank, more Gems a reward, Stellar Floors, Dash and End Rush tiles, Gem chance a floor and a chance a reward pays 100 Gems; each grows with every tier past its own, up to its cap, and counts even before what it adds to is open.
 From Tier 14, each tier gives a **One Piece Ticket** to claim in the Club and redeem on the Equipment page for a free five-Star Unique of your choice.
 See [docs/SHOP.md](../SHOP.md#champion-status-and-the-champions-club) for the tiers.
 The server and store are not connected yet, so for now the daily Gems can be claimed and the Gem and Arcanite packs bought without payment (the two weeks counting on the device's clock), and nothing else.
 See [docs/SHOP.md](../SHOP.md).
+
+## Gifts
+
+Every weekly mission prize holds a **gift**, given last, and the Champion's Bundle gives 10 (several received at once show together, in a grid, ×2 beside a gift received twice).
+Gifts aren't unique: each copy adds its bonus for good, and they count before what they raise is open.
+The gifts of a stat add up, and that total multiplies the relics' bonus rather than adding into it, so the relics keep their worth: +10% from relics and +10% from gifts make ×1.21.
+A chance (Critical Chance, Golden Floor and Golden Gem chance, the drop chances) takes the gifts' percent as points.
+Each gift is rolled: Common 48%, Uncommon 30%, Rare 14%, Epic 7%, Legendary 1% (Mythic gifts only come as set rewards).
+
+| Rarity | Gifts |
+|---|---|
+| Common | Max HP, ATK, DEF, Silver or XP +1% |
+| Uncommon | Regen, Shroud, Potions, Shards, Provisions, ×3 Drop Chance or Critical Chance +1%; XP +3% |
+| Rare | Max HP, ATK, DEF or Silver +3%; Gold or Keys +1% |
+| Epic | ×5 Drop Chance or Golden Floor chance +1% |
+| Legendary | XP or Silver +10%; Gold +3%; Critical Chance or Golden Gem chance +1% |
+
+Potions heal more, Shards give more ATK and DEF, and Keys give more of a key (1.01 at +1%).
+Provisions raise the Gear page's provisions: the Traveler's elixir heals past Max HP, the Vanguard Banner and Aegis charm raise ATK and DEF by more, each Gold Key gives more than one key, and Bombs hit harder.
+×3 and ×5 Drop Chance are each a chance that a kill drops three or five times its Gold, Silver, Cells and Rubies, and three or five times its chance of each Equipment drop; both at once drop ×15.
+A Golden Floor chance from relics or gifts makes Golden Floors even before the Golden Floors skill, paying the Golden Floor Multiplier.
+The Relics page lists the gifts received, in its Gifts section.

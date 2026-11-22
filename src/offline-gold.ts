@@ -1,3 +1,4 @@
+import { giftAmount } from "./economy/gift-effects.ts";
 import { bestWorn } from "./equipment/effects.ts";
 import { relicAmount, relicFactor } from "./economy/relic-effects.ts";
 import { GEM_COOLDOWN_MS, GEM_VALUE } from "./economy/gems.ts";
@@ -135,7 +136,7 @@ export function offlineGems(save: Save, paidMs: number) {
   const floors = (fpm * paidMs) / 60_000, bonus = gemCardBonus(save);
   const timer = Math.min(floors, (paidMs * relicFactor(save, "floorGems")) / GEM_COOLDOWN_MS);
   const chance = (Math.min(100, bonus.gemChance + championValue(save, "gemChance")) / 100) * floors;
-  const golden = Math.min(100, bonus.goldenGem + championValue(save, "goldenGem")) / 100, stellar = Math.min(100, bonus.stellarGem + relicAmount(save, "stellarGem")) / 100;
+  const golden = Math.min(100, bonus.goldenGem + championValue(save, "goldenGem") + giftAmount(save, "goldenGem")) / 100, stellar = Math.min(100, bonus.stellarGem + relicAmount(save, "stellarGem")) / 100;
   const value = (1 - golden) * GEM_VALUE.plain + golden * ((1 - stellar) * GEM_VALUE.golden + stellar * GEM_VALUE.stellar);
   return Math.floor(((timer + chance) * value * share) / 100);
 }

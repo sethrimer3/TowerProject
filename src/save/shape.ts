@@ -1,5 +1,6 @@
 /** The shape of the save: each mode's slice (`ModeSave`) and everything kept between runs (`Save`). save/save.ts loads and decodes it. */
 import type { ChampionSave } from "../shop/champion.ts";
+import type { GiftSave } from "../economy/gifts.ts";
 import type { ReviewSave } from "../review-prompt.ts";
 import type { TrainingJob, TrainingPaid } from "../progression/training-jobs.ts";
 import type { TierRecord } from "../tiers.ts";
@@ -257,6 +258,8 @@ export type Save = {
   events: EventsSave;
   /** The relics owned, by id (economy/relics.ts), each once, kept between runs. */
   relics: string[];
+  /** The gifts received, how many of each, and their saved stream (economy/gifts.ts), kept between runs. */
+  gifts: GiftSave;
   /** The Review Prompt's button: when it was last pressed, and whether it is done with (review-prompt.ts). */
   review: ReviewSave;
   /** The Shrine Boons page's choices, kept between runs (shrines.ts). */

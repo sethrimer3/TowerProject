@@ -10,7 +10,7 @@ import { askForGems } from "./dialogs.ts";
 import { materialIcon } from "./equipment-icons.ts";
 import { currencyAmount, holdAmount } from "./hud.ts";
 import { flyToPurse, type Flight } from "./flourish.ts";
-import { revealReward, type RewardShown } from "./reward-reveal.ts";
+import { giftsShown, revealReward, type RewardShown } from "./reward-reveal.ts";
 
 /** A countdown on the page: *2d 5h*, *7h 12m*, *12m*. */
 const countdown = (ms: number) => shortCountdown(ms).replace(/([dh])(?=\d)/g, "$1 ");
@@ -39,14 +39,17 @@ function payoutFlights(p: MissionPayout, update: () => void): Flight[] {
 }
 
 /** What a weekly reward paid, one celebration a currency in turn: Gold,
- * Gems, Medals, Arcanite and Training Points, each it paid any of. */
+ * Gems, Medals, Arcanite and Training Points, each it paid any of, then its gift. */
 function weeklyShown(p: MissionPayout, missions: number): RewardShown[] {
   const kicker = "WEEKLY REWARD", text = `For ${missions} daily missions this week`;
   const each: [number, string, string][] = [
     [p.gold, goldIcon(), "Gold"], [p.gems, gemIcon(), "Gems"], [p.medals, medalIcon(), "Medals"], [p.arcanite, arcaniteIcon(), "Arcanite"],
     [p.training, pointsIcon(), p.training === 1 ? "Training Point" : "Training Points"],
   ];
-  return each.filter(([n]) => n > 0).map(([n, icon, name]) => ({ icon, amount: `+${n.toLocaleString("en-US")}`, kicker, name, text, permanent: false }));
+  const shown = each.filter(([n]) => n > 0).map(([n, icon, name]): RewardShown => ({ icon, amount: `+${n.toLocaleString("en-US")}`, kicker, name, text, permanent: false }));
+  // The gift comes last.
+  const gift = p.gifts ? giftsShown(p.gifts, kicker) : null;
+  return gift ? [...shown, gift] : shown;
 }
 
 /** The Missions screen (docs/MISSIONS.md): the week's rewards on a bar

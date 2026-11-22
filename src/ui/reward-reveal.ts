@@ -7,11 +7,16 @@ import type { ShopOffer } from "../shop/offers.ts";
 import type { MailItem } from "../mail/message.ts";
 import { gemIcon, goldIcon, medalIcon, arcaniteIcon, relicIcon, ticketIcon, uiSprite, vipIcon } from "./dom.ts";
 import { RELICS } from "../economy/relics.ts";
+import { GIFTS, type GiftsGranted } from "../economy/gifts.ts";
+import { GIFT_TEXT } from "../economy/gift-effects.ts";
+import { RARITIES as RARITY_TABLE } from "../shop/rarity.ts";
+import { giftItemIcon } from "./gift-icons.ts";
 
 /** A reward to celebrate: its icon, the amount beside it (a currency's
  * "+250"), the line over its name, and what it does. A `permanent` one, an
- * unlock bought for good, turns golden rays behind it; currency doesn't. */
-export type RewardShown = { icon: string; amount?: string; kicker: string; name: string; text?: string; permanent: boolean };
+ * unlock bought for good, turns golden rays behind it; currency doesn't.
+ * With `grid` (several gifts at once), the grid stands where the icon would. */
+export type RewardShown = { icon: string; amount?: string; kicker: string; name: string; text?: string; permanent: boolean; grid?: string };
 
 const CURRENCY_ICONS: Record<CurrencyId, () => string> = { gems: () => gemIcon(), arcanite: () => arcaniteIcon(), gold: goldIcon, medals: () => medalIcon(), vip: () => vipIcon() };
 
@@ -31,7 +36,8 @@ export function revealReward(r: RewardShown, reduceMotion: boolean, onDone?: () 
   layer.setAttribute("aria-label", `${r.kicker}: ${r.name}`);
   const rays = r.permanent ? `<div class="card-reveal-rays" aria-hidden="true"></div>` : "";
   const amount = r.amount ? `<b class="reward-reveal-amount">${r.amount}</b>` : "";
-  layer.innerHTML = `<div class="card-reveal-stage">${rays}<button type="button" class="reward-reveal-prize" id="reward-reveal-prize" aria-label="${r.name}: claim">${r.icon}${amount}</button></div><div class="card-reveal-text"><small>${r.kicker}</small><b>${r.name}</b>${r.text ? `<p>${r.text}</p>` : ""}<span>Press to claim</span></div>`;
+  const prize = r.grid ? `<div class="gift-reveal-grid">${r.grid}</div>` : `${r.icon}${amount}`;
+  layer.innerHTML = `<div class="card-reveal-stage${r.grid ? " gift-reveal-stage" : ""}">${rays}<button type="button" class="reward-reveal-prize${r.grid ? " gift-reveal" : ""}" id="reward-reveal-prize" aria-label="${r.name}: claim">${prize}</button></div><div class="card-reveal-text"><small>${r.kicker}</small><b>${r.name}</b>${r.text ? `<p>${r.text}</p>` : ""}<span>Press to claim</span></div>`;
   if (onSkip) layer.insertAdjacentHTML("beforeend", `<button type="button" class="reward-reveal-skip" id="reward-reveal-skip">Skip</button>`);
   (document.querySelector("#app") ?? document.body).append(layer);
   // The whole screen claims it, so a press anywhere goes on.
@@ -88,4 +94,22 @@ export function mailShown(items: MailItem[]): RewardShown | null {
   const [first, ...rest] = shown;
   if (!first) return null;
   return { ...first, text: rest.map((x) => `${x.amount} ${x.name}`).join(" · ") || undefined };
+}
+
+/** What gifts just received show: one gift on its own, its rarity over its
+ * bonus; several all at once, in a grid, each gift once with ×N beside
+ * those received more than once. Null for none. */
+export function giftsShown(granted: GiftsGranted, kicker: string): RewardShown | null {
+  const total = granted.reduce((n, g) => n + g.count, 0);
+  const [first] = granted;
+  if (!first) return null;
+  if (total === 1) {
+    const def = GIFTS[first.id]!;
+    return { icon: giftItemIcon(first.id, "gift-item reward-gift"), kicker, name: `${RARITY_TABLE[def.rarity].displayName} Gift`, text: GIFT_TEXT[def.stat](def.percent), permanent: true };
+  }
+  const grid = granted.map((g) => {
+    const def = GIFTS[g.id]!;
+    return `<span class="gift-reveal-cell" title="${GIFT_TEXT[def.stat](def.percent)}">${giftItemIcon(g.id)}${g.count > 1 ? `<b>×${g.count}</b>` : ""}</span>`;
+  }).join("");
+  return { icon: "", grid, kicker, name: `${total} Gifts`, text: "Their bonuses are yours for good, on the Relics page.", permanent: true };
 }

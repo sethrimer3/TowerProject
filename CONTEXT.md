@@ -1077,6 +1077,10 @@ _Avoid_: shock (Ricochet Shock's), mark (alone)
 **Relic**:
 A unique keepsake won by reaching an event's Medal milestone (premium relics only with the Event Booster), or by claiming a tower's last Goal, each giving a permanent bonus, each owned at most once and kept for good. Spending Medals is never needed to win one. A free relic multiplies a Training row's value; a premium relic gives what training can't. Each event theme has its own four, and each tower two.
 
+**Gift**:
+A keepsake received from every weekly mission prize (and some Shop offers), each a small permanent bonus to one stat, by rarity from Common to Mythic. Unlike a relic, the same gift can be owned many times, each copy adding its bonus; the gifts' total is its own factor, multiplying the relics'.
+_Avoid_: present, reward box (the weekly prize that holds it)
+
 **Relic rarity**:
 How rare a relic is: rare, epic or legendary. An event's first relic of each pair is rare and its second epic; a tower's last Goal gives an epic relic and, as its premium reward, a legendary one.
 _Avoid_: trophy (the Tournament's), artifact, badge

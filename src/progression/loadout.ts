@@ -19,6 +19,8 @@ import { TETHER_ROWS, tetherRank } from "../equipment/powers.ts";
 import { silverFound } from "../economy/gold-multipliers.ts";
 import { PIERCE_CAP } from "../equipment/balance.ts";
 import { relicAmount, relicBoost, relicCut, relicFactor, type RelicHolder } from "../economy/relic-effects.ts";
+import { giftAmount, type GiftHolder } from "../economy/gift-effects.ts";
+import type { GiftStat } from "../economy/gifts.ts";
 import { RESEARCH, researched } from "./archives.ts";
 import { ranksInTraining, trainingGold } from "./training-jobs.ts";
 import { goalUnlocked, type GoalUnlock } from "../goals.ts";
@@ -127,11 +129,14 @@ const STAT_ROWS: Partial<Record<Stat, TrainingId>> = {
 };
 /** What `stat` is multiplied by, the whole of it a run starts with and
  * so each change to it mid-run (progression/hero-stats.ts): its research's
- * percent (1 without), times its free relics' (economy/relic-effects.ts). */
-export const statFactor = (save: Pick<Save, "archives"> & { relics?: readonly string[] }, stat: Stat) => {
+ * percent (1 without), times its free relics' (economy/relic-effects.ts),
+ * times its gifts' (economy/gift-effects.ts), each a factor of its own. */
+const STAT_GIFTS: Partial<Record<Stat, GiftStat>> = { attack: "attack", defense: "defense", maxHp: "maxHp", shroud: "shroud", regen: "regen" };
+export const statFactor = (save: Pick<Save, "archives"> & { relics?: readonly string[] } & GiftHolder, stat: Stat) => {
   const research = stat in STAT_RESEARCH ? researched(save.archives, STAT_RESEARCH[stat as keyof typeof STAT_RESEARCH]) / 100 : 1;
-  const row = STAT_ROWS[stat], relics = row ? relicBoost(save, row) : 0;
-  return relics ? (research * (100 + relics)) / 100 : research;
+  const row = STAT_ROWS[stat], relics = row ? relicBoost(save, row) : 0, gift = STAT_GIFTS[stat], gifts = gift ? giftAmount(save, gift) : 0;
+  const withRelics = relics ? (research * (100 + relics)) / 100 : research;
+  return gifts ? (withRelics * (100 + gifts)) / 100 : withRelics;
 };
 
 /** The character a run in `mode` would start with now: the baseline,

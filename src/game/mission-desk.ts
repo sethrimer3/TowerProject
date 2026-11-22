@@ -1,4 +1,5 @@
 import { relicArcanite } from "../economy/relic-effects.ts";
+import { grantGifts, type GiftsGranted } from "../economy/gifts.ts";
 import type { Mode } from "../entities.ts";
 import { snap } from "../exact.ts";
 import { random, stream } from "../random.ts";
@@ -14,9 +15,12 @@ import { earn } from "../save/profile.ts";
 
 /** mulberry32's step: each draw moves the state on by this much. */
 const STEP = 0x6d2b79f5;
+/** The gifts each weekly reward gives (economy/gifts.ts). */
+export const WEEKLY_GIFTS = 1;
 
 /** What claiming a daily mission or a weekly reward paid. */
-export type MissionPayout = { gold: number; gems: number; medals: number; arcanite: number; training: number; material?: { id: string; amount: number } };
+/** What a claim paid; a weekly reward also gives a gift (`gifts`), its last. */
+export type MissionPayout = { gold: number; gems: number; medals: number; arcanite: number; training: number; material?: { id: string; amount: number }; gifts?: GiftsGranted };
 
 /** The daily and weekly missions' commands (the game's `missions`):
  * giving new missions every 8 hours, counting what the player does toward
@@ -212,7 +216,9 @@ export class MissionDesk {
     earn(save, "gems", r.gems);
     earn(save, "medals", r.medals);
     earn(save, "arcanite", arcanite);
+    // Every weekly gift box holds a gift too, given last.
+    const gifts = grantGifts(save, WEEKLY_GIFTS);
     this.host.message = `Weekly reward · ${WEEKLY_REWARDS[i]!.missions} missions`;
-    return { ...r };
+    return { ...r, gifts };
   }
 }

@@ -78,9 +78,12 @@ export class Finds {
     this.host.gemFinder.bossDrop(enemy, at, killKey);
     const floor = rules.equivalentFloor(rules.progressAt(run, at.y));
     this.host.gainXp(enemy, floor, scale);
+    // The gifts' ×3 and ×5 Drop Chance multiply everything the kill drops.
+    const drops = purse.dropMultiplier(at.x, at.y);
+    if (drops > 1) this.host.gain(at.x, at.y, `×${drops} drops!`, null);
     // Silver belongs to the run, so it isn't gated like Gold.
-    const silver = purse.killSilver(enemy, floor, scale, at);
-    const { gold, cells, rubies, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill, this.host.arcana.lifespringKill(enemy), snap(this.host.spotlightGold(at) * this.host.voidwellGold(at) * this.host.falconGold(at)));
+    const silver = purse.killSilver(enemy, floor, snap(scale * drops), at);
+    const { gold, cells, rubies, equipment } = purse.enemyLoot(enemy, at.x, at.y, scale, instakill, this.host.arcana.lifespringKill(enemy), snap(this.host.spotlightGold(at) * this.host.voidwellGold(at) * this.host.falconGold(at)), drops);
     const cellsFound = cells ? [cellsText(cells)] : [], found = equipment.flatMap(equipmentGains), healed = this.bossPotion(enemy);
     for (const piece of equipment) {
       if (piece.item || piece.salvaged) this.host.events.record("equipment", 1, key);

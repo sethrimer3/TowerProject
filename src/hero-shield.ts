@@ -14,15 +14,15 @@ type Ranks = Partial<Record<TrainingId, number>>;
 /** The most HP the Aether Shield holds for `mode`'s hero of `maxHp`: Shield
  * HP's share of it (kept in tenths of a percent, raised by what the hero
  * wears), times its research. */
-export const shieldCapacity = (save: Pick<Save, "upgrades" | "archives" | "relics" | "equipment">, ranks: Ranks, maxHp: number, mode: Mode) => {
+export const shieldCapacity = (save: Pick<Save, "upgrades" | "archives" | "relics" | "gifts" | "equipment">, ranks: Ranks, maxHp: number, mode: Mode) => {
   const gear = wornEffects(save, mode), cradle = powerOf(gear, "cradleOfLife", "factor") || 1;
   // Cradle of Life multiplies it, its own factor.
-  return snap((maxHp * trainedAmount({ upgrades: save.upgrades, training: ranks, relics: save.relics, gear }, "shieldHp") * researched(save.archives, "shieldHpPercent") * cradle) / 100_000);
+  return snap((maxHp * trainedAmount({ upgrades: save.upgrades, training: ranks, relics: save.relics, gifts: save.gifts, gear }, "shieldHp") * researched(save.archives, "shieldHpPercent") * cradle) / 100_000);
 };
 
 /** The turns a shield breaking now would take to regrow, `mode`'s hero's
  * Rebuild substats cutting them. */
-export const regrowNow = (save: Pick<Save, "upgrades" | "archives" | "relics" | "equipment">, ranks: Ranks, mode: Mode) =>
+export const regrowNow = (save: Pick<Save, "upgrades" | "archives" | "relics" | "gifts" | "equipment">, ranks: Ranks, mode: Mode) =>
   Math.max(1, Math.round(regrowTurns(trainedAmount({ upgrades: save.upgrades, training: ranks, gear: wornEffects(save, mode) }, "regrowShield"), researched(save.archives, "regrowTurns")) * relicCut(save, "shieldRegrow")));
 
 /** Brings `run`'s shield up to what is owned now: its first shield comes full,

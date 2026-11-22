@@ -76,6 +76,7 @@ Gold is the daily mission's Gold for the highest tower open, times the multiplie
 **Medals** (`save.medals`) are a new limited currency, kept between runs; Events' missions pay them too (docs/EVENTS.md); Event stores and familiars spend them.
 They show in the forest's purse once held (where it has room), and on the currencies bar, in light purple.
 Each weekly reward's **Training Point** adds to those the hero's levels earn (`save.bonusTrainingPoints`).
+Each weekly reward also gives a **gift** (`WEEKLY_GIFTS`, economy/gifts.ts), the last thing it pays; see the Relics screen in docs/EVENTS.md.
 
 ## Screens
 
@@ -87,7 +88,7 @@ Each weekly reward's **Training Point** adds to those the hero's levels earn (`s
   Below, how many missions the list holds out of 8 and when the next two come (or, at 8, to claim or complete one to make room), then each mission: what it asks, what it pays, its bar, and once complete a Claim button.
   The currencies bar tops the screen, as it does the Upgrades page.
   What a daily mission pays flies from its Claim button to the bar, nothing to press away (`flyToPurse` in `ui/flourish.ts`): each currency's icon and amount, one a moment after the other, fading as it lands on its currency, which shows its new amount only then and swells a moment; a material, with no place on the bar, rises and fades where it was claimed; with Reduce motion on, each shows still over its currency and fades.
-  A weekly reward's currencies rise to the middle of the screen one celebration each in turn (`revealReward`: Gold, Gems, Medals, Arcanite, Training Points, those it pays), each pressed away to show the next; a Skip button at the top right, on each but the last, passes over the rest (they are paid already).
+  A weekly reward's currencies rise to the middle of the screen one celebration each in turn (`revealReward`: Gold, Gems, Medals, Arcanite, Training Points, those it pays, then its gift, `giftsShown`), each pressed away to show the next; a Skip button at the top right, on each but the last, passes over the rest (they are paid already).
 
 ## Future
 

@@ -4,6 +4,7 @@ import type { GoalUnlock } from "../goals.ts";
 import type { ResearchTarget } from "./archives.ts";
 import { snap } from "../exact.ts";
 import { relicBoostValue, relicRowValue, type RelicHolder } from "../economy/relic-effects.ts";
+import { giftAmount, giftRaised, type GiftHolder } from "../economy/gift-effects.ts";
 import { gearRowValue, type GearTotals } from "../equipment/gear-rows.ts";
 /** Training points each level earns, to spend on the hero's stats. */
 export const TRAINING_PER_LEVEL = 3;
@@ -550,9 +551,21 @@ export const amountAt = (row: TrainingDef, ranks: number) => Math.min(row.cap ??
  * ranks counted only once its `requires` is; then raised by the relics
  * `save` holds (economy/relic-effects.ts) and, once open, by the worn
  * equipment it carries (`gear`, equipment/gear-rows.ts). */
-export function trainedAmount(save: { upgrades: Partial<Record<UpgradeId, number>>; training?: Partial<Record<TrainingId, number>>; gear?: GearTotals } & RelicHolder, id: TrainingId, ranks = save.training?.[id] ?? 0) {
+export function trainedAmount(save: { upgrades: Partial<Record<UpgradeId, number>>; training?: Partial<Record<TrainingId, number>>; gear?: GearTotals } & RelicHolder & GiftHolder, id: TrainingId, ranks = save.training?.[id] ?? 0) {
   const row = trainingDef(id), needs = row.needs ?? row.requires;
-  // A row not yet open still takes its free relics: Silver Bonus' ×1 grows.
-  if (needs && !save.upgrades[needs]) return relicBoostValue(save, row, row.off ?? 0);
-  return gearRowValue(save.gear, id, relicRowValue(save, row, amountAt(row, row.requires && !save.upgrades[row.requires] ? 0 : ranks)));
+  // A row not yet open still takes its free relics and its gifts: Silver Bonus' ×1 grows.
+  if (needs && !save.upgrades[needs]) return giftRowValue(save, id, relicBoostValue(save, row, row.off ?? 0));
+  return giftRowValue(save, id, gearRowValue(save.gear, id, relicRowValue(save, row, amountAt(row, row.requires && !save.upgrades[row.requires] ? 0 : ranks))));
+}
+/** Row `id`'s `value` with the gifts owned: Silver's percent multiplies
+ * Silver Bonus' whole value, a factor of its own, and Critical Chance's
+ * points add to its chance (in the row's hundredths), open or not. */
+function giftRowValue(save: GiftHolder, id: TrainingId, value: number) {
+  if (!save.gifts) return value;
+  if (id === "silverBonus") return giftRaised(save, "silver", value);
+  if (id === "critChance") {
+    const points = giftAmount(save, "critChance");
+    return points ? snap(value + points * 100) : value;
+  }
+  return value;
 }

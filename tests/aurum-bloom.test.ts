@@ -108,7 +108,12 @@ test("Aurum Bloom's Bonus and Golden Chance add to the skill's and its research'
   assert.equal(withBloom(g.run, undefined), g.run, "without it, the run's own");
   const floor = FLOORS.find((f) => environmentOn("golden", g.run.seed, f, 3.5))!;
   const golden = (with_?: FloorBloom) => new RunPurse(g.save, "tower", g.run, () => 0.5, 0, () => 0.5, () => floor, with_).golden(floor);
-  assert.equal(golden(bloom), 5.8, "without the skill, its Bonus alone, whatever the research");
+  // The run's own chance, without the skill, is the relics' and gifts': it pays the research's multiplier.
+  assert.equal(golden(), 2.1, "relics' and gifts' Golden Floors, without the skill, pay its research");
+  const own = g.run.goldenFloor;
+  delete g.run.goldenFloor;
+  assert.equal(golden(bloom), 5.8, "without the skill or a chance of the run's own, its Bonus alone, whatever the research");
+  g.run.goldenFloor = own;
   g.save.upgrades.goldenFloors = 1;
   assert.equal(golden(), 2.1, "the skill and its research alone");
   assert.equal(golden(bloom), 6.9, "×2.1 + 4.8 more, on the grid");

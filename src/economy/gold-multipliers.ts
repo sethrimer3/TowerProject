@@ -1,3 +1,4 @@
+import { giftAmount } from "./gift-effects.ts";
 import { championValue, isChampion } from "../shop/champion.ts";
 import { researched } from "../progression/archives.ts";
 import { trainedAmount } from "../progression/training.ts";
@@ -16,7 +17,7 @@ import { relicAmount, relicFactor } from "./relic-effects.ts";
 /** One Gold multiplier: a factor on every Gold banked, its name as the
  * player sees it, and its factor, or null while it isn't applied (the
  * player sees "Inactive"). `id` names it for the code. */
-export type GoldMultiplier = { id: "tower" | "ads" | "adPrize" | "levelUp" | EntitlementId | "champion" | "collection" | "relics" | "gear" | "jackpot" | "boons" | "golden" | "stellar"; name: string; factor: number | null };
+export type GoldMultiplier = { id: "tower" | "ads" | "adPrize" | "levelUp" | EntitlementId | "champion" | "collection" | "relics" | "gifts" | "gear" | "jackpot" | "boons" | "golden" | "stellar"; name: string; factor: number | null };
 
 /** What the Gold multipliers read: the save, the mode whose hero's
  * equipment counts, the tier, the wall clock (ms, for the Gold ad's boost),
@@ -26,7 +27,7 @@ export type GoldMultiplier = { id: "tower" | "ads" | "adPrize" | "levelUp" | Ent
  * the Gold found (`golden`: 1 off a Golden Floor; undefined shows no Golden
  * Floor line), and with Aurum Bloom, a Stellar Floor's (`stellar`, the same). */
 export type GoldContext = {
-  save: Pick<Save, "goldBoostUntil" | "ads" | "entitlements" | "themes" | "music" | "equipment" | "relics" | "vip">;
+  save: Pick<Save, "goldBoostUntil" | "ads" | "entitlements" | "themes" | "music" | "equipment" | "relics" | "gifts" | "vip">;
   mode: Mode;
   tier: number;
   now: number;
@@ -64,6 +65,9 @@ export function goldMultipliers({ save, mode, tier, now, shrine, golden, stellar
   const owned = save.themes.length + save.music.length;
   const collection: GoldMultiplier = { id: "collection", name: "Event Collection", factor: owned ? collectionGoldFactor(save) : null };
   const relics: GoldMultiplier = { id: "relics", name: "Relics", factor: relicAmount(save, "gold") ? relicFactor(save, "gold") : null };
+  // Gifts' Gold is a factor of its own beside the relics'.
+  const gift = giftAmount(save, "gold");
+  const gifts: GoldMultiplier = { id: "gifts", name: "Gifts", factor: gift ? (100 + gift) / 100 : null };
   const found = wornEffects(save, mode).goldFind;
   const gear: GoldMultiplier = { id: "gear", name: "Gold Found", factor: found ? (100 + found) / 100 : null };
   // Jackpot Spurs is its own factor, apart from Gold found.
@@ -73,7 +77,7 @@ export function goldMultipliers({ save, mode, tier, now, shrine, golden, stellar
     ...(golden === undefined ? [] : [{ id: "golden" as const, name: "Golden Floor", factor: golden === 1 ? null : golden }]),
     ...(stellar === undefined ? [] : [{ id: "stellar" as const, name: "Stellar Floor", factor: stellar === 1 ? null : stellar }]),
   ];
-  return [{ id: "tower", name: "Tower Multiplier", factor: TIER_BONUS_TENTHS[tier - 1]! / 10 }, ads, ...adPrize, ...levelUp, ...packs, ...champion, collection, relics, gear, ...spurs, ...boons, ...floor];
+  return [{ id: "tower", name: "Tower Multiplier", factor: TIER_BONUS_TENTHS[tier - 1]! / 10 }, ads, ...adPrize, ...levelUp, ...packs, ...champion, collection, relics, gifts, gear, ...spurs, ...boons, ...floor];
 }
 
 /** The multipliers applied, multiplied together (unrounded: `factorText`

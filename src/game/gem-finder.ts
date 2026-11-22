@@ -1,3 +1,4 @@
+import { giftAmount } from "../economy/gift-effects.ts";
 import { relicAmount, relicFactor } from "../economy/relic-effects.ts";
 import { snap } from "../exact.ts";
 import type { Board } from "../board.ts";
@@ -139,7 +140,7 @@ export class GemFinder {
     // The relics' Stellar Gem chance adds its points to Stellar Gem Chance, for Golden Gems.
     const stellar = snap(bonus.stellarGem + relicAmount(this.host.save, "stellarGem"));
     // Champion Status's Golden Gem chance adds to the GEM card's.
-    const golden = snap(bonus.goldenGem + championValue(this.host.save, "goldenGem"));
+    const golden = snap(bonus.goldenGem + championValue(this.host.save, "goldenGem") + giftAmount(this.host.save, "goldenGem"));
     return rollGemKind(golden, stellar, random(run.seed ^ GOLDEN_SALT ^ salt), random(run.seed ^ STELLAR_SALT ^ salt));
   }
 

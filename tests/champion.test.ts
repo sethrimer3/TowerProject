@@ -91,6 +91,9 @@ test("the Champion's Cape raises ATK and DEF by 5%, and Champion XP is its own +
   assert.equal(RELICS["shop.coins3"]!.rarity, "legendary");
   const plain = new Game(defaults());
   plain.newRun();
+  // The bundle's gifts may raise XP too: set them aside to see the Champion's own factor.
+  assert.equal(Object.values(g.save.gifts.owned).reduce((n: number, k) => n + (k ?? 0), 0), 10, "the bundle gives 10 gifts");
+  g.save.gifts.owned = {};
   g.newRun();
   const xp = (game: Game) => {
     const before = game.save.xp;

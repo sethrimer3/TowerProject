@@ -48,7 +48,7 @@ The player-facing rules, in full, one topic a page:
 | [Runs](docs/gameplay/runs.md) | Movement settings, Phoenix Spark, how a run ends, Run Notes, rewards, the in-run controls, Dash |
 | [Layout](docs/gameplay/layout.md) | Portrait and landscape, switching on wide screens, Handedness, Battery saver and its themes |
 | [Cinematic mode](docs/gameplay/cinematic-mode.md) | The board alone: entering and leaving it, idle dimming, Gems in it |
-| [Currencies and the Shop](docs/gameplay/currencies-and-shop.md) | Gems and Gem finds, the ad boosts, Offline Gold, the Shop |
+| [Currencies and the Shop](docs/gameplay/currencies-and-shop.md) | Gems and Gem finds, the ad boosts, Offline Gold, the Shop, gifts |
 | [Towers, Areas and Goals](docs/gameplay/towers-areas-goals.md) | Higher towers, mastered and cleared areas, Goals and Warp |
 | [Shrines](docs/gameplay/shrines.md) | Shrines and boons |
 | [The Codex](docs/gameplay/codex.md) | The in-game reference and its categories |
