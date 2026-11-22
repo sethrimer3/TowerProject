@@ -62,23 +62,50 @@ function steppedBand(c: CanvasRenderingContext2D, x: number, y: number, outer: n
   c.fill();
 }
 
-/** A familiar's area round (x, y): a stepped tint and double rim, and its
- * particles appearing and vanishing inside, from the clock alone. */
-export function paintFamiliarArea(c: CanvasRenderingContext2D, kind: AreaKind, x: number, y: number, radius: number, tile: number, now: number, { still = false, battery = false, alpha = 1 } = {}) {
-  const look = AREAS[kind], unit = Math.max(1, Math.round(tile / 24));
+/** An area's tint and rim round (x, y). */
+function paintRim(c: CanvasRenderingContext2D, kind: AreaKind, x: number, y: number, radius: number, unit: number, battery: boolean) {
+  const look = AREAS[kind];
   c.save();
   if (!battery) {
-    c.globalAlpha = AREA_ALPHA * alpha;
+    c.globalAlpha = AREA_ALPHA;
     c.fillStyle = look.inner;
     steppedBand(c, x, y, radius, 0, unit);
+    c.globalAlpha = 1;
   }
-  c.globalAlpha = alpha;
   c.fillStyle = battery ? WHITE : look.outer;
   steppedBand(c, x, y, radius, radius - unit, unit);
   if (!battery) {
     c.fillStyle = look.inner;
     steppedBand(c, x, y, radius - unit, radius - 2 * unit, unit);
   }
+  c.restore();
+}
+
+/** The rims baked, by kind, size and look: hundreds of rows each, so a frame
+ * copies one picture. A resize or an upgrade bakes again. */
+const rims = new Map<string, HTMLCanvasElement>();
+const RIMS_KEPT = 24;
+function bakedRim(kind: AreaKind, radius: number, unit: number, battery: boolean) {
+  if (typeof document === "undefined") return null;
+  const r = Math.round(radius), key = `${kind}:${r}:${unit}:${battery}`, baked = rims.get(key);
+  if (baked) return baked;
+  if (rims.size >= RIMS_KEPT) rims.clear();
+  const canvas = document.createElement("canvas"), half = r + 2 * unit;
+  canvas.width = canvas.height = 2 * half;
+  paintRim(canvas.getContext("2d")!, kind, half, half, r, unit, battery);
+  rims.set(key, canvas);
+  return canvas;
+}
+
+/** A familiar's area round (x, y): a stepped tint and double rim, and its
+ * particles appearing and vanishing inside, from the clock alone. */
+export function paintFamiliarArea(c: CanvasRenderingContext2D, kind: AreaKind, x: number, y: number, radius: number, tile: number, now: number, { still = false, battery = false, alpha = 1 } = {}) {
+  const look = AREAS[kind], unit = Math.max(1, Math.round(tile / 24));
+  c.save();
+  c.globalAlpha = alpha;
+  const rim = bakedRim(kind, radius, unit, battery);
+  if (rim) c.drawImage(rim, Math.round(x) - rim.width / 2, Math.round(y) - rim.height / 2);
+  else paintRim(c, kind, x, y, radius, unit, battery);
   if (!still && !battery) {
     const count = Math.max(5, Math.round((radius / tile) * 3));
     for (let i = 0; i < count; i++) {
