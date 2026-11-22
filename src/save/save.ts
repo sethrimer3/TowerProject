@@ -47,6 +47,7 @@ import { validDilation } from "../arcana/time-dilation.ts";
 import { validPhantasm } from "../arcana/phantasm.ts";
 import { validFrost, validFrosted, validNecro } from "../arcana/necrotic-frost.ts";
 import { validVoidwell } from "../arcana/voidwell.ts";
+import { decodeFamiliars, defaultFamiliars, validFamiliarsRun } from "../familiars/save.ts";
 
 export function defaults(): Save {
   return {
@@ -59,6 +60,7 @@ export function defaults(): Save {
     arcaniteCarry: 0,
     rubies: 0,
     arcana: defaultArcana(),
+    familiars: defaultFamiliars(),
     codex: defaultCodex(),
     medals: 0,
     vip: 0,
@@ -264,6 +266,7 @@ const RUN_FIELD_CHECKS = {
   phantasm: validPhantasm,
   necroticFrost: validFrost,
   voidwell: validVoidwell,
+  familiars: validFamiliarsRun,
   // Kinetic Mallet keeps a combo going up to 4 turns more.
   combo: (v: any) => isRecord(v) && wholeIn(v.next, 1, 1e9) && wholeIn(v.idle, 0, 5),
   gear: validGearRun,
@@ -533,6 +536,7 @@ export function decode(raw: string | null): Save {
     d.review = decodeReview(s.review);
     d.shrines = decodeShrines(s.shrines);
     d.arcana = decodeArcana(s.arcana);
+    d.familiars = decodeFamiliars(s.familiars);
     d.codex = decodeCodex(s.codex);
     d.themes = decodeThemes(s.themes);
     d.music = decodeMusic(s.music);

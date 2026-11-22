@@ -15,6 +15,7 @@ import type { PhantasmRun } from "./arcana/phantasm.ts";
 import type { FrostRun } from "./arcana/necrotic-frost.ts";
 import type { VoidwellRun } from "./arcana/voidwell.ts";
 import type { GearRun } from "./equipment/powers.ts";
+import type { FamiliarsRun } from "./familiars/save.ts";
 import type { ChestOdds, DoorOdds, Player, Tile } from "./entities.ts";
 /** A stat a provision boosts for a while. */
 export type Boosted = (typeof PROVISION_BOOSTS)[keyof typeof PROVISION_BOOSTS];
@@ -143,6 +144,9 @@ export type RunCore = {
   /** Voidwell's cooldown and vortex (arcana/voidwell.ts); absent before its
    * first turn. */
   voidwell?: VoidwellRun;
+  /** Each familiar's place on its path, cooldown and effect (familiars/save.ts);
+   * absent until one has moved. */
+  familiars?: FamiliarsRun;
   /** Ranged enemies' and the Archer's cooldowns, and the turns taken
    * inside (enemies/ranged.ts); absent until the first shot is due. */
   volleys?: Volleys;

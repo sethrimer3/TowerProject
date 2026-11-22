@@ -24,6 +24,7 @@ import type { TournamentSave } from "../tournament/progress.ts";
 import type { MailSave } from "../mail/progress.ts";
 import type { MissionsSave } from "../missions/progress.ts";
 import type { EventsSave } from "../events/progress.ts";
+import type { FamiliarsSave } from "../familiars/save.ts";
 import type { Profile } from "./profile.ts";
 import type { OfflineSave } from "../offline-gold.ts";
 import type { TowerRun, DelveRun, AutomoveMemory, Run, Fall } from "../runs.ts";
@@ -95,6 +96,8 @@ export type Save = {
   rubies: number;
   /** The Arcana bought, and the choice waiting (arcana/arcana.ts). */
   arcana: ArcanaSave;
+  /** The familiars hatched, with their levels and switches (familiars/save.ts). */
+  familiars: FamiliarsSave;
   /** What the Codex remembers the player has come across: arcana seen and
    * Uniques owned (codex/discovery.ts). */
   codex: import("../codex/discovery.ts").CodexSave;

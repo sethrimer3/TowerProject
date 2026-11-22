@@ -27,6 +27,7 @@ import { chooseTorchSpots } from "../src/torches.ts";
 import { getTowerGateEnemy, type TowerEnemyProfile, type TowerEnemyStrength } from "../src/enemies/scaling.ts";
 import { cost, UPGRADES } from "../src/progression/upgrades.ts";
 import { WIDTH } from "../src/config.ts";
+import { CIRCUIT, pathOffset, wolfAngle, wolfOffset, type Roamer } from "../src/familiars/paths.ts";
 
 const json = (v: unknown) => JSON.stringify(v, (_k, x) => (x instanceof Map ? [...x.entries()] : x instanceof Uint8Array || x instanceof Int32Array ? [...x] : x));
 const digest = (v: unknown) => createHash("sha256").update(json(v)).digest("hex").slice(0, 16);
@@ -57,6 +58,8 @@ function outputs(): Record<string, string> {
   const profiles: TowerEnemyProfile[] = ["attackHeavy", "balanced", "defenseHeavy"];
   out.enemies = digest([0, 9, 55, 99, 100, 250, 480].flatMap((room) => strengths.flatMap((s) => profiles.map((p) => getTowerGateEnemy(room, s, p)))));
   out.prices = digest(UPGRADES.flatMap((u) => Array.from({ length: 40 }, (_, level) => cost(u.id, level))));
+  for (const id of Object.keys(CIRCUIT) as Roamer[]) out[`familiar ${id}`] = digest(Array.from({ length: 720 }, (_, turns) => pathOffset(id, turns)));
+  out["familiar wolf"] = digest(Array.from({ length: 360 }, (_, cast) => wolfOffset(wolfAngle(7919, cast))));
   return out;
 }
 
@@ -114,6 +117,7 @@ test("saved and played-by generation calls no inexact Math function", () => {
 /** The modules Tower and Delve generation run through. */
 const GENERATION = [
   ...readdirSync(new URL("../src/tower/", import.meta.url)).map((f) => `tower/${f}`),
+  ...readdirSync(new URL("../src/familiars/", import.meta.url)).map((f) => `familiars/${f}`),
   "delve/labyrinth.ts", "delve/patterns.ts", "delve/world.ts", "enemies/more-enemies.ts", "torches.ts", "board.ts", "random.ts", "exact.ts",
   "enemies/scaling.ts", "enemies/curves.ts", "enemies/fast.ts", "enemies/shielded.ts", "tiers.ts", "config.ts", "progression/upgrades.ts", "economy/kill-pay.ts", "progression/xp.ts", "economy/prices.ts", "progression/training.ts", "economy/provisions.ts",
 ];
