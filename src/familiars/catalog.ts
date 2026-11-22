@@ -69,6 +69,8 @@ export const FAMILIARS = {
       duration: lasting,
       cooldown: cooldown(120),
       bonus: { name: "Bonus", base: 200, step: 20, levels: 30, shown: times(100) },
+      // TODO: research is to take Duration to 45 turns, once it has a schedule,
+      // and relics and Equipment to widen Range, once any do.
       range: { name: "Range", base: 200, step: 25, levels: 20, shown: tiles },
     },
   },
