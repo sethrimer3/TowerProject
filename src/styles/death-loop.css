@@ -11,7 +11,7 @@ html #modal.death-loop:not(#_):not(#__) {
   border: 0;
   border-image: none;
   border-radius: 0;
-  background: #000;
+  background: transparent;
   color: #eee0b7;
   box-shadow: none;
   outline: none;
@@ -37,3 +37,7 @@ html #modal.death-loop .death-loop-symbol {
 /* Theme ornaments must not appear on the black interlude. */
 html #modal.death-loop:not(#_):not(#__)::before,
 html #modal.death-loop:not(#_):not(#__)::after { content: none; display: none; }
+
+/* Fade the black curtain independently, leaving crisp particles over the returned world. */
+html #modal.death-loop .death-loop-curtain { position: absolute; inset: 0; background: #000; z-index: -1; pointer-events: none; }
+html #modal.death-loop .death-loop-pixels { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; pointer-events: none; }

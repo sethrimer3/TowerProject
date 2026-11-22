@@ -131,6 +131,7 @@ const modal = el("modal") as HTMLDialogElement;
 const ctx: AppContext = {
   game,
   modal,
+  returnPoint: () => renderer.heroClientPoint(),
   save,
   update,
   renderPage,
@@ -143,7 +144,7 @@ const runNotes = new RunNotesDialog(ctx);
 // The Tournament's server (a stand-in until it exists), and what waits on it.
 const tournament = new TournamentClient(game, stubTournament(() => game.save.tournament, () => game.clock()));
 const runEnd = new RunEndDialog(ctx, tournament, runNotes);
-const provingGrounds = new ProvingGroundsDialog(game, modal, save, update, () => isBoard(tab));
+const provingGrounds = new ProvingGroundsDialog(game, modal, save, update, () => isBoard(tab), () => renderer.heroClientPoint());
 const shownGame = () => provingGrounds.viewGame ?? game;
 const tournamentPage = new TournamentPage(ctx, tournament, refreshTournament);
 // The Delve's cave, the way into a tournament.

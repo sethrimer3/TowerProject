@@ -460,3 +460,6 @@ The protection badge appears only while researched Damage Reduction is active, a
 Trial enemies use the same native shock badge keyed by the existing saved shock state; no combat or saved data changes.
 `tests/new-spell-art.test.ts` validates palette, binary alpha, strip uniqueness and intact frame borders; `node tests/new-spell-art.mjs` checks actual renderer gates, field expiry, motion settings, item subjects and both atlas modes on phone/desktop.
 The appended `nativeSpellArt` render scene captures activation, later frames, reduced motion and expiry without changing prior scene seeds.
+
+`Renderer.heroClientPoint()` measures the current hero's tile center in client pixels using the canvas rect and settled camera target, without drawing or mutating game state.
+The death loop calls it after returning or retrying, so its particles converge on the new spawn across responsive layouts.

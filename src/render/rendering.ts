@@ -194,6 +194,12 @@ export class Renderer {
     const view = this.cameraView(n);
     return { bottom: this.camera.restingBottom(view), left: this.camera.restingLeft(view) };
   }
+  /** Client-pixel center of the returned hero at the new board's settled camera target. */
+  heroClientPoint() {
+    const box = this.canvas.getBoundingClientRect(), n = this.density, view = this.target(n), p = this.game.run.player;
+    return { x: box.left + (p.x - view.left + 0.5) * box.width / n,
+      y: box.top + (n - p.y + view.bottom - 0.5) * box.height / n };
+  }
   draw(now: number) {
     const f = this.beginFrame(now);
     // Battery saver, or the Battery Saver Game theme inside a run.

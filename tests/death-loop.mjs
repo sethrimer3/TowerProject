@@ -44,7 +44,7 @@ try {
     const pixelCount=()=>page.locator('.death-loop-symbol').evaluate(c=>[...c.getContext('2d').getImageData(0,0,96,40).data].filter((v,i)=>i%4===3&&v).length);
     await seed();await click('#defeat-accept');await page.clock.runFor(100);
     assert.ok(await page.locator('#modal.death-loop[open]').count());
-    const cover=await page.locator('#modal').evaluate(e=>{const b=e.getBoundingClientRect(),s=getComputedStyle(e);return [b.x,b.y,b.width,b.height,innerWidth,innerHeight,s.backgroundColor,s.borderTopWidth,s.borderImageSource,s.outlineStyle,getComputedStyle(e,"::before").display,getComputedStyle(e,"::after").display];});
+    const cover=await page.locator('#modal').evaluate(e=>{const b=e.getBoundingClientRect(),s=getComputedStyle(e);return [b.x,b.y,b.width,b.height,innerWidth,innerHeight,getComputedStyle(e.querySelector('.death-loop-curtain')).backgroundColor,s.borderTopWidth,s.borderImageSource,s.outlineStyle,getComputedStyle(e,"::before").display,getComputedStyle(e,"::after").display];});
     assert.deepEqual(cover,[0,0,width,850,width,850,'rgb(0, 0, 0)','0px','none','none','none','none']);
     assert.equal(await pixelCount(),0,'the symbol stays hidden during fade-in');
     let opacity=Number(await page.locator('#modal').evaluate(e=>getComputedStyle(e).opacity));
@@ -64,9 +64,23 @@ try {
     assert.equal((await saved()).tower.run.outside,true);
     assert.equal((await saved()).tower.fall,null);
     assert.ok(await page.locator('#modal[open]').count(),'input remains blocked through the reveal fade');
-    opacity=Number(await page.locator('#modal').evaluate(e=>getComputedStyle(e).opacity));
-    assert.ok(opacity>0&&opacity<1,'the returned world fades back gradually');
+    assert.equal(await page.locator('#modal').getAttribute('data-death-loop-phase'),'burst');
+    assert.equal(Number(await page.locator('.death-loop-pixels').getAttribute('data-particles')),complete,'every visible texel bursts');
+    await page.screenshot({path:`test-results/death-loop/burst-${width}.png`});
     await page.clock.runFor(600);
+    opacity=Number(await page.locator('.death-loop-curtain').evaluate(e=>getComputedStyle(e).opacity));
+    assert.ok(opacity>0&&opacity<1,'the returned world fades back gradually');
+    assert.equal(await page.locator('#modal').getAttribute('data-death-loop-phase'),'absorb');
+    const destination=await page.evaluate(async()=>{
+      const {Game}=await import('/src/state.ts'),{Renderer}=await import('/src/render/rendering.ts');
+      const g=new Game(JSON.parse(localStorage.getItem('towerdelve.v1')));
+      const r=new Renderer(document.querySelector('#world'),g),p=r.heroClientPoint();
+      const c=document.querySelector('.death-loop-pixels');
+      return [p.x,p.y,Number(c.dataset.targetX),Number(c.dataset.targetY)];
+    });
+    assert.deepEqual(destination.slice(0,2),destination.slice(2),'pixels converge on the returned hero');
+    await page.screenshot({path:`test-results/death-loop/absorb-${width}.png`});
+    await page.clock.runFor(700);
     assert.equal(await page.locator('#modal[open], #modal.death-loop').count(),0);
     await page.screenshot({path:`test-results/death-loop/returned-${width}.png`});
     const gold=(await saved()).gold;await page.clock.runFor(1000);assert.equal((await saved()).gold,gold,'return pays once');
@@ -99,7 +113,7 @@ try {
     await page.clock.runFor(2700);
     assert.equal((await saved()).tower.run.outside,true);
     assert.ok(await page.locator('#modal[open]').count());
-    await page.clock.runFor(500);assert.equal(await page.locator('#modal[open]').count(),0);
+    await page.clock.runFor(1200);assert.equal(await page.locator('#modal[open]').count(),0);
 
     await seed('early');await click('#end-run');await click('#retry');await page.clock.runFor(100);
     assert.ok(await page.locator('#modal.death-loop[open]').count(),'early Retry uses the same sequence');

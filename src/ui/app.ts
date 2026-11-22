@@ -26,6 +26,8 @@ export interface AppContext {
   readonly modal: HTMLDialogElement;
   /** Persists the save, reporting unavailable storage in the status line. */
   save(): void;
+  /** The returned hero's tile center in viewport pixels. */
+  returnPoint?(): { x: number; y: number };
   /** Refreshes the HUD from game state (and saves, and shows the defeat dialog while the hero lies fallen). */
   update(): void;
   /** Re-renders the current page. */

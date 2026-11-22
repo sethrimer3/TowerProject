@@ -263,8 +263,13 @@ The UI golden runs at 390 × 844, so it stays in portrait; browser suites at des
 
 
 `ui/death-loop.ts` replaces the former defeat return fade with a full-screen black shared modal and a pale 48-frame native infinity trace.
-After a fallen-run summary or confirmed early ending closes, it fades to black over 450ms, draws for 1.7 seconds, holds briefly, commits return/retry once under black, then fades out over 500ms; the shared modal keeps input and autoplay blocked throughout.
+After a fallen-run summary or confirmed early ending closes, it fades to black over 450ms, draws for 1.7 seconds, holds briefly, commits return/retry once under black, then bursts into pixels for 260ms and pulls them into the returned hero over a 900ms fade; the shared modal keeps input and autoplay blocked throughout.
 Tap, Enter, Space or Escape skips safely through that same return; Reduce motion shows the finished symbol briefly instead.
 Queued close events from the preceding summary are ignored while the transition modal is open.
 The old modal content, classes, styles and accessibility attributes are restored afterward, and reloading during the trace retains the saved fallen run without paying it twice.
 `node tests/death-loop.mjs` checks real death/early return and retry, cancellation, trial knockout/early exit, fade timing, modal cleanup, reduced motion, skip, palette and viewport coverage in both atlas modes.
+
+The completed loop scatters each opaque native texel for 260ms, then pulls the square particles along curved paths into the returned hero for 900ms while an independent black curtain fades away.
+`infinity-pixels.ts` uses deterministic per-texel motion without gameplay randomness.
+`AppContext.returnPoint` measures the renderer after the return is committed and on each frame, keeping the destination correct across layout changes.
+The modal blocks input until convergence; Reduce Motion retains the short still-symbol fade without particles.

@@ -255,7 +255,7 @@ export class RunEndDialog {
           if (retrying) game.retry("Fallen in combat");
           else game.acceptDefeat();
           ctx.navigate(game.mode);
-        });
+        }, ctx.returnPoint);
       }, { once: true });
       return;
     }
@@ -273,7 +273,7 @@ export class RunEndDialog {
           if (retrying) game.retry(`${capitalized(words.run)} ended`);
           else game.finish(`${capitalized(words.run)} ended`);
           ctx.navigate(game.mode);
-        });
+        }, ctx.returnPoint);
       }, { once: true });
       modal.close();
     };

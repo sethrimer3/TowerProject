@@ -46,7 +46,7 @@ export class ProvingGroundsDialog {
   private canvas=el("world") as HTMLCanvasElement;
   private originalTabIndex=this.canvas.tabIndex;
   private originalLabel=this.canvas.getAttribute("aria-label")!;
-  constructor(private base:Game,private modal:HTMLDialogElement,private save:()=>void,private changed:()=>void=()=>{},private visible:()=>boolean=()=>true) {
+  constructor(private base:Game,private modal:HTMLDialogElement,private save:()=>void,private changed:()=>void=()=>{},private visible:()=>boolean=()=>true,private returnPoint?:()=>{x:number;y:number}) {
     window.addEventListener("keydown",e=> {
       if(!this.active || !this.visible() || this.modal.open || /INPUT|SELECT|TEXTAREA/.test((e.target as HTMLElement).tagName))return;
       if(e.key==="Escape"){e.preventDefault();e.stopImmediatePropagation();this.leave();return;}
@@ -301,7 +301,7 @@ export class ProvingGroundsDialog {
     const state=this.session!.state;
     const showLoop=state.status==="active" || (state.status==="lost" && state.player.hp<=0);
     const leave=()=>{if(!this.active)return;if(this.session?.state)saveTrialDamage(this.base.save,this.session.state);delete this.base.save.provingGrounds;this.detach();this.base.returnFromTrials();this.save();this.changed();};
-    if(showLoop)playDeathLoop(this.modal,this.base.save.settings.reduceMotion,leave);
+    if(showLoop)playDeathLoop(this.modal,this.base.save.settings.reduceMotion,leave,this.returnPoint);
     else leave();
   }
   private detach() {
