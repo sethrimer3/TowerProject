@@ -134,25 +134,22 @@ const validEnemy = (e: any) =>
   isRecord(e) && ENEMY_STRENGTHS.includes(e.strength) && typeof e.name === "string" &&
   finite(e.hp) && e.hp > 0 && finite(e.attack) && e.attack >= 0 && finite(e.defense) && e.defense >= 0 && finite(e.tier) &&
   (e.spawn === undefined || wholeIn(e.spawn, 0, 1e9));
-/** An enemy spawned onto the floor during the run (`Game.spawnEnemy`),
- * numbered among the run's spawns. TODO: drop the unnumbered Greater Boss
- * once saves from before spawn numbers are gone. */
-const validSpawned = (e: any) => validEnemy(e) && (e.spawn !== undefined || e.strength === "greaterBoss");
 /** What the hero's arrows have taken off an enemy's DEF (Armor Break), if anything. */
 const validBroken = (v: any) => v.broken === undefined || (finite(v.broken) && v.broken > 0);
 /** What Lifespring, Necrotic Frost, Thunderbolt, Phantasm, Necrotic Freeze and Ricochet Shock have marked an enemy's tile with, if anything. */
 const validMarks = (v: any) => (v.sprung === undefined || wholeIn(v.sprung, 0, 1e9)) && (v.necro === undefined || validNecro(v.necro)) && (v.amber === undefined || (finite(v.amber) && v.amber > 0 && v.amber <= AMBER_MOST)) && (v.bolted === undefined || wholeIn(v.bolted, 1, 1e9)) && (v.stun === undefined || wholeIn(v.stun, 1, 1e3)) && (v.frosted === undefined || validFrosted(v.frosted)) && (v.shocked === undefined || v.shocked === true) && validFamiliarMarks(v);
 /** Whether a tile holds none of what the hero's arrows and the arcana leave on an enemy. */
 const unmarked = (v: any) => v.wound === undefined && v.broken === undefined && v.sprung === undefined && v.necro === undefined && v.amber === undefined && v.bolted === undefined && v.stun === undefined && v.frosted === undefined && v.shocked === undefined && v.burn === undefined && v.linger === undefined;
-/** An enemy the hero's arrows have wounded or broken (enemies/ranged.ts): the
- * generated or spawned enemy, kept with its wound and what they broke. */
+/** An enemy in the changes: the generated or spawned enemy (`Game.spawnEnemy`),
+ * kept with any wound and marks on it. It may carry none: a hit that did no
+ * damage writes it as it was, and a stun or linger leaves it so as it wears off. */
 const validWounded = (v: any) => (v.wound === undefined || (finite(v.wound) && v.wound > 0)) && validBroken(v) && validMarks(v) && validEnemy(v.enemy);
 /** Open floor, maybe with a Flying enemy over it (enemies/flying.ts), generated
  * or moved there, kept with its wound. */
 const validFloor = (v: any) => v.flyer === undefined ? unmarked(v) : validEnemy(v.flyer) && (v.wound === undefined || (finite(v.wound) && v.wound > 0)) && validBroken(v) && validMarks(v);
 const validChange = (v: any) =>
   (v?.kind === "floor" && validFloor(v)) || v?.kind === "wall" ||
-  (v?.kind === "enemy" && (unmarked(v) ? validSpawned(v.enemy) : validWounded(v))) ||
+  (v?.kind === "enemy" && validWounded(v)) ||
   (v?.kind === "openedChest" && (v.tier === undefined || CHEST_TIERS.includes(v.tier))) ||
   (v?.kind === "reward" && CHEST_TIERS.includes(v.tier));
 const validChanges = (m: any) => pointMap(m, validChange);
