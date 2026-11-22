@@ -133,12 +133,14 @@ A Shop offer (`eventBoost`, $9.99, sku `event_booster`, sold on the Events page,
 - The doubled Medals count toward the relics.
 - Opens the event's two premium relics.
 
+The Familiars tab offers it too, when a press finds too few Medals.
 It is real money: until the store is connected it is granted only in Dev mode or with free purchases.
 The events boosted are kept by Erase All (`save.events.boosted`), since they were paid for.
 
 ## The Store
 
-The Events screen has two tabs: **Missions** (the relic track, the booster and the missions) and **Store**, which sells for Medals (`events/store.ts`):
+The Events screen has three tabs: **Missions** (the relic track, the booster and the missions), **Store**, which sells for Medals (`events/store.ts`), and **Familiars**, where Medals hatch and grow them ([Familiars](gameplay/familiars.md)).
+The Store sells:
 
 - **Currencies**: 150 Gems and 15 Arcanite on one row, 40 Medals each; then one box an Equipment supply, 250 for 30 Medals.
   Each bought raises its price (25 Medals for Gems and Arcanite, 5 for a supply), until the next event starts every price over (`save.events.bought`).
@@ -154,7 +156,7 @@ The Events screen has two tabs: **Missions** (the relic track, the booster and t
 
 - **Events button** (`#events-button`, a pennant, `eventIcon` in `ui/dom.ts`): the time the event has left (*7d20h*), with a dot while a mission is new to the Events screen, has a tier to claim, or is finished and hasn't been seen moved under the rest (`EventDesk.waiting`).
   In the forest it stands in the actions column under the Tournament's; inside a run, in the run's menu.
-- **Events screen** (`ui/events-page.ts`): an X back to the page that opened it; the currencies bar over it, as over the Upgrades page; the banner (the event's name over a placeholder pennant) and the days and hours left; the Missions and Store tabs (see The Store above), Missions first each time the screen opens, holding the relic track (a bar filling with the Medals toward the relics, to the last milestone, and reading the Medals won, its free relics above and its Event Boost relics below, each row named on its left, each relic lit and checked once won, a premium one locked without the booster, and each pressed (not on a resting mouse) showing its name and bonus as the Relics screen does, without its golden rays and sparkles, and an Event Boost relic then a line under its bonus: *Get event boost to unlock.* in red until the Event Booster is bought, *Event boost relic unlocked* in green after, and until it is won the Medals still to earn for it, `boostNote`); the booster's offer, or that it is active; how many missions are out and when the next come; then the missions.
+- **Events screen** (`ui/events-page.ts`): an X back to the page that opened it; the currencies bar over it, as over the Upgrades page; the banner (the event's name over a placeholder pennant) and the days and hours left; the Missions, Store and Familiars tabs (see The Store above), Missions first each time the screen opens, holding the relic track (a bar filling with the Medals toward the relics, to the last milestone, and reading the Medals won, its free relics above and its Event Boost relics below, each row named on its left, each relic lit and checked once won, a premium one locked without the booster, and each pressed (not on a resting mouse) showing its name and bonus as the Relics screen does, without its golden rays and sparkles, and an Event Boost relic then a line under its bonus: *Get event boost to unlock.* in red until the Event Booster is bought, *Event boost relic unlocked* in green after, and until it is won the Medals still to earn for it, `boostNote`); the booster's offer, or that it is active; how many missions are out and when the next come; then the missions.
   Each mission shows what its next tier to claim asks, *X/3* (the tiers claimed) and the Medals that tier pays (doubled once boosted) at the right of its name, and its bar; new ones wear *NEW*.
   Once a tier is done, the mission's border and bar turn gold and the bar reads *Claim* followed by that tier's Medals and the Medal icon (shown there instead of beside the tier count); pressing it pays them, flying from the bar to the Medals in the banner, which count them as they land (`flyToPurse`), nothing to press away, and the mission already shows its next tier, *Claim* again if that one is done too.
   A mission whose third tier is claimed stays where it is for 2 seconds, then slides under the rest (`save.events.moved`).

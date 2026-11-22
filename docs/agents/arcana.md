@@ -77,7 +77,7 @@ It decides play, so the angle comes from `bearing` in `src/exact.ts`, an arctang
 - A Bomb: `Game.bombStrike` multiplies the hero's ATK, read as the turn stands (tick 0).
 
 Thorns, Shield Thorns and boss Takedown take shares of the enemy's HP, and doors take keys or HP, so none of them reads it.
-A new damage source that is struck with the hero's ATK must read the beams too.
+A new damage source that is struck with the hero's ATK must read the beams too, and the Hunting Wolf's tag (`taggedDamage`, familiars.md).
 **Drawing** (`drawOverseerBeams`, `render/effects/overseer-beams.ts`, first in `drawOverlays`) fills each wedge from the hero as drawn (`f.playerX`, `f.playerY`) with a faint white in `soft-light` (`BEAM_LIGHT`), above the darkness and under what is marked on the board, reaching past the canvas's edges.
 It turns by `Game.turnClock`, stamped with every `endTurn`, unlike `turnShown` set however far the turn came, as the volley's ticks do; reduced motion jumps to the turn's end.
 

@@ -17,6 +17,8 @@ A locked skill's cost to reach (`costToReach`) sums its next rank's price and th
 Links name a `CodexTarget`; `main.ts`'s `followCodex` opens the page on what it points at (`DeckPage.focus` opens a card's details, `SkillTreePage.focus`/`showTree`, `ResearchPage.show`, `GearPage.openEquipment`/`openArcana`, `ShopPage.focusOffer` scrolls to and lights an offer).
 A link to a page only the forest opens (Deck, Upgrades, Gear, Goals, Relics, Shrine Boons) is disabled inside a climb, with a note.
 
+The Familiars category opens with Events (or a familiar hatched) and shows each with its brief (`FAMILIAR_BRIEFS`), a hatched one its levels.
+
 **Adding to it.**
 A future major game experience that doesn't break down into a category of its own gets a topic in `GENERAL_TOPICS` (codex.ts).
 A new category is a function in codex.ts listed in `codexCategories`, with an id in `CodexCategoryId`.

@@ -197,6 +197,10 @@ The hand and run-training controls hide only while this submenu is visible.
 The preview uses native Classic art independently of the equipped Game theme, with static poses and identical scene conditions on every slide.
 Copy example name copies its stable ID and name for feedback through Discord or text; there is no voting collection or tally.
 
+## Familiars tab
+
+The Events screen's third tab is `ui/familiars-panel.ts`, with `ui/hatch-reveal.ts` for a hatch and the Toggles menu's Familiars group (`FAMILIAR_TOGGLES`) for the Dragon's numbers (familiars.md).
+
 ## Arcana Effects Lab
 
 Visual Settings also offers Arcana Effects Lab to every player, without requiring Arcana unlocks or Dev Mode.

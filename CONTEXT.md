@@ -1054,6 +1054,26 @@ A piece of music bought in any event's Store, joining the play sequence for good
 **Event Collection**:
 The Gold multiplier for the themes and bonus tracks owned, their shares added: a UI theme 1%, a Game theme 2%, a track 0.8%. Classic gives none.
 
+**Familiar**:
+One of five young beasts (Fire Dragon, Lightning Slime, Hunting Wolf, Golden Falcon, Support Wisp) hatched and grown for Medals, which moves over the board in a climb and acts by itself.
+_Avoid_: bot, pet, companion
+
+**Hatch**:
+Buying a familiar from its egg on the Events screen's Familiars tab, each dearer by how many are hatched.
+_Avoid_: unlock, summon
+
+**Burn**:
+What the Fire Dragon leaves on an enemy it strikes: its damage again every turn until the enemy falls or the floor is left, and its ATK cut by Damage Reduction.
+_Avoid_: decay (Necrotic Frost's)
+
+**Linger**:
+The Lightning Slime's slow on an enemy it stunned, for 3 turns once the stun is over.
+_Avoid_: freeze (Necrotic Freeze's stun)
+
+**Tag**:
+Standing in the planted Hunting Wolf's range, where the hero's damage on an enemy is multiplied.
+_Avoid_: shock (Ricochet Shock's), mark (alone)
+
 **Relic**:
 A unique keepsake won by reaching an event's Medal milestone (premium relics only with the Event Booster), or by claiming a tower's last Goal, each giving a permanent bonus, each owned at most once and kept for good. Spending Medals is never needed to win one. A free relic multiplies a Training row's value; a premium relic gives what training can't. Each event theme has its own four, and each tower two.
 

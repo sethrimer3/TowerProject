@@ -17,6 +17,7 @@ With the Dev setting Access to Everything on, every category and entry shows.
 - **Training**: how Training works (free training points from levels and weekly missions, training with Gold, training several ranks at once, rushing with Gems, auto-continue, stopping), then each Training row open to you, by group.
 - **Arcana**: each arcanum you've been offered, owned or been lent by a Shrine boon; an owned one shows its attributes' levels and values.
 - **Equipment**: the Unique pieces you've found, by category.
+- **Familiars**: the five familiars, shown once Events are open, each hatched one with its levels.
 - **Enemies**: how fights work (who strikes first, how damage is counted, rising ATK), the stats that win fights, which stats help most against which enemies, then enemies by power and by attribute (each once a tower you've opened can have it), by build, and the Proving Grounds bosses.
 - **Combat**: the powers that turn fights your way, each once you own its skill.
 - **Shrines**, **Environments** and **Archives**: the boons, floor environments and research projects (the Archives with how they work: Gold, Rush, auto-continue, switching, archivists and Speed Ups).
