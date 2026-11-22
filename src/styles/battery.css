@@ -200,8 +200,8 @@ html.battery-saver #board-frame:not(#_) {
   background: #000;
   box-sizing: content-box;
 }
-/* No text under the board: the status line and the tile's details. */
-html.battery-saver #board.active > :is(.status, .inspection):not(#_) { display: none !important; }
+/* Layout moves these between the board frame and side panel; keep both text-free. */
+html.battery-saver :is(#status-row, #inspect):not(#_) { display: none !important; }
 /* The hand: just under the board, its cards 60% of their size and their
    levels 70%, the card at work underlined rather than framed. */
 html.battery-saver nav:not(#_) {

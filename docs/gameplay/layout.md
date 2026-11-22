@@ -38,9 +38,9 @@ Turned on its side (with Landscape layout on wide screens on), the square stands
 The top bar is gone; above the square a short centred row shows HP, ATK, DEF, the keys held, the floor, then the Gold, Silver and Gems held, each a small white icon and its number, with Back, then Play or Pause and Settings beside them (Back, Enter and Settings in the forest), and the Gem button, with its Gems, while they can be claimed.
 The hand sits just under the square, its cards smaller and their levels smaller still, and the card at work is underlined; the hand's row is as tall as an open Training group's, so the buttons below stay put.
 A hand too wide for the column scrolls sideways from its first card.
-There is no text under the board.
+Status messages and tile-inspection text stay hidden around the board in every Battery saver layout.
 Back turns Battery saver off and brings the normal page back; Settings only opens the Settings page, where Battery saver can also be turned off.
-While no card can act, a red warning sign stands first in the row of buttons; pressing it ends the climb, as End Climb does.
+While no card can act, a red warning sign stands first in the row of buttons; pressing it opens the End Run dialog.
 **Battery saver white**, just under the Battery saver setting while it is on, dims every white on the screen, from full down to 5%, where white is barely lighter than the black.
 A tap anywhere brings the white up to full quickly; it stays full while the taps keep coming, and a few seconds after the last one fades back to the brightness chosen.
 
