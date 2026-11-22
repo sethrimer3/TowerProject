@@ -59,14 +59,16 @@ import { seesAll } from "./access.ts";
  * boss's chance of a Common piece, RunPurse.killDrops, and Daily Mission
  * Materials, missionReward), and Tower VI's
  * Esoteric Research (floor 150: every Archives project of 100 or 150 levels
- * opens its last 50, maxLevel in progression/archives.ts). */
+ * opens its last 50, maxLevel in progression/archives.ts), and Tower V's
+ * Familiar Research (floor 60: the Archives' five familiar Cooldown
+ * projects, read by FamiliarDesk.values). */
 export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
   | "shardAttack" | "shardDefense" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
   | "badgeSlots" | "noteTaking" | "archerCard" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
   | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot" | "superCriticalResearch" | "aetherShield" | "rerollMission"
-  | "bossPotion" | "dropResearch" | "esotericResearch";
+  | "bossPotion" | "dropResearch" | "esotericResearch" | "familiarResearch";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -79,7 +81,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   trainingDiscount: "Training Discount", cardGroups: "Card Groups", flyingEnemyCard: "Flying Enemy Card",
   warpLoot: "Warp Loot", superCriticalResearch: "Super Critical Research", aetherShield: "Unlock Aether Shield",
   rerollMission: "Reroll Daily Mission", bossPotion: "Boss Potion Drop", dropResearch: "Drop & Material Research",
-  esotericResearch: "Esoteric Research",
+  esotericResearch: "Esoteric Research", familiarResearch: "Familiar Research",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, an amount of a
  * currency or of Breakthrough points, or a relic. A `breakthrough` reward is
@@ -220,7 +222,7 @@ const TOWER_FIVE: Record<number, CheckpointSet> = {
   30: { reward: unlock("parryPercent"), premium: gold(1_000_000) },
   40: { reward: unlock("banBoons"), premium: gems(40) },
   50: { reward: gold(2_000_000), premium: gold(5_000_000) },
-  60: { reward: gems(40), premium: gems(50) },
+  60: { reward: unlock("familiarResearch"), premium: gems(50) },
   70: { reward: gold(3_000_000), premium: gold(6_000_000) },
   80: { reward: gems(45), premium: gems(55) },
   90: { reward: gold(4_000_000), premium: gold(8_000_000) },

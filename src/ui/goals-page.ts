@@ -105,6 +105,8 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">Until it is claimed, those projects stop 50 levels short of their full length.</p>`,
   dropResearch: `<p>Drop & Material Research opens two projects in the Archives' Equipment section: Common Drop Chance gives each boss you defeat a chance, 0.1% a level up to 1%, to drop a Common piece of equipment, and Daily Mission Materials adds one upgrade material a level, up to 50, to what each daily mission pays.</p>` +
     `<p class="hint">The Common piece is rolled on its own, beside the boss's usual drops.</p>`,
+  familiarResearch: `<p>Familiar Research opens five projects in the Archives' Familiars section, one for each familiar's Cooldown: every level brings its effect 1 turn sooner, up to 25 turns.</p>` +
+    `<p class="hint">Familiars hatch from eggs on the Events screen's Familiars tab, for Medals.</p>`,
   researchSpeed: `<p>Research Speed opens in the Archives: train the archivists to read faster, and every research, those under way included, takes less time.</p>`,
   badgeSlots: `<p>Badge Slots opens in the Archives: research it, and each card holds one more badge a level. Drag a badge onto a card on the Deck page to fill its next slot; on a card with every slot full, it takes the bottom slot's place.</p>` +
     `<p class="hint">Badges that can't work together can't share a card: a key colour's &lt; gate with its ≥ gate (GK &lt; with GK ≥), or Effective with Dampen.</p>`,

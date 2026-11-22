@@ -35,6 +35,7 @@ export const RESEARCH_CATEGORIES = {
   equipment: "Equipment",
   shrines: "Shrines",
   arcana: "Arcana",
+  familiars: "Familiars",
   special: "Special",
 } as const;
 export type ResearchCategory = keyof typeof RESEARCH_CATEGORIES;
@@ -50,6 +51,8 @@ export const hoursMinutes = (minutes: number) => {
   const m = Math.floor(minutes);
   return `${String(Math.floor(m / 60)).padStart(2, "0")}h:${String(m % 60).padStart(2, "0")}m`;
 };
+/** Turns taken off a cooldown. */
+const fewerTurns = (n: number) => (n ? `-${n} ${n === 1 ? "turn" : "turns"}` : "None");
 /** A one-level unlock: open or not. */
 const opened = (n: number) => (n ? "Open" : "Locked");
 /** The numbers research can change, each with its name, the base the game
@@ -271,6 +274,12 @@ export const RESEARCH_TARGETS = {
   commonDrop: { name: "Common Drop Chance", base: 0, shown: tenths },
   /** Upgrade materials each daily mission pays more (missionReward): none untrained. */
   missionMaterials: { name: "Mission Materials", base: 0, shown: (n: number) => `+${n}` },
+  /** The turns research takes off each familiar's Cooldown (FamiliarDesk.values): none untrained, 1 a level. */
+  dragonCooldown: { name: "Cooldown", base: 0, shown: fewerTurns },
+  slimeCooldown: { name: "Cooldown", base: 0, shown: fewerTurns },
+  falconCooldown: { name: "Cooldown", base: 0, shown: fewerTurns },
+  wolfCooldown: { name: "Cooldown", base: 0, shown: fewerTurns },
+  wispCooldown: { name: "Cooldown", base: 0, shown: fewerTurns },
   /** Badges each card can hold. */
   badgeSlots: { name: "Badge Slots", base: 1, shown: count },
   /** Turns allowed per Obelisk boss trial run before the encounter ends. */
@@ -582,6 +591,18 @@ const MISSION_MATERIALS_TIMES: readonly [days: number, hours: number, minutes: n
   [3, 3, 46], [3, 7, 48], [3, 12, 4], [3, 16, 33], [3, 21, 15], [4, 2, 12], [4, 7, 23], [4, 12, 48], [4, 18, 28], [5, 0, 23],
   [5, 6, 32], [5, 12, 58], [5, 19, 38], [6, 2, 34], [6, 9, 47], [6, 17, 15], [7, 0, 59], [7, 9, 0], [7, 17, 18], [8, 1, 52],
   [8, 10, 43], [8, 19, 52], [9, 5, 17], [9, 15, 1], [10, 1, 2], [10, 11, 20], [10, 21, 57], [11, 8, 52], [11, 20, 5], [12, 7, 36],
+];
+/** Each familiar's Cooldown research: 1 turn off a level, for 25 levels, all
+ * five on this Gold and these times (about 1.81 trillion Gold and 577 days each). */
+const FAMILIAR_GOLD = [
+  30_000_000, 60_050_000, 91_600_000, 132_150_000, 201_200_000, 336_250_000, 598_800_000, 1_080_000_000, 1_910_000_000, 3_250_000_000,
+  5_330_000_000, 8_410_000_000, 12_830_000_000, 18_980_000_000, 27_340_000_000, 38_450_000_000, 52_940_000_000, 71_530_000_000, 95_050_000_000, 124_400_000_000,
+  160_630_000_000, 204_870_000_000, 258_370_000_000, 322_540_000_000, 398_880_000_000,
+];
+const FAMILIAR_TIMES: readonly [days: number, hours: number, minutes: number][] = [
+  [1, 14, 53], [1, 23, 14], [2, 7, 47], [2, 16, 54], [3, 3, 4], [3, 14, 56], [4, 5, 11], [4, 22, 39], [5, 20, 13], [6, 22, 51],
+  [8, 7, 37], [9, 23, 39], [12, 0, 6], [14, 10, 17], [17, 7, 29], [20, 17, 6], [24, 16, 35], [29, 7, 26], [34, 15, 14], [40, 17, 36],
+  [47, 16, 12], [55, 12, 46], [64, 9, 5], [74, 6, 59], [85, 8, 22],
 ];
 /** A schedule's level `i` of `target`, adding `value`, at its listed Gold and
  * days, hours and minutes (and seconds, where it lists them). */
@@ -1407,6 +1428,41 @@ export const RESEARCH = {
     categories: ["arcana", "abilities"],
     requires: [{ upgrade: "archives" }, { upgrade: "extraVoidwellResearch" }],
     levels: scheduled("extraVoidwell", 1, [15_000_000_000], [[17, 8, 39]]),
+  },
+  dragonCooldown: {
+    name: "Dragon Cooldown",
+    description: "The Fire Dragon attacks again sooner.",
+    categories: ["familiars"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "familiarResearch" }],
+    levels: scheduled("dragonCooldown", 1, FAMILIAR_GOLD, FAMILIAR_TIMES),
+  },
+  slimeCooldown: {
+    name: "Lightning Slime Cooldown",
+    description: "The Lightning Slime stuns again sooner.",
+    categories: ["familiars"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "familiarResearch" }],
+    levels: scheduled("slimeCooldown", 1, FAMILIAR_GOLD, FAMILIAR_TIMES),
+  },
+  falconCooldown: {
+    name: "Golden Falcon Cooldown",
+    description: "The Golden Falcon's Gold multiplier comes round sooner.",
+    categories: ["familiars"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "familiarResearch" }],
+    levels: scheduled("falconCooldown", 1, FAMILIAR_GOLD, FAMILIAR_TIMES),
+  },
+  wolfCooldown: {
+    name: "Hunting Wolf Cooldown",
+    description: "The Hunting Wolf dashes out to tag enemies again sooner.",
+    categories: ["familiars"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "familiarResearch" }],
+    levels: scheduled("wolfCooldown", 1, FAMILIAR_GOLD, FAMILIAR_TIMES),
+  },
+  wispCooldown: {
+    name: "Support Wisp Cooldown",
+    description: "The Support Wisp boosts the other familiars again sooner.",
+    categories: ["familiars"],
+    requires: [{ upgrade: "archives" }, { goalUnlock: "familiarResearch" }],
+    levels: scheduled("wispCooldown", 1, FAMILIAR_GOLD, FAMILIAR_TIMES),
   },
   commonDrop: {
     name: "Common Drop Chance",

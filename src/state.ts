@@ -99,6 +99,7 @@ import { TournamentDesk } from "./game/tournament-desk.ts";
 import { MailDesk } from "./game/mail-desk.ts";
 import { MissionDesk } from "./game/mission-desk.ts";
 import { EventDesk } from "./game/event-desk.ts";
+import { FamiliarDesk } from "./game/familiar-desk.ts";
 import { ShrineDesk } from "./game/shrine-desk.ts";
 import { ArcanaDesk } from "./game/arcana-desk.ts";
 import { arcanaOpen, defaultArcanaRun, type ArcanumId } from "./arcana/arcana.ts";
@@ -387,6 +388,8 @@ export class Game {
   /** Events: the fortnight's missions, counting toward them and paying
    * their Medals. */
   readonly events = new EventDesk(this);
+  /** Familiars: hatched and grown for Medals, switched on and off. */
+  readonly familiars = new FamiliarDesk(this, this.events);
   /** The Shop's command: buying an offer. */
   readonly shop = new ShopDesk(this, this.training, this.events);
   /** The skill trees' command: buying a skill. */
