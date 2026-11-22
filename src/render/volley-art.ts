@@ -30,7 +30,7 @@ export function drawVolley(f: FrameContext, volleys: readonly Volley[], wrap = 0
   for (const volley of volleys)
     for (const shot of volley.shots) {
       // Lifespring's field, Phantasm's ghosts, Necrotic Frost's decay and Voidwell's damage show here only as their numbers and HP bars.
-      if (shot.lifespring || shot.phantasm || shot.necro || shot.voidwell) continue;
+      if (shot.lifespring || shot.phantasm || shot.necro || shot.voidwell || shot.familiar) continue;
       if (shot.ricochet) {
         if (f.now >= landsAt(volley, shot) && f.now < landsAt(volley, shot) + RICOCHET_FLASH_MS) drawRicochet(f, shot, wrap);
         continue;

@@ -42,13 +42,19 @@ export const instakill = (r: CombatPrediction) => r.turns === 1 && !r.thornKill 
  * by the hand's cards' percents added into one factor: the enemy cards
  * covering it (`foeAttack`) and `cards` more (an arrow's Shot ATK). Each
  * kind of source sums its own bonuses; the kinds multiply. Shock Multiplier
- * multiplies all of it on a shocked enemy. */
+ * multiplies all of it on a shocked enemy, and the Hunting Wolf's tag on a
+ * tagged one. */
 export function attackAgainst(player: Player, enemy: Enemy, cards = 0) {
   const boss = isBoss(enemy) ? (player.bossAttack ?? 0) : 0, card = foeAttack(player.foeAttack, enemy) + cards;
   const geared = boss ? snap((player.attack * (100 + boss)) / 100) : player.attack;
   const carded = card ? snap((geared * (100 + card)) / 100) : geared;
-  return shockedAttack(player, enemy, carded);
+  return taggedDamage(player, enemy, shockedAttack(player, enemy, carded));
 }
+/** `damage` (or the ATK it is struck with) on `enemy`, multiplied by the
+ * Hunting Wolf's Bonus where it is tagged and the hero strikes with
+ * `Player.tags`, a kind of its own. A new damage source struck with the
+ * hero's ATK reads it through `attackAgainst` or here. */
+export const taggedDamage = (player: Player, enemy: Enemy, damage: number) => (player.tags && enemy.tagged ? snap(damage * enemy.tagged) : damage);
 /** `attack` on `enemy`, multiplied by Shock Multiplier when Ricochet Shock has
  * shocked it and the hero strikes with its factor (`Player.shock`), a kind of its own. */
 export const shockedAttack = (player: Player, enemy: Enemy, attack: number) => (player.shock && enemy.shocked ? snap(attack * player.shock) : attack);

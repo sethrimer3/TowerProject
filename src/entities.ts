@@ -83,6 +83,16 @@ export type Enemy = {
    * multiplied by Shock Multiplier (`Player.shock`); set by the board as it reads
    * the tile's `shocked`, never saved. */
   shocked?: true;
+  /** The Fire Dragon has set it burning and is on (familiars/marks.ts): its ATK,
+   * as read here, is already cut by Damage Reduction; set by the board as it
+   * reads the tile's `burn`, never saved. */
+  burned?: true;
+  /** The percent the Lightning Slime's linger slows it by, counted once a stun
+   * is over; set by the board as it reads the tile's `linger`, never saved. */
+  linger?: number;
+  /** What the hero's damage on it is multiplied by, in the Hunting Wolf's area
+   * as the board reads the tile, by a hero carrying `Player.tags`; never saved. */
+  tagged?: number;
   /** It stands in Voidwell's vortex (arcana/voidwell.ts): it doesn't move or shoot, and
    * a Fast one doesn't strike first; set by the board as it reads the tile, never saved. */
   stunned?: true;
@@ -140,7 +150,7 @@ export type DoorRule =
  * it fills, and a percent potion (whose tile is marked `color: "red"`, the
  * mark generation and saves keep) blue, like the Overheal bar. */
 export const potionShade = (t: Pick<Tile, "color">): "red" | "blue" => (t.color === "red" ? "blue" : "red");
-export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; broken?: number; sprung?: number; necro?: Record<string, number>; amber?: number; bolted?: number; shocked?: true; stun?: number; frosted?: number[]; chest?: Exclude<ChestKind, "plain"> };
+export type Tile = { kind: Kind; amount?: number; color?: KeyColor; door?: DoorRule; enemy?: Enemy; flyer?: Enemy; tier?: ChestTier; wound?: number; broken?: number; sprung?: number; necro?: Record<string, number>; amber?: number; bolted?: number; shocked?: true; stun?: number; frosted?: number[]; burn?: number; linger?: { turns: number; slow: number }; chest?: Exclude<ChestKind, "plain"> };
 /** Whether `enemy` is held where it stands this turn, by Voidwell's vortex or a Phantasm stun: it doesn't move or shoot. */
 export const isStunned = (enemy: Pick<Enemy, "stunned" | "stun">) => !!enemy.stunned || !!enemy.stun;
 export type Point = { x: number; y: number };
@@ -222,6 +232,10 @@ export type Player = {
    * fight and are shot carry it (`Game.fighterAt`, `Game.striker`), so previews
    * and planners count the plain hero, the worst case. */
   dilationGuard?: number;
+  /** A Hunting Wolf is hatched, so an enemy's `tagged` multiplies this hero's
+   * damage (`taggedDamage`). Like `shock`, only the copies of the hero that
+   * strike carry it; previews and planners count the plain hero, the worst case. */
+  tags?: true;
   /** Mirror Vault's Retribution (equipment/powers.ts): the damage the fight's
    * first strike takes off its enemy after its own, as much as is left of it
    * (`bout`); absent unless it is worn. Like `beamAttack`, only the copy of

@@ -9,6 +9,7 @@ import { tierCells, tierTile } from "../tiers.ts";
 import { foeTile, type FoeRule } from "../shrines.ts";
 import { fastCells } from "../enemies/fast.ts";
 import { boundsOf, stunnedTile, type VortexZone } from "../arcana/voidwell.ts";
+import { burnMark, familiarTile, lingerMark, type FamiliarSight } from "../familiars/marks.ts";
 import { boltMark, necroMark, shockMark, stunMark, rangedCells, springMark, wounded, woundMore } from "../enemies/ranged.ts";
 import { skippedTile, type LevelSkips } from "../enemies/level-skips.ts";
 import { armoredCells } from "../enemies/armored.ts";
@@ -193,11 +194,13 @@ export class RoomWorld implements Board {
     const t = changed
       ? wounded(this.withBoons(withChest(changed, generated, x, y, seed, this.chestOdds)))
       : this.withBoons(withChest(withPotions(generated, x, y, seed, this.percentPotions), generated, x, y, seed, this.chestOdds));
-    const stood = stunnedTile(t, x, y, this.vortex);
+    const stood = familiarTile(stunnedTile(t, x, y, this.vortex), x, y, this.familiars);
     return this.shield ? guardedTile(stood, x, y, [this.shield], (s) => this.holds(s)) : stood;
   }
   /** The vortex standing, which `tile` reads enemies through; `Game` sets it. */
   vortex?: () => VortexZone | undefined;
+  /** What the familiars make of its enemies, read last of all but a bubble; `Game` sets it. */
+  familiars?: () => FamiliarSight | undefined;
   /** What the floor spans, walls round it left out. */
   floorBounds() {
     return boundsOf(this.floorTiles((t) => t.kind !== "wall"));
@@ -255,6 +258,14 @@ export class RoomWorld implements Board {
   markStun(x: number, y: number, turns: number) {
     const k = point(x, y), raw = this.changes[k] ?? this.cells.get(k);
     if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = stunMark(raw, turns);
+  }
+  markBurn(x: number, y: number, boost: number) {
+    const k = point(x, y), raw = this.changes[k] ?? this.cells.get(k);
+    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = burnMark(raw, boost);
+  }
+  markLinger(x: number, y: number, turns: number, slow: number) {
+    const k = point(x, y), raw = this.changes[k] ?? this.cells.get(k);
+    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = lingerMark(raw, turns, slow);
   }
   markBolt(x: number, y: number) {
     const k = point(x, y), raw = this.changes[k] ?? this.cells.get(k);

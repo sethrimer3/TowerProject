@@ -93,6 +93,11 @@ export class FamiliarDesk {
     }
     return true;
   }
+  /** `id`'s values without research, for what reads them every tile (only
+   * Cooldown is researched); undefined while it is an egg or off. */
+  stats<I extends FamiliarId>(id: I): Record<StatKey<I>, number> | undefined {
+    return this.isOn(id) ? familiarValues(id, this.levels(id)) : undefined;
+  }
   /** The values of those hatched and switched on; null with none, so a save
    * without familiars does nothing new. */
   get working(): FamiliarValues | null {

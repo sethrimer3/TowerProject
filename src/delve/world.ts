@@ -7,6 +7,7 @@ import { breakTorch, placeTorches, torchesLeft } from "../torches.ts";
 import { tierCells, tierTile } from "../tiers.ts";
 import { fastCells } from "../enemies/fast.ts";
 import { boundsOf, stunnedTile, type VortexZone } from "../arcana/voidwell.ts";
+import { burnMark, familiarTile, lingerMark, type FamiliarSight } from "../familiars/marks.ts";
 import { boltMark, necroMark, shockMark, stunMark, rangedCells, springMark, wounded, woundMore } from "../enemies/ranged.ts";
 import { skippedTile } from "../enemies/level-skips.ts";
 import { armoredCells } from "../enemies/armored.ts";
@@ -219,11 +220,13 @@ export class World implements Board {
     const k = point(x, y), changed = this.changes[k];
     const generated = chunk.get(k) ?? { kind: "wall" }, odds = this.run.chestOdds;
     const t = foeTile(changed ? wounded(this.skipped(withChest(changed, generated, x, y, this.seed, odds), x, y)) : this.skipped(withChest(withPotions(generated, x, y, this.seed, this.run.percentPotions ?? 0), generated, x, y, this.seed, odds), x, y), this.foes);
-    const stood = stunnedTile(t, x, y, this.vortex);
+    const stood = familiarTile(stunnedTile(t, x, y, this.vortex), x, y, this.familiars);
     return this.shieldList.length ? guardedTile(stood, x, y, this.shieldList, (s) => this.holds(s), this.width) : stood;
   }
   /** The vortex standing, which `tile` reads enemies through; `Game` sets it. */
   vortex?: () => VortexZone | undefined;
+  /** What the familiars make of its enemies, read last of all but a bubble; `Game` sets it. */
+  familiars?: () => FamiliarSight | undefined;
   /** What the area (x, y) stands in spans on its equivalent floor. */
   floorBounds(x: number, y: number) {
     return boundsOf(this.floorTiles(x, y, (t) => t.kind !== "wall"));
@@ -353,6 +356,14 @@ export class World implements Board {
   markStun(x: number, y: number, turns: number) {
     const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);
     if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = stunMark(raw, turns);
+  }
+  markBurn(x: number, y: number, boost: number) {
+    const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);
+    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = burnMark(raw, boost);
+  }
+  markLinger(x: number, y: number, turns: number, slow: number) {
+    const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);
+    if (raw?.kind === "enemy" || raw?.flyer) this.changes[k] = lingerMark(raw, turns, slow);
   }
   markBolt(x: number, y: number) {
     const k = point(x, y), raw = this.changes[k] ?? this.chunks.get(Math.floor(y / CHUNK))?.get(k);

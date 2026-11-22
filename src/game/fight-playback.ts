@@ -13,7 +13,7 @@ import { healAfterVictory, isLethal, regenerate, regenerateShield, type StepEffe
 export interface FightHost {
   readonly run: Run;
   /** The hero as it takes a fight: the run's hero, with a Dash Combo's ATK. */
-  fighterAt(to: { x: number; y: number }): Player;
+  fighterAt(to: { x: number; y: number }, enemy?: Enemy): Player;
   readonly mode: Mode;
   readonly stepRules: StepRules;
   readonly crit: CritRule | undefined;
@@ -121,7 +121,7 @@ export class FightPlayback<S extends FoughtStep> {
     }
     const lethal = isLethal(outcome), revive = lethal ? this.revival(step.dest) : undefined, wings = lethal ? this.host.wingsFor(enemy) : undefined;
     const sparks = lethal ? this.host.sparksLeft : 0;
-    const crits = this.critRolls(step.dest, enemy), fighter = this.host.fighterAt(step.dest), powered = carriesPower(fighter);
+    const crits = this.critRolls(step.dest, enemy), fighter = this.host.fighterAt(step.dest, enemy), powered = carriesPower(fighter);
     if (!this.playsFights && !revive && !wings && !sparks && !crits && !powered) return this.take(step, 0);
     const fight = bout(fighter, enemy, revive, crits, wings, sparks), start = performance.now(), rose = revivals(fight).length;
     step.crits = critHits(fight);
@@ -289,7 +289,8 @@ export class FightPlayback<S extends FoughtStep> {
       shroud = snap(Math.max(0, shroud - (s.shrouded ?? 0)));
       shield = snap(Math.max(0, shield - (s.shielded ?? 0)));
     }
-    const fighter = this.host.fighterAt(fight.to);
+    // The enemy as the fight began, so a familiar switched since counts from the next fight.
+    const fighter = this.host.fighterAt(fight.to, fight.enemy);
     fight.bout = resume(fight.bout, from, { player: { ...fighter, hp, shroud, ...(fighter.shroudGuard ? { fullShroud: fighter.shroud ?? 0 } : {}), ...(p.shield === undefined ? {} : { shield }) }, enemy: fight.enemy, revives: this.revival(fight.to), crits: this.critRolls(fight.to, fight.enemy), wings: this.host.wingsFor(fight.enemy), sparks: this.host.sparksLeft });
     this.showRevivals(fight.start, fight.bout);
     this.showBreak(fight.start, fight.bout);

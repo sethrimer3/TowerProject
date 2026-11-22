@@ -4,6 +4,7 @@ import { tileRandom } from "./random.ts";
 import { environmentOn } from "./environments.ts";
 import type { Shield } from "./enemies/shielded.ts";
 import type { FloorBounds, VortexZone } from "./arcana/voidwell.ts";
+import type { FamiliarSight } from "./familiars/marks.ts";
 
 /** A board the player walks: the Delve labyrinth, a Tower floor, or the
  * forest outside. */
@@ -34,6 +35,13 @@ export type Board = {
   /** The vortex standing, which the board's enemy tiles are read through
    * (`stunnedTile` in arcana/voidwell.ts); `Game` sets it on every board it uses. */
   vortex?: () => VortexZone | undefined;
+  /** Sets the enemy at (x, y) burning with the Wisp's boost (`burnMark` in familiars/marks.ts). */
+  markBurn?(x: number, y: number, boost: number): void;
+  /** Leaves the enemy at (x, y) lingering (`lingerMark` in familiars/marks.ts). */
+  markLinger?(x: number, y: number, turns: number, slow: number): void;
+  /** What the familiars make of the enemies on it (`familiarTile` in
+   * familiars/marks.ts); `Game` sets it on every board it uses. */
+  familiars?: () => FamiliarSight | undefined;
   /** What the floor (x, y) stands on spans, walls round it left out: a Tower floor's,
    * or in the Delve its area's tiles at the same equivalent floor. */
   floorBounds?(x: number, y: number): FloorBounds | undefined;

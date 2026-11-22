@@ -14,7 +14,7 @@ import type { GearTotals } from "./equipment/gear-rows.ts";
 import type { Board } from "./board.ts";
 import { isStunned, point, type ByFoe, type Enemy, type Player, type Tile } from "./entities.ts";
 import type { Save } from "./save/shape.ts";
-import { attackAgainst, breaksArmor, critAgainst, facing, guaranteedCrits, guarded, isBoss, landsSuperCrit, shieldThorn, stealCeiling, thornDamage } from "./combat.ts";
+import { attackAgainst, taggedDamage, breaksArmor, critAgainst, facing, guaranteedCrits, guarded, isBoss, landsSuperCrit, shieldThorn, stealCeiling, thornDamage } from "./combat.ts";
 import { critRule } from "./progression/loadout.ts";
 import { foeAttack } from "./cards/foe-cards.ts";
 import { trainedAmount } from "./progression/training.ts";
@@ -56,7 +56,7 @@ const SHOCK_SALT = 0x5ac0c;
  * felled (`fell`), which the board keeps showing until the shot lands. An
  * enemy's shot Phoenix Spark shrugged off (`sparked`) does nothing.
  */
-export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; sparked?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy; ricochet?: true; thunderbolt?: true; splash?: true; lifespring?: true; phantasm?: true; necro?: true; voidwell?: true };
+export type Shot = { by: "hero" | "enemy"; from: { x: number; y: number }; to: { x: number; y: number }; damage: number; tick: number; shrouded?: number; shielded?: number; shieldBroke?: true; sparked?: true; crit?: number; superCrit?: true; charge?: number; healed?: number; thorns?: number; before?: number; hp?: number; full?: number; fell?: Enemy; ricochet?: true; thunderbolt?: true; splash?: true; lifespring?: true; phantasm?: true; necro?: true; voidwell?: true; familiar?: true };
 /** Where `shot`'s target stands: the hero's tile for an enemy's shot (whose
  * thorns cost the shooter, at `from`), the enemy's for an arrow. */
 export const enemyOf = (shot: Shot) => (shot.by === "enemy" ? shot.from : shot.to);
@@ -74,8 +74,8 @@ export const THUNDERBOLT_FLASH_MS = 240;
 /** When `shot` of `volley` leaves its shooter, and when it lands: a ricochet
  * does both as the arrow it springs from lands; a thunderbolt falls from its
  * tick of the turn; Lifespring's field, Phantasm's ghosts and Necrotic Frost's decay strike at once. */
-export const landsAt = (volley: Volley, shot: Shot) => volley.at + (volley.ms * shot.tick) / TURN_TICKS + (shot.lifespring || shot.phantasm || shot.necro || shot.voidwell ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
-export const leavesAt = (volley: Volley, shot: Shot) => landsAt(volley, shot) - (shot.ricochet || shot.lifespring || shot.phantasm || shot.necro || shot.voidwell ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
+export const landsAt = (volley: Volley, shot: Shot) => volley.at + (volley.ms * shot.tick) / TURN_TICKS + (shot.lifespring || shot.phantasm || shot.necro || shot.voidwell || shot.familiar ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
+export const leavesAt = (volley: Volley, shot: Shot) => landsAt(volley, shot) - (shot.ricochet || shot.lifespring || shot.phantasm || shot.necro || shot.voidwell || shot.familiar ? 0 : shot.thunderbolt ? THUNDERBOLT_FALL_MS : volley.ms * SHOT_FLIGHT);
 /** Whether every shot of `volley` has landed, and its flashes ended, by `now`. */
 export const volleyOver = (volley: Volley, now: number) => volley.shots.every((s) => now >= landsAt(volley, s) + (s.ricochet ? RICOCHET_FLASH_MS : s.thunderbolt ? THUNDERBOLT_FLASH_MS : 0));
 
@@ -134,7 +134,7 @@ export type VolleyTurn = {
 /** An enemy an arrow felled, or the thorns of its own shot (`thorns`):
  * where, whether it fell to its first wound (an instakill), and the
  * arrow's critical applications. */
-export type VolleyKill = { enemy: Enemy; at: { x: number; y: number }; instakill: boolean; crits: number; thorns?: true; ricochet?: true; thunderbolt?: true; lifespring?: true; phantasm?: true; necro?: true; voidwell?: true };
+export type VolleyKill = { enemy: Enemy; at: { x: number; y: number }; instakill: boolean; crits: number; thorns?: true; ricochet?: true; thunderbolt?: true; lifespring?: true; phantasm?: true; necro?: true; voidwell?: true; familiar?: true };
 /** What a turn's volley did: the run's volley state after it, the shots in
  * the order they fired, the hero's HP after them, whether a Ranged enemy's
  * shot got through (`hurt`), the enemy whose shot felled the hero (the
@@ -221,7 +221,7 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
       foes[key] = charge;
       continue;
     }
-    const slow = togetherSlow(slowAt(100 * shortWay(x - hero.x, wrap), 100 * (y - hero.y)), foe?.amber ?? 0);
+    const slow = togetherSlow(togetherSlow(slowAt(100 * shortWay(x - hero.x, wrap), 100 * (y - hero.y)), foe?.amber ?? 0), foe?.linger ?? 0);
     const kept = foe && held(charged(charge, slowedCharge(foeGain(foe), slow)), foeShotCost(floorOf(x, y)));
     if (kept !== undefined) foes[key] = kept;
   }
@@ -241,7 +241,8 @@ export function volleyTurn(turn: VolleyTurn): VolleyOutcome {
     for (const s of shooters) {
       if (s.charge !== undefined) {
         // In a field as the hero stands this tick, its cooldown runs slower.
-        const slow = togetherSlow(slowAt(-(100 * s.near.dx + walk.ux * tick), -(100 * s.near.dy + walk.uy * tick)), foeOn(board.tile(s.near.x, s.near.y))?.amber ?? 0);
+        const charging = foeOn(board.tile(s.near.x, s.near.y));
+        const slow = togetherSlow(togetherSlow(slowAt(-(100 * s.near.dx + walk.ux * tick), -(100 * s.near.dy + walk.uy * tick)), charging?.amber ?? 0), charging?.linger ?? 0);
         s.charge += slow ? slowedTickGain(s.gain, slow, tick) : s.gain;
         if (s.charge < s.cost) continue;
       }
@@ -447,7 +448,7 @@ function rebound(board: VolleyTurn["board"], wrap: number, p: Player, { x, y }: 
 /** An arcanum's strike on the enemy at `to`, if one stands there: Arcanum Damage
  * (`boost`, its crits averaged and none rolled) as an arrow's less DEF, with no
  * Lifesteal and no Armor Break. Marked as what struck it (`how`), its kill too. */
-function arcaneStrike(board: VolleyTurn["board"], p: Player, to: { x: number; y: number }, boost: number, how: Pick<Shot, "from" | "tick" | "ricochet" | "thunderbolt" | "splash" | "phantasm">, shots: Shot[], kills: VolleyKill[]) {
+export function arcaneStrike(board: Pick<Board, "tile" | "clear" | "wound">, p: Player, to: { x: number; y: number }, boost: number, how: Pick<Shot, "from" | "tick" | "ricochet" | "thunderbolt" | "splash" | "phantasm" | "familiar">, shots: Shot[], kills: VolleyKill[]) {
   const tile = board.tile(to.x, to.y), enemy = foeOn(tile);
   if (!enemy) return;
   const { armorBreak: _, ...striker } = p;
@@ -458,7 +459,7 @@ function arcaneStrike(board: VolleyTurn["board"], p: Player, to: { x: number; y:
   else {
     board.clear(to.x, to.y);
     landed.fell = enemy;
-    kills.push({ enemy, at: to, instakill: false, crits: 0, ...(how.ricochet ? { ricochet: true as const } : how.phantasm ? { phantasm: true as const } : { thunderbolt: true as const }) });
+    kills.push({ enemy, at: to, instakill: false, crits: 0, ...(how.ricochet ? { ricochet: true as const } : how.phantasm ? { phantasm: true as const } : how.familiar ? { familiar: true as const } : { thunderbolt: true as const }) });
   }
 }
 
@@ -573,7 +574,7 @@ export function lifespringContact({ board, wrap, hero }: { board: Pick<Board, "t
   for (const { x, y, tile } of enemiesWithin(board, hero, reach, wrap)) {
     if (!left) break;
     if (entered && inRange(shortWay(x - entered.x, wrap), y - entered.y, reach)) continue;
-    const enemy = tile.enemy, against = guarded(rate(enemy.sprung ?? 0), enemy);
+    const enemy = tile.enemy, against = guarded(taggedDamage(hero, enemy, rate(enemy.sprung ?? 0)), enemy);
     if (against <= 0) continue;
     const hit = fieldHit(left, enemy.hp, against), after = snap(Math.max(0, enemy.hp - hit.damage)), to = { x, y };
     left = hit.pool;

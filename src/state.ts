@@ -50,11 +50,11 @@ import type {
   ChestOdds,
   KeyColor,
 } from "./entities.ts";
-import { isStunned } from "./entities.ts";
+import { isStunned, point } from "./entities.ts";
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import { chestKindAt, litTorches, type Board } from "./board.ts";
-import { COMBO_LIMIT, COMBO_PERCENT, COMBO_TURNS, critAgainst, critMultiplier, guaranteedCrits, healUpTo, instakill, landsSuperCrit, shockedAttack, squaredUp, strikesFirst, type CritRule, type Wings } from "./combat.ts";
+import { COMBO_LIMIT, COMBO_PERCENT, COMBO_TURNS, critAgainst, critMultiplier, guaranteedCrits, healUpTo, instakill, landsSuperCrit, shockedAttack, squaredUp, taggedDamage, strikesFirst, type CritRule, type Wings } from "./combat.ts";
 import { smites, type Smitten } from "./angel.ts";
 import { HEART_DOOR_HP, hpCeiling, isLethal, resolveStep, type StepBlocked, type StepEffect, type StepRules, shardStat } from "./step-effects.ts";
 import { ENTRANCE_Y, ENTRANCE_ZOOM_MS, OUTSIDE_START_Y, OutsideWorld } from "./outside.ts";
@@ -100,11 +100,13 @@ import { MailDesk } from "./game/mail-desk.ts";
 import { MissionDesk } from "./game/mission-desk.ts";
 import { EventDesk } from "./game/event-desk.ts";
 import { FamiliarDesk } from "./game/familiar-desk.ts";
-import { endFamiliarsTurn, stepFamiliars, type Burst, type Room } from "./familiars/rules.ts";
+import { endFamiliarsTurn, falconArea, inArea, stepFamiliars, wolfArea, type Burst, type Room } from "./familiars/rules.ts";
+import { lingerWorn, type FamiliarSight } from "./familiars/marks.ts";
+import { burnTicks, dragonStrike, slimeStrike } from "./familiars/strikes.ts";
 import { ROOM_MIDDLE } from "./familiars/paths.ts";
 import { ShrineDesk } from "./game/shrine-desk.ts";
 import { ArcanaDesk } from "./game/arcana-desk.ts";
-import { arcanaOpen, defaultArcanaRun, type ArcanumId } from "./arcana/arcana.ts";
+import { arcanaOpen, arcanumBoost, defaultArcanaRun, type ArcanumId } from "./arcana/arcana.ts";
 import type { Beams } from "./arcana/overseer.ts";
 import { beamFactor, inBeams } from "./arcana/overseer.ts";
 import { NoticeDesk } from "./game/notice-desk.ts";
@@ -248,6 +250,7 @@ export class Game {
   set world(board: Board) {
     this.shownBoard = board;
     board.vortex = () => this.vortex;
+    board.familiars = () => this.familiarSight;
   }
   run!: Run;
   route: Step[] = [];
@@ -318,6 +321,10 @@ export class Game {
   /** Where the hero began the turn now ending, which the familiars' room
    * goes by until the turn is over. */
   private endingFrom: { x: number; y: number } | null = null;
+  /** The tiles the Dragon set alight in the turn now ending: they tick from the next. */
+  private lit = new Set<string>();
+  /** What the Dragon and Slime last set off, and when, for the board to draw; never saved. */
+  familiarFx: { bursts: Burst[]; at: number } | null = null;
   /** The last potion that healed, picked up or crafted: the HP it healed
    * from and to, where the hero stood, and a number that grows with each, so
    * the HP bar can fill up to it and the board raise the HP healed. */
@@ -1164,8 +1171,8 @@ export class Game {
    * `attackAgainst` reads on a shocked enemy. Previews and planners take the
    * plain hero, the worst case. */
   get striker(): Player {
-    const shock = this.arcana.shock, guard = this.dilationGuard;
-    return shock || guard ? { ...this.run.player, ...(shock ? { shock: shock.factor } : {}), ...(guard ? { dilationGuard: guard } : {}) } : this.run.player;
+    const shock = this.arcana.shock, guard = this.dilationGuard, tags = !!this.save.familiars.wolf;
+    return shock || guard || tags ? { ...this.run.player, ...(shock ? { shock: shock.factor } : {}), ...(guard ? { dilationGuard: guard } : {}), ...(tags ? { tags: true as const } : {}) } : this.run.player;
   }
   /** The percent Time Dilation's Damage Reduction cuts what strikes the hero by
    * (`Player.dilationGuard`): while its field stands, once researched; else 0. */
@@ -1183,14 +1190,16 @@ export class Game {
   /** The hero as it takes the fight at `to`, the step's tile: with Overseer's
    * beams as the turn begins on that tile, a copy carrying their ATK as well,
    * Shock Multiplier's once Ricochet Shock is researched, and Time Dilation's
-   * Damage Reduction while its field stands. */
-  fighterAt(to: { x: number; y: number }): Player {
-    const factor = this.beamFactorAt(to), slow = this.slowdownAt(to), worn = this.worn, shock = this.arcana.shock?.factor, guard = this.dilationGuard;
+   * Damage Reduction while its field stands. With familiars it carries the
+   * Wolf's `tags` and the linger on `enemy` (the one fought, else the tile's). */
+  fighterAt(to: { x: number; y: number }, enemy?: Enemy): Player {
+    const linger = this.save.familiars.slime ? (enemy ?? foeOn(this.world.tile(to.x, to.y)))?.linger ?? 0 : 0, tags = !!this.save.familiars.wolf;
+    const factor = this.beamFactorAt(to), slow = togetherSlow(this.slowdownAt(to), linger), worn = this.worn, shock = this.arcana.shock?.factor, guard = this.dilationGuard;
     // The Uniques' powers: Hoarder Greaves' and Challenger's Defiance's ATK, Mirror Vault's Retribution, Amber Prison's percent.
     const gear = this.gearAttackAt(to.x, to.y), mirror = powerOf(worn, "mirrorVault", "factor"), amber = powerOf(worn, "amberPrison", "perHit");
-    if (factor === 1 && !slow && gear === 1 && !mirror && !amber && !shock && !guard) return this.fighter;
+    if (factor === 1 && !slow && gear === 1 && !mirror && !amber && !shock && !guard && !tags) return this.fighter;
     const hero = this.fighter;
-    return { ...hero, ...(gear === 1 ? {} : { attack: snap(hero.attack * gear) }), ...(factor === 1 ? {} : { beamAttack: factor }), ...(slow ? { slowdown: slow } : {}), ...(shock ? { shock } : {}), ...(guard ? { dilationGuard: guard } : {}),
+    return { ...hero, ...(gear === 1 ? {} : { attack: snap(hero.attack * gear) }), ...(factor === 1 ? {} : { beamAttack: factor }), ...(slow ? { slowdown: slow } : {}), ...(shock ? { shock } : {}), ...(guard ? { dilationGuard: guard } : {}), ...(tags ? { tags: true as const } : {}),
       ...(mirror ? { retribution: this.run.gear?.retribution ?? 0 } : {}), ...(amber ? { amber } : {}) };
   }
   /** What the worn Uniques multiply ATK by against the enemy at (x, y):
@@ -1938,7 +1947,7 @@ export class Game {
   /** What the Bomb just thrown at `enemy` on (x, y) deals: its rolls are a
    * fixed number per run, tile and Bomb, so a replay lands the same. */
   private bombStrike(x: number, y: number, enemy: Enemy) {
-    const { player, seed, bombsUsed } = this.run, crit = critAgainst(this.crit, player, enemy), attack = snap(shockedAttack(this.striker, enemy, player.attack) * this.beamFactorAt({ x, y }));
+    const { player, seed, bombsUsed } = this.run, crit = critAgainst(this.crit, player, enemy), striker = this.striker, attack = snap(taggedDamage(striker, enemy, shockedAttack(striker, enemy, player.attack)) * this.beamFactorAt({ x, y }));
     if (!crit) return { damage: attack, applications: 0, superCrit: false };
     const rolls = (seed ^ BOMB_SALT ^ Math.imul(bombsUsed ?? 0, 0x85ebca6b)) | 0;
     const sure = guaranteedCrits(crit.chance), rest = snap(crit.chance - 100 * sure);
@@ -2596,16 +2605,17 @@ export class Game {
     this.arcana.phantasmTurn();
     this.arcana.frostTurn();
     this.voidwellTurn();
-    this.familiarsTurn();
+    const scorched = this.familiarsTurn(beams, at, sameFloor ? from : p);
     const dilation = this.dilation, frost = this.frostArea;
     // Thunderbolt and Overseer Zap strike first, so what they fell shoots no more this turn, then the ghosts along the hero's step.
-    const struck = [...(sameFloor ? sprung : []), ...this.strikeBolts(fired, beams, sameFloor ? from : undefined), ...this.strikeZap(beams, sameFloor ? from : undefined), ...this.strikeGhosts(beams, at, ms, sameFloor ? from : undefined)];
+    const struck = [...scorched, ...(sameFloor ? sprung : []), ...this.strikeBolts(fired, beams, sameFloor ? from : undefined), ...this.strikeZap(beams, sameFloor ? from : undefined), ...this.strikeGhosts(beams, at, ms, sameFloor ? from : undefined)];
     if ((this.tier < 3 && !archer) || !sameFloor) {
       this.showVolley(struck, at, ms);
       if (sameFloor) this.showVolley(this.crownGhosts(beams), at, ms, true);
       this.wearStuns();
       this.showVolley(this.lifespringContact(), at, ms, true);
       this.showVolley(this.decayNecro(beams), at, ms, true);
+      this.showVolley(this.burnTurn(beams), at, ms, true);
       this.showVolley(this.voidwellStrike(), at, ms, true);
       return;
     }
@@ -2650,8 +2660,10 @@ export class Game {
       return;
     }
     // Then the Aggroed enemies close in (enemies/flying.ts), their cooldowns with them.
-    const moved = aggroTurn({ board: this.world, changes: this.run.changes, hero: p, floorOf: (x, y) => this.floorOf(x, y), lit: litTorches(this.world), foes: this.run.volleys.foes, ...(dilation || frost || powerOf(this.worn, "amberPrison", "perHit") ? { slowAt: (x: number, y: number) => togetherSlow(this.slowdownAt({ x, y }), foeOn(this.world.tile(x, y))?.amber ?? 0) } : {}), stunnedAt: (x: number, y: number) => { const foe = foeOn(this.world.tile(x, y)); return !!foe && isStunned(foe); } });
+    const moved = aggroTurn({ board: this.world, changes: this.run.changes, hero: p, floorOf: (x, y) => this.floorOf(x, y), lit: litTorches(this.world), foes: this.run.volleys.foes, ...(dilation || frost || this.save.familiars.slime || powerOf(this.worn, "amberPrison", "perHit") ? { slowAt: (x: number, y: number) => { const foe = foeOn(this.world.tile(x, y)); return togetherSlow(togetherSlow(this.slowdownAt({ x, y }), foe?.amber ?? 0), foe?.linger ?? 0); } } : {}), stunnedAt: (x: number, y: number) => { const foe = foeOn(this.world.tile(x, y)); return !!foe && isStunned(foe); } });
     if (moved.steps.length) {
+      // An enemy lit this turn may have stepped: it still first ticks the next.
+      for (const { from: was, to } of moved.steps) if (this.lit.delete(point(was.x, was.y))) this.lit.add(point(to.x, to.y));
       if (moved.foes && Object.keys(moved.foes).length) this.run.volleys.foes = moved.foes;
       else delete this.run.volleys.foes;
     }
@@ -2662,6 +2674,7 @@ export class Game {
     this.showVolley(this.strikeGhosts(beams, at, ms, undefined, TURN_TICKS), at, ms, true);
     this.showVolley(this.lifespringContact(), at, ms, true);
     this.showVolley(this.decayNecro(beams), at, ms, true);
+    this.showVolley(this.burnTurn(beams), at, ms, true);
     this.showVolley(this.voidwellStrike(), at, ms, true);
   }
   /** The room the familiars move round (docs/agents/familiars.md): a Tower
@@ -2670,10 +2683,61 @@ export class Game {
     const at = this.mode === "tower" ? ROOM_MIDDLE : this.endingFrom ?? this.turnFrom ?? this.run.player;
     return { middle: { x: at.x, y: at.y }, wrap: this.wrap, seed: this.run.seed };
   }
-  /** The familiars' turn before anything strikes: their cooldowns, and what they set off where they began it. */
-  private familiarsTurn(): Burst[] {
+  /** The familiars' turn before anything strikes: their cooldowns, then what
+   * they set off where they began it, the Slime before the Dragon. Pays what
+   * the Dragon fells and returns its shots. */
+  private familiarsTurn(beams: Beams | undefined, at: number, from: { x: number; y: number }): Shot[] {
+    this.lit.clear();
     const working = this.familiars.working;
-    return working ? stepFamiliars((this.run.familiars ??= {}), working, this.familiarRoom) : [];
+    if (!working) return [];
+    const bursts = stepFamiliars((this.run.familiars ??= {}), working, this.familiarRoom), shots: Shot[] = [];
+    if (!bursts.length) return shots;
+    this.familiarFx = { bursts, at };
+    for (const burst of bursts) {
+      if (burst.id === "slime") {
+        slimeStrike(this.world, burst, working.slime!);
+        continue;
+      }
+      const out = dragonStrike({ board: this.world, wrap: this.wrap, hero: this.striker, ...(beams ? { beams } : {}) }, burst, this.dragonDamage(working.dragon!.damage), from);
+      shots.push(...out.shots);
+      this.lit = out.lit;
+      for (const { enemy, at: tile } of out.kills) this.message = [`Fire Dragon · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
+    }
+    return shots;
+  }
+  /** What the Dragon multiplies the hero's ATK by: its Damage (in tenths) as
+   * Arcanum Damage is worked out, the crits averaged. */
+  private dragonDamage(tenths: number) {
+    return arcanumBoost(tenths / 10, this.crit);
+  }
+  /** The burns as the turn ends, while the Dragon is on: pays what they fell and returns their shots. */
+  private burnTurn(beams: Beams | undefined): Shot[] {
+    const dragon = this.familiars.stats("dragon");
+    if (!dragon) return [];
+    const out = burnTicks({ board: this.world, wrap: this.wrap, hero: this.striker, ...(beams ? { beams } : {}) }, this.run.changes, this.dragonDamage(dragon.damage), this.lit);
+    for (const { enemy, at } of out.kills) this.message = [`Burn · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, at, 1, false, 0)].join(" · ");
+    return out.shots;
+  }
+  /** What the board reads enemies through (familiars/marks.ts). Asked for
+   * every enemy tile read, so it reads no research. */
+  private get familiarSight(): FamiliarSight | undefined {
+    const { dragon, slime, wolf } = this.save.familiars, run = this.run;
+    if ((!dragon && !slime && !wolf) || run.outside) return undefined;
+    const burning = dragon && this.familiars.stats("dragon"), planted = wolf && run.familiars?.wolf?.left ? this.familiars.stats("wolf") : undefined;
+    return {
+      ...(burning ? { cut: burning.reduction } : {}),
+      ...(slime && !slime.off ? { lingers: true } : {}),
+      ...(planted ? { tag: wolfArea(run.familiars, { wolf: planted, wisp: this.familiars.stats("wisp") }, this.familiarRoom) } : {}),
+    };
+  }
+  /** What the Golden Falcon multiplies the Gold of a kill at `at` by: its
+   * Bonus, and the Wisp's on it, while its effect stands and `at` lies in its
+   * range as the turn began, however the enemy fell; else 1. */
+  falconGold(at: { x: number; y: number }) {
+    const run = this.run.familiars, falcon = run?.falcon?.left ? this.familiars.stats("falcon") : undefined;
+    if (!falcon) return 1;
+    const area = falconArea(run, { falcon, wisp: this.familiars.stats("wisp") }, this.familiarRoom);
+    return area && inArea(area, at.x, at.y) ? area.factor : 1;
   }
   /** The familiars' turn over: each moves on, its effect a turn shorter. */
   private endFamiliars() {
@@ -2718,6 +2782,13 @@ export class Game {
    * holds its enemy through the whole of its next turn. */
   private wearStuns() {
     const changes = this.run.changes;
+    // Linger first, so the turn a stun ends on uses up none of it.
+    if (this.familiars.isOn("slime"))
+      for (const k of Object.keys(changes)) {
+        if (!changes[k]!.linger) continue;
+        const [x, y] = k.split(",").map(Number) as [number, number], foe = foeOn(this.world.tile(x, y));
+        if (!foe || !isStunned(foe)) changes[k] = lingerWorn(changes[k]!);
+      }
     for (const k of Object.keys(changes)) if (changes[k]!.stun) changes[k] = stunWorn(changes[k]!);
   }
   private voidwellTurn() {
@@ -2772,7 +2843,7 @@ export class Game {
   private lifespringContact(entered?: { x: number; y: number }, tick?: number) {
     const s = this.run.lifespring;
     if (!s?.pool || !this.arcana.lifespringRule()) return [];
-    const out = lifespringContact({ board: this.world, wrap: this.wrap, hero: this.run.player }, s.pool, this.lifespringReach, (waves) => this.arcana.lifespringRate(waves), entered, tick);
+    const out = lifespringContact({ board: this.world, wrap: this.wrap, hero: this.striker }, s.pool, this.lifespringReach, (waves) => this.arcana.lifespringRate(waves), entered, tick);
     if (out.pool) s.pool = out.pool;
     else delete s.pool;
     for (const { enemy, at: tile } of out.kills) this.message = [`Lifespring · ${this.enemyTitle(enemy)} defeated`, ...this.finds.kill(enemy, tile, 1, false, 0)].join(" · ");
@@ -2874,7 +2945,7 @@ export class Game {
    * the hero's first strike ending it), or 0 once its tile is looted. */
   enemyGold(x: number, y: number, instakill = false) {
     const e = foeOn(this.world.tile(x, y));
-    return e ? this.purse.killGoldPreview(e, x, y, instakill, snap(this.spotlightGold({ x, y }) * this.voidwellGold({ x, y }))) : 0;
+    return e ? this.purse.killGoldPreview(e, x, y, instakill, snap(this.spotlightGold({ x, y }) * this.voidwellGold({ x, y }) * this.falconGold({ x, y }))) : 0;
   }
   /** What the floor the hero stands on can roll (`enemies/odds.ts`): each
    * strength's chance, stats and Gold, and each trait's chance, for the
