@@ -94,3 +94,20 @@ test('absorption progressively warms ivory to gold and increases its glow', () =
   assert.deepEqual(infinityPixelLight(1), {color:'rgb(255, 196, 64)',glow:1});
   for (const t of [.25,.5,.75]) assert.equal(infinityPixelLight(t).glow, t);
 });
+
+
+test('particle opacity follows the approach and is exactly zero at the destination', () => {
+  const pixel = {x:0,y:0,dx:0,dy:0,curl:0,delay:0,color:'white'};
+  const origin = {x:0,y:0}, target = {x:1000,y:0};
+  let previous = 1;
+  for (const pull of [0,.25,.5,.75,.9,.99,1]) {
+    const p = infinityPixelAt(pixel,origin,1,target,1,pull);
+    assert.ok(p.alpha <= previous, 'opacity never increases while approaching');
+    previous = p.alpha;
+  }
+  const half = infinityPixelAt(pixel,origin,1,target,1,Math.sqrt(.5));
+  assert.ok(Math.abs(half.x-500)<1e-9);
+  assert.ok(half.alpha<=.251,'the fade is already visible halfway to the player');
+  assert.ok(infinityPixelAt(pixel,origin,1,target,1,.99).alpha < .001,'overlapping pixels become faint before arrival');
+  assert.deepEqual(infinityPixelAt(pixel,origin,1,target,1,1), {...target,alpha:0});
+});

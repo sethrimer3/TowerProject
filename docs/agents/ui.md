@@ -275,3 +275,6 @@ The completed loop scatters half the opaque native texels for 260ms, then pulls 
 The modal blocks input until convergence; Reduce Motion retains the short still-symbol fade without particles.
 
 Particles warm from ivory to gold and gain stepped square halos during absorption, with thin rasterized trails following the last 48ms of their curved paths.
+
+Particle opacity follows the squared fraction of remaining distance to the hero, reaching exactly zero at the destination.
+Heads, halos and trails share this opacity so their overlapping light fades before arrival.

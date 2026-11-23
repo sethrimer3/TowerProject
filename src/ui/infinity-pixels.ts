@@ -31,11 +31,12 @@ export function infinityPixelAt(pixel: InfinityPixel, origin: PixelPoint, scale:
   const vx = target.x - scattered.x, vy = target.y - scattered.y, length = Math.hypot(vx, vy) || 1;
   const bend = pixel.curl * scale;
   const control = { x: (scattered.x + target.x) / 2 - vy / length * bend, y: (scattered.y + target.y) / 2 + vx / length * bend };
-  return {
-    x: (1 - t) ** 2 * scattered.x + 2 * (1 - t) * t * control.x + t * t * target.x,
-    y: (1 - t) ** 2 * scattered.y + 2 * (1 - t) * t * control.y + t * t * target.y,
-    alpha: 1 - q ** 3,
-  };
+  const x = (1 - t) ** 2 * scattered.x + 2 * (1 - t) * t * control.x + t * t * target.x;
+  const y = (1 - t) ** 2 * scattered.y + 2 * (1 - t) * t * control.y + t * t * target.y;
+  // Fade by actual remaining distance. Squaring keeps overlapping heads,
+  // halos and trails from accumulating into a bright spot at the hero.
+  const remaining = Math.min(1, Math.hypot(target.x - x, target.y - y) / length);
+  return { x, y, alpha: remaining * remaining };
 }
 
 /** Warm ivory becomes luminous gold during absorption, with a crisp square halo. */

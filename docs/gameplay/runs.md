@@ -27,6 +27,7 @@ Pressing **End Climb** (End Run in the Delve) asks whether to end the climb (or,
 When the hero falls in a fight, the run waits at 0 HP with the hand paused, a skull and crossbones burns in a red glow over the hero's head for two and a half seconds, and then the dialog, headed **Fallen in combat**, names the monster.
 It must be answered: **Return to entrance** ends the run, pays what it still owes, and returns to the forest for the next run.
 After the summary, the screen fades to black, a pale pixel infinity sign draws itself, bursts into pixels with thin trails that glow increasingly gold, and flows into the returned hero as the world fades back in, as if the delver has begun the loop again.
+The pixels, glow and trails fade progressively during their approach, reaching zero opacity at the hero.
 This also accompanies Retry, confirming an early End Run, and leaving a trial early or after a knockout.
 Tap, Enter, Space or Escape skips it; Reduce motion shows a brief still symbol.
 Headed **Regroup and try again**, the dialog says the Tower (or Delve) will shift to a new layout for the next run and invites the player to look over and spend what this one earned.
