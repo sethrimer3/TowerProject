@@ -21,6 +21,7 @@ import { bonusText } from "../economy/relic-effects.ts";
 import { RARITY_NAMES, RELICS } from "../economy/relics.ts";
 import { relicButton } from "./relic-pop.ts";
 import { FamiliarsPanel } from "./familiars-panel.ts";
+import { play } from "../sound.ts";
 
 /** The Events screen's tabs: the event's missions and relics, its Store, and Familiars. */
 const TAB_NAMES = { missions: "Missions", store: "Store", familiars: "Familiars" } as const;
@@ -293,8 +294,10 @@ export class EventsPage {
    * tier, Claim again while it too is done), and its Medals flown from the
    * Claim bar to the Medals held in the banner, which count them as they land. */
   private claim(id: number) {
-    const game = this.ctx.game, from = el("events").querySelector(`[data-claim="${id}"]`)?.getBoundingClientRect(), before = game.save.medals, medals = game.events.claim(id);
+    const game = this.ctx.game, from = el("events").querySelector(`[data-claim="${id}"]`)?.getBoundingClientRect(), before = game.save.medals, relics = game.save.relics.length, medals = game.events.claim(id);
     if (!from || medals === null) return;
+    // The Medals that reach a relic's milestone claim the relic.
+    if (game.save.relics.length > relics) play("openGift");
     this.ctx.update();
     this.render();
     const held = (n: number) => { const b = document.getElementById("event-medals-held"); if (b) b.textContent = heldAmount(game, n); };

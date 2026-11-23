@@ -16,6 +16,7 @@ import { placeText } from "../tournament/prizes.ts";
 import { tournamentScore } from "../tournament/run.ts";
 import { notesResearched, type RunNotesDialog } from "./run-notes-dialog.ts";
 import { tierHighest } from "./floor-tip.ts";
+import { play } from "../sound.ts";
 
 /** The modal dialogs opened from the HUD, all sharing `ctx.modal`. */
 
@@ -235,6 +236,7 @@ export class RunEndDialog {
     const where = `${words.progress} ${displayedProgress(game.run.height, !!game.run.outside)}`;
     const kept = "Milestone rewards and Gold found are saved.";
     const stats = this.stats();
+    play("runSummary");
     if (cause === "fallen") {
       const by = slice.fall?.by;
       // Encourages another run: the next one is a new layout, and what this one earned can make the hero stronger.

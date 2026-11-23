@@ -11,6 +11,7 @@ import { materialIcon } from "./equipment-icons.ts";
 import { currencyAmount, holdAmount } from "./hud.ts";
 import { flyToPurse, type Flight } from "./flourish.ts";
 import { giftsShown, revealReward, type RewardShown } from "./reward-reveal.ts";
+import { play } from "../sound.ts";
 
 /** A countdown on the page: *2d 5h*, *7h 12m*, *12m*. */
 const countdown = (ms: number) => shortCountdown(ms).replace(/([dh])(?=\d)/g, "$1 ");
@@ -159,7 +160,9 @@ export class MissionsPage {
     el("missions").querySelectorAll<HTMLButtonElement>("[data-reroll]").forEach((b) => (b.onclick = () => this.reroll(Number(b.dataset.reroll))));
     el("missions").querySelectorAll<HTMLButtonElement>("[data-weekly]").forEach((b) => (b.onclick = () => {
       const i = Number(b.dataset.weekly), paid = game.missions.claimWeekly(i);
-      if (paid) this.claimed(...weeklyShown(paid, WEEKLY_REWARDS[i]!.missions));
+      if (!paid) return;
+      play("openGift");
+      this.claimed(...weeklyShown(paid, WEEKLY_REWARDS[i]!.missions));
     }));
   }
 

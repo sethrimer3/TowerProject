@@ -23,7 +23,7 @@ const PALETTE32 = Uint32Array.from(PALETTE, (hex) => {
 /** Blade bend by height: CURVE[h][k] = (k / h)^1.5. */
 const CURVE = Array.from({ length: 12 }, (_, h) => Float32Array.from({ length: h + 1 }, (_, k) => (h ? Math.pow(k / h, 1.5) : 0)));
 /** How hard the wind blows, in pixels of lean at a blade's tip. */
-const WIND: Record<Weather, number> = { sunny: 1.2, cloudy: 1.8, rain: 2.6, storm: 4 };
+const WIND: Record<Weather, number> = { sunny: 1.2, cloudy: 1.8, evening: 0.8, rain: 2.6, storm: 4 };
 
 export class OutsideGrass {
   private plans = new Map<string, Blade[]>();

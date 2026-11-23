@@ -7,7 +7,7 @@ const effects = stream("effects");
 
 /** How loud each bed plays at its full level (the loops are all
  * loudness-matched, so these set the balance between them). */
-export const BED_GAIN: Readonly<Record<Bed, number>> = { windForest: 0.12, windChimes: 0.07, blacksmith: 0.22, dockWater: 0.2, meditative: 0.1, divineRelic: 0.3 };
+export const BED_GAIN: Readonly<Record<Bed, number>> = { windForest: 0.12, windChimes: 0.07, blacksmith: 0.22, dockWater: 0.2, meditative: 0.1, divineRelic: 0.3, evening: 0.14 };
 /** Seconds a bed takes to rise or die away. */
 export const BED_FADE = 1.5;
 
@@ -48,7 +48,8 @@ const distance = (a: { x: number; y: number }, b: { x: number; y: number }) => M
 const near = (d: number, reach: number) => Math.max(0, 1 - d / reach);
 
 /** The beds the board plays where the hero stands: outside, the wind (and
- * the chimes on a windy day) while Weather sounds is on; in the clearing,
+ * the chimes on a windy day, or on an evening its own ambience in place of
+ * the wind) while Weather sounds is on; in the clearing,
  * the Blacksmith's forge, louder the nearer; at the lake, the dock's water,
  * louder nearer the fisherman, and the meditative music; in the builders'
  * room, only the Divine Relic's hum, louder nearer its chest. Inside, nothing. */
@@ -57,7 +58,9 @@ export function surroundingLevels(s: Surroundings): Levels {
   if (s.place === "divine") return s.relic ? { divineRelic: RELIC_FLOOR + (1 - RELIC_FLOOR) * near(distance(s.hero, s.relic), RELIC_REACH) } : {};
   const levels: Levels = {};
   if (s.weatherSound) {
-    levels.windForest = 1;
+    // A calm evening plays its own ambience in place of the wind.
+    if (s.weather === "evening") levels.evening = 1;
+    else levels.windForest = 1;
     if (WINDY.has(s.weather)) levels.windChimes = 1;
   }
   if (s.place === "forest" && s.blacksmith) {

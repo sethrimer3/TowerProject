@@ -341,7 +341,7 @@ export function renderBoardHeading(game: Game, overlay: BoardOverlay) {
   const words = MODES[game.mode].words, tiers = tierLine(game);
   text("board-title", boardTitle(game));
   if (game.run.outside) {
-    const labels = { cloudy: "CLOUDY", sunny: "SUNNY", rain: "RAINING", storm: "THUNDERSTORM" };
+    const labels = { cloudy: "CLOUDY", sunny: "SUNNY", evening: "EVENING", rain: "RAINING", storm: "THUNDERSTORM" };
     text("board-subtitle", game.atLake ? `QUIET LAKE · ${labels[outsideWeather(game.run.seed)]}` : tiers ?? `FOREST CLEARING · ${labels[outsideWeather(game.run.seed)]}`);
     // The sign down the path stands where this hint would.
     el("inspect").textContent = game.atLake ? "Walk onto the dock to speak to the fisherman." : game.canSwapForest ? "" : words.begin;

@@ -166,6 +166,7 @@ export class MissionDesk {
       if (m.counted.length > COUNTED_KEPT) m.counted.splice(0, m.counted.length - COUNTED_KEPT);
     }
     mission.progress = Math.min(MISSIONS[type].target, mission.progress + amount);
+    if (isComplete(mission)) this.host.cue?.("dailyMission");
   }
 
   /** Counts what a run has done in all (`total`: run training ranks bought,

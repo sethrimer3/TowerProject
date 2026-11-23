@@ -15,6 +15,7 @@ import { showRelic } from "./relic-pop.ts";
 import { flyToPurse } from "./flourish.ts";
 import { goalRewardShown, offerShown, revealReward } from "./reward-reveal.ts";
 import { tiersReachable } from "../access.ts";
+import { play } from "../sound.ts";
 
 // The Goals screen: each tower drawn as a stone column rising from the
 // ground, a line up its middle lit to the highest floor completed, and a
@@ -323,6 +324,7 @@ export class GoalsPage {
     }
     const reward = game.claimGoal(tower, floor, premium);
     if (!reward) return;
+    if (reward.kind === "tower") play("newTower");
     this.message = `Claimed: ${rewardText(reward)}`;
     this.ctx.update();
     this.render();

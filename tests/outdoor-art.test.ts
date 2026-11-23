@@ -51,7 +51,7 @@ function recorder(h: Hash): CanvasRenderingContext2D {
 /** Seeds whose weather is each kind, first ones found. */
 function seedsByWeather() {
   const found = new Map<string, number[]>();
-  for (let s = 1; [...found.values()].reduce((n, l) => n + l.length, 0) < 8 && s < 5000; s++) {
+  for (let s = 1; [...found.values()].reduce((n, l) => n + l.length, 0) < 10 && s < 5000; s++) {
     const list = found.get(outsideWeather(s)) ?? [];
     if (list.length < 2) found.set(outsideWeather(s), [...list, s]);
   }

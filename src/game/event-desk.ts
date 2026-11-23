@@ -245,7 +245,9 @@ Your Medals weren't claimed in time, so here they are.`,
   private raise(type: EventMissionType, to: number) {
     const m = this.e.missions.find((x) => x.type === type);
     if (!m || to <= m.progress) return false;
+    const done = tiersDone(m);
     m.progress = Math.min(EVENT_MISSIONS[type].targets[TIERS - 1], to);
+    if (tiersDone(m) > done) this.host.cue?.("eventMission");
     return true;
   }
 

@@ -16,6 +16,7 @@ import type { AppContext } from "./app.ts";
 import { el, gemIcon, goldIcon, medalIcon, arcaniteIcon, relicIcon, vipIcon } from "./dom.ts";
 import { giftsShown, offerShown, revealReward } from "./reward-reveal.ts";
 import { giftsSince } from "../economy/gifts.ts";
+import { play } from "../sound.ts";
 
 /** Gem prices from this up ask the player to confirm first. */
 export const CONFIRM_GEMS = 200;
@@ -302,6 +303,7 @@ export class ShopPage {
       if (now === null) return this.say("Can't reach the server. Try again when you're online.");
       const before = this.ctx.game.save.gifts.owned;
       const refused = this.ctx.game.shop.buy(o.id, now, paid);
+      if (!refused) play("shopPurchase");
       this.say(refused ? REFUSALS[refused] : `${o.name}: ${o.price.kind === "free" ? "claimed" : "purchased"}!`);
       this.ctx.update();
       // The gifts it gave, if any, show together after the offer's own reveal.

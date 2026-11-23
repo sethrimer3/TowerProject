@@ -1,11 +1,15 @@
 import { outsideWeather, type Weather } from "../outside.ts";
 import { tileRandom } from "../random.ts";
-import { runningAudio } from "../sound.ts";
+import { runningAudio, soundOn } from "../sound.ts";
+import { oneShot } from "../sound-files.ts";
 
 // No full-screen flashes: a single slow, localized glow peaks at 1.5% opacity.
 export function lightningOpacity(seconds: number) {
   return seconds < 0 || seconds > 4 ? 0 : Math.sin(seconds * Math.PI / 4) ** 2 * 0.015;
 }
+
+/** How loud the recorded thunder plays. */
+const THUNDER_GAIN = 0.3;
 
 export class OutdoorWeather {
   seed = -1;
@@ -17,9 +21,22 @@ export class OutdoorWeather {
   silence() {
     if (this.source) { this.source.stop(); this.source.disconnect(); this.source = undefined; }
   }
+  /** Thunder: the recording once it has loaded, else a rumble made from
+   * low noise. */
   rumble(seed: number) {
     const a = runningAudio();
-    if (!a) return;
+    if (!a || !soundOn()) return;
+    const recorded = oneShot(a, "thunder")?.[0];
+    if (recorded) {
+      this.silence();
+      const source = a.createBufferSource(), gain = a.createGain();
+      source.buffer = recorded;
+      gain.gain.value = THUNDER_GAIN;
+      source.connect(gain).connect(a.destination);
+      source.onended = () => { source.disconnect(); gain.disconnect(); if (this.source === source) this.source = undefined; };
+      this.source = source; source.start();
+      return;
+    }
     const buffer = a.createBuffer(1, a.sampleRate * 4, a.sampleRate);
     const data = buffer.getChannelData(0);
     let low = 0;
@@ -79,9 +96,28 @@ type Sky = { c: CanvasRenderingContext2D; size: number; seed: number; elapsed: n
  * strike while a live storm shows it, else null. */
 function paintWeather(sky: Sky, weather: Weather, lightning: number | null) {
   sky.c.save();
+  if (weather === "evening") paintSunset(sky);
   if (weather === "rain" || weather === "storm") paintRain(sky, weather === "storm");
   if (lightning !== null) paintLightning(sky, lightning);
   sky.c.restore();
+}
+
+/** An evening's sunset over the clearing: its colors warmed toward gold and
+ * rose from the top left, where the sun sets, and dimmed toward dusky
+ * violet at the far corner. The one weather that tints the whole scene. */
+function paintSunset({ c, size }: Sky) {
+  c.globalCompositeOperation = "soft-light";
+  const warm = c.createLinearGradient(0, 0, size * 0.45, size);
+  warm.addColorStop(0, "rgba(255,168,72,0.6)");
+  warm.addColorStop(0.5, "rgba(244,116,84,0.45)");
+  warm.addColorStop(1, "rgba(128,72,150,0.45)");
+  c.fillStyle = warm; c.fillRect(0, 0, size, size);
+  c.globalCompositeOperation = "multiply";
+  const dusk = c.createLinearGradient(0, 0, size * 0.45, size);
+  dusk.addColorStop(0, "rgba(255,214,170,0.16)");
+  dusk.addColorStop(1, "rgba(112,84,150,0.24)");
+  c.fillStyle = dusk; c.fillRect(0, 0, size, size);
+  c.globalCompositeOperation = "source-over";
 }
 
 /** Slanting streaks of rain, heavier in a storm. */

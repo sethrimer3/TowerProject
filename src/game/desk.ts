@@ -2,6 +2,7 @@ import type { Run } from "../runs.ts";
 import type { Save } from "../save/shape.ts";
 import type { MissionType } from "../missions/catalog.ts";
 import type { EventMissionType } from "../events/catalog.ts";
+import type { GameCue } from "../shown.ts";
 
 /** What the game's desks need from it: the save (replaced by an erase, so
  * read each time), the active run, Dev free purchases, the wall clock, the
@@ -19,6 +20,8 @@ export interface DeskHost {
   eventDone(type: EventMissionType, amount: number): void;
   /** Research completed: the game applies what it changes at once. */
   researchDone(): void;
+  /** Asks for one of the game's sounds (`Game.cue`). */
+  cue?(cue: GameCue): void;
 }
 
 /** Whether `gems` can be paid now (always, with Dev free purchases). */

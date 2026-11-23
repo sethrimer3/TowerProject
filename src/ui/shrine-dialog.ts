@@ -5,12 +5,13 @@ import type { AppContext } from "./app.ts";
 import { el, shrineIcon } from "./dom.ts";
 import { arcanum, LENT_LEVELS, valuesAt, type ArcanumId } from "../arcana/arcana.ts";
 import { ARCANUM_ICONS } from "./arcana-panel.ts";
+import { play } from "../sound.ts";
 
 /** The run's Shrine button, pressed: with boons waiting, the offer to pick
  * one from (again while more wait); with none, the boons the run has picked
  * in a scrolling table, standard boons' copies added up. Either way, once
  * Auto Pick Boons is researched, its toggle, kept between runs. */
-export function showShrine(ctx: AppContext) {
+export function showShrine(ctx: AppContext, picking = false) {
   const shrine = ctx.game.shrine, offer = shrine.offer();
   const modal = ctx.modal;
   modal.innerHTML = (offer.length ? offerHtml(ctx, offer) : pickedHtml(ctx)) + autoPickHtml(ctx) +
@@ -18,16 +19,20 @@ export function showShrine(ctx: AppContext) {
   if (!modal.open) modal.showModal();
   el("shrine-close").onclick = () => modal.close();
   modal.querySelectorAll<HTMLButtonElement>("[data-boon]").forEach((b) => (b.onclick = () => {
-    shrine.pick(b.dataset.boon as BoonId);
+    // Boons picked one after another in one visit sound once.
+    if (shrine.pick(b.dataset.boon as BoonId) && !picking) play("shrineBoon");
     ctx.update();
-    if (shrine.unspent) showShrine(ctx);
+    if (shrine.unspent) showShrine(ctx, true);
     else modal.close();
   }));
   const auto = modal.querySelector<HTMLInputElement>("#boon-autopick");
   if (auto) auto.onchange = () => {
+    const unspent = shrine.unspent;
     shrine.setAutoPick(auto.checked);
+    // Turned on, Auto Pick takes the boons waiting at once.
+    if (shrine.unspent < unspent && !picking) play("shrineBoon");
     ctx.update();
-    showShrine(ctx);
+    showShrine(ctx, picking || shrine.unspent < unspent);
   };
 }
 

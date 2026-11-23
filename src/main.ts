@@ -61,7 +61,9 @@ import { showHeldArcanum } from "./ui/arcana-panel.ts";
 import { holdTabs, renderBoardLesson } from "./ui/board-lesson.ts";
 import { renderSettingsPage } from "./ui/settings-page.ts";
 import { ShopPage } from "./ui/shop-page.ts";
-import { play } from "./sound.ts";
+import { play, playUnlessOther } from "./sound.ts";
+import { ANYWHERE_CUES } from "./shown.ts";
+import { CUE_STALE_MS } from "./render/board-sounds.ts";
 import { applyUiTheme, bindFeedback } from "./ui/medieval.ts";
 import { gemSparkle, goldSparkle } from "./ui/flourish.ts";
 import { TournamentClient } from "./tournament/client.ts";
@@ -227,6 +229,18 @@ function save(seen = !document.hidden) {
     game.message = "Storage unavailable — progress is only kept for this session.";
 }
 /** Refreshes the HUD from game state, saves, and asks a fallen hero's player what next. */
+/** The Gems held when last updated: fewer now is Gems spent. */
+let gemsWere = game.save.gems;
+/** The sounds a page hears: Gems spent (the Shop's purchase sound, unless
+ * what they bought has its own), and, while the board isn't showing to
+ * play them, the game's sounds that belong to no board. */
+function pageSounds() {
+  if (game.save.gems < gemsWere) playUnlessOther("shopPurchase");
+  gemsWere = game.save.gems;
+  if (isBoard(tab)) return;
+  const now = performance.now();
+  for (const cue of new Set(game.cues.splice(0).filter((c) => ANYWHERE_CUES.has(c.cue) && now - c.at <= CUE_STALE_MS).map((c) => c.cue))) play(cue);
+}
 function update() {
   wakeFrames();
   provingGrounds.check();
@@ -253,6 +267,7 @@ function update() {
   provingGrounds.decorate();
   const finished = [...game.research.done.splice(0).map(researchToast), ...game.training.done.splice(0).map(trainingToast)];
   if (finished.length) play("trained");
+  pageSounds();
   researchToasts.add(finished);
   // The Codex remembers the arcana and Uniques the player has come across.
   if (!provingGrounds.active) noteDiscoveries(game.save.codex, game.save, game.arcana.held.map((h) => h.id));

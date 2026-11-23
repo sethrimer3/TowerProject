@@ -3,7 +3,7 @@ import type { UiLook } from "./theme-collection.ts";
 /** The recorded sounds in `public/assets/sounds/` (Ogg Vorbis; `SOURCES.md`
  * lists where each came from), fetched and decoded on first use. One-shots
  * are short clips the cues in `sound.ts` play (a variant at random where
- * there are several); beds are long loops, each baked once into a buffer
+ * there are several, never the one played last); beds are long loops, each baked once into a buffer
  * whose end is cross-faded into its start, so a recording that wasn't cut
  * as a clean loop still repeats without a click. Nothing here plays
  * anything: it only hands out buffers once they are ready, and null until
@@ -34,6 +34,19 @@ export const ONE_SHOTS = {
   tournamentRewards: ["ui/tournament-rewards"],
   /** The story that begins the game. */
   tutorialStart: ["ui/tutorial-start"],
+  /** A Shop offer bought or claimed, or Gems spent anywhere. */
+  shopPurchase: ["ui/shop-purchase"],
+  /** A Shrine boon chosen. */
+  shrineBoon: ["ui/shrine-boon"],
+  /** A familiar hatching from its egg. */
+  eggHatch: ["ui/egg-hatch"],
+  /** A card ascending, for its Rubies. */
+  cardAscension: ["ui/card-ascension"],
+  /** A daily mission completed, and an Event mission's tier completed. */
+  dailyMission: ["ui/daily-mission"],
+  eventMission: ["ui/event-mission"],
+  /** A weekly prize or an Event relic claimed. */
+  openGift: ["ui/open-gift"],
   /** A Gem, a Golden Gem and a Stellar Gem collected. */
   gem: ["pickups/gem"],
   gemGolden: ["pickups/gem-golden"],
@@ -62,6 +75,23 @@ export const ONE_SHOTS = {
   divineRelic: ["events/divine-relic"],
   /** The hand finding nothing it can do. */
   runStuck: ["events/run-stuck"],
+  /** Revive or Angel Wings raising the hero. */
+  angelRevive: ["events/angel-revive"],
+  /** A floor that begins with a boss on it. */
+  bossAppears: ["events/boss-appears"],
+  /** A Delve milestone gate sealing behind the hero. */
+  delveGate: ["events/delve-gate"],
+  /** The summary at a run's end. */
+  runSummary: ["events/run-summary"],
+  /** A new tower opened. */
+  newTower: ["events/new-tower"],
+  /** Thunder in a forest storm (played by `render/weather.ts`). */
+  thunder: ["events/thunder"],
+  /** The hero climbing the stairs to a new floor. */
+  stoneSteps: ["steps/stone-steps"],
+  /** One footstep, and one of a run of quick steps. */
+  step: ["steps/step-1", "steps/step-2", "steps/step-3", "steps/step-4", "steps/step-5", "steps/step-6", "steps/step-7", "steps/step-8"],
+  run: ["steps/run-1", "steps/run-2", "steps/run-3", "steps/run-4", "steps/run-5", "steps/run-6", "steps/run-7", "steps/run-8"],
   /** Walking from the forest into the Tower, or into the Delve's cave. */
   enterTower: ["events/enter-tower"],
   enterDelve: ["events/enter-delve"],
@@ -75,6 +105,11 @@ export const ONE_SHOTS = {
   bodyFall: ["battle/body-fall-1", "battle/body-fall-2"],
   /** The Lightning Slime's burst. */
   slimeImpact: ["battle/slime-impact"],
+  /** Thunderbolt's bolt striking. */
+  lightningZap: ["battle/lightning-zap-1", "battle/lightning-zap-2", "battle/lightning-zap-3"],
+  /** The Wolf's charge and the Dragon's fire. */
+  wolfCharge: ["battle/wolf-charge"],
+  dragonFire: ["battle/dragon-fire"],
 } as const satisfies Record<string, readonly string[]>;
 export type OneShot = keyof typeof ONE_SHOTS;
 
@@ -100,6 +135,8 @@ export const BEDS = {
   meditative: "ambience/meditative",
   /** The Divine Relic's hum in the builders' room, louder nearer its chest. */
   divineRelic: "ambience/divine-relic",
+  /** A calm evening outside, in place of the wind. */
+  evening: "ambience/evening",
 } as const satisfies Record<string, string>;
 export type Bed = keyof typeof BEDS;
 

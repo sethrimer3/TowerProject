@@ -1761,7 +1761,13 @@ export class Game {
    * once, and Auto Pick takes any boons it earned. */
   researchDone() {
     this.shrine.sync();
+    this.autoPickBoons();
+  }
+  /** Auto Pick takes the boons waiting, sounding once however many it took. */
+  private autoPickBoons() {
+    const unspent = this.shrine.unspent;
     this.shrine.autoPick();
+    if (this.shrine.unspent < unspent) this.cue("shrineBoon");
   }
   /** Whether fights play out strike by strike: always, until Instant
    * Combat opens the Animate fights setting to turn it off. */
@@ -2863,7 +2869,10 @@ export class Game {
     this.lit.clear();
     const working = this.familiars.working;
     if (!working) return [];
+    const casts = this.run.familiars?.wolf?.casts ?? 0;
     const bursts = stepFamiliars((this.run.familiars ??= {}), working, this.familiarRoom), shots: Shot[] = [];
+    // The Wolf sets off on its charge.
+    if ((this.run.familiars.wolf?.casts ?? 0) > casts) this.cue("wolfCharge");
     if (!bursts.length) return shots;
     this.familiarFx = { bursts, at };
     for (const burst of bursts) {
@@ -3377,6 +3386,7 @@ export class Game {
       this.forgetLabyrinth();
       this.route = [];
       this.feedback(`Depth ${world.milestone * 100} · the passage seals behind you.`);
+      this.cue("delveGate");
     }
     const visited = this.save.delve.memory.visited;
     visited[`${x},${y}`] = (visited[`${x},${y}`] ?? 0) + 1;
@@ -3567,8 +3577,10 @@ export class Game {
     // The new floor was built before its rolls.
     board.levelSkips = this.run.levelSkips;
     this.enterTowerFloor(board);
+    this.cue("stoneSteps");
+    if (this.floorBosses.length) this.cue("bossAppears");
     // A new floor may earn a boon, which Auto Pick takes at once.
-    this.shrine.autoPick();
+    this.autoPickBoons();
     // The hero keeps every stat into a new section.
     const earned = sectionStart ? new AreaLedger(this.save).enter(this.towerRun, board) : [];
     if (skipped) this.feedback(passed.length ? `Floor Skipped · floors ${this.run.height - TOWER_SECTION}–${this.run.height - 1} ${passed.join(" and ")}` : "Floor Skipped", 1000);

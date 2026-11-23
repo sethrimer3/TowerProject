@@ -1,6 +1,7 @@
 import { FAMILIARS, type FamiliarId } from "../familiars/catalog.ts";
 import { familiarFrame, paintFamiliar } from "../render/effects/familiars.ts";
 import { drawKit } from "../sprites/kit.ts";
+import { play } from "../sound.ts";
 
 /** A press this soon after it opens is the confirmation's own, pressed twice. */
 const DEAF_MS = 400;
@@ -20,6 +21,7 @@ function pixels(className: string) {
  * key, dismisses it; Reduce motion shows its last moment at once. */
 export function showHatch(id: FamiliarId, reduceMotion: boolean) {
   document.querySelector(".hatch-reveal")?.remove();
+  play("eggHatch");
   const still = reduceMotion || !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   const said = `${FAMILIARS[id].short} hatched!`, layer = document.createElement("div");
   layer.className = `hatch-reveal${still ? " still" : ""}`;

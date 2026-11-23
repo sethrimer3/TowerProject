@@ -90,10 +90,10 @@ for (const mode of ["tower", "delve"] as const) {
   });
 }
 
-test("weather uses exact 40/30/20/10 intervals; lightning is slow and faint", () => {
-  const counts = { cloudy: 0, sunny: 0, rain: 0, storm: 0 };
+test("weather uses exact 40/20/10/20/10 intervals; lightning is slow and faint", () => {
+  const counts = { cloudy: 0, sunny: 0, evening: 0, rain: 0, storm: 0 };
   for (let i = 0; i < 1000; i++) counts[weatherForRoll((i + 0.5) / 1000)]++;
-  assert.deepEqual(counts, { cloudy: 400, sunny: 300, rain: 200, storm: 100 });
+  assert.deepEqual(counts, { cloudy: 400, sunny: 200, evening: 100, rain: 200, storm: 100 });
   assert.equal(lightningOpacity(-1), 0);
   assert.equal(lightningOpacity(5), 0);
   assert.equal(lightningOpacity(2), 0.015);

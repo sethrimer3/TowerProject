@@ -11,12 +11,12 @@ const CELL = 4, RESOLUTION = 96, FIELD = 128, PERIOD = 768;
 export const CLOUD_LIGHT = { direction: { x: 1, y: 3 }, elevationScale: .25, driftX: 3, driftY: 1.1 } as const;
 /** Opacity is a final cap, independent of the number of feather layers. */
 export const GOD_RAY_STYLE = {
-  opacity: { sunny: .16, cloudy: .13, rain: .045, storm: .02 } satisfies Record<Weather, number>,
+  opacity: { sunny: .16, cloudy: .13, evening: .1, rain: .045, storm: .02 } satisfies Record<Weather, number>,
   layers: 8, outerWidth: 2.8, blurRadius: 2, blurPasses: 2,
 } as const;
 const SUN_X = CLOUD_LIGHT.direction.x * CLOUD_LIGHT.elevationScale;
 const SUN_Y = CLOUD_LIGHT.direction.y * CLOUD_LIGHT.elevationScale;
-const STRENGTH: Record<Weather, number> = { sunny: .19, cloudy: .29, rain: .22, storm: .27 };
+const STRENGTH: Record<Weather, number> = { sunny: .19, cloudy: .29, evening: .17, rain: .22, storm: .27 };
 const smooth = (v: number) => { v = Math.max(0, Math.min(1, v)); return v * v * (3 - 2 * v); };
 const wrap = (v: number, size: number) => ((v % size) + size) % size;
 

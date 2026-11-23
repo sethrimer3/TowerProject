@@ -19,7 +19,7 @@ import { ForestFoliage } from "./decor/forest-foliage.ts";
 import { forestSpritesReady } from "../sprites/forest.ts";
 import { TileLayerCache } from "./tile-cache.ts";
 import { OutdoorWeather } from "./weather.ts";
-import { BoardSounds } from "./board-sounds.ts";
+import { BoardSounds, type HeardHero } from "./board-sounds.ts";
 import { play } from "../sound.ts";
 import { ambience, surroundingLevels, type Surroundings } from "../ambience.ts";
 import { CloudShadows } from "./cloud-shadows.ts";
@@ -411,7 +411,8 @@ export class Renderer {
     this.follow(n, dt, now);
     this.inFlight.update(g.volley, now, g.mode === "delve" ? g.world.width : 0);
     this.popups.update({ run: g.run, gains: g.gains, fight: g.fights.shown, lastHeal: g.lastHeal, volley: g.volley, save: g.save }, now);
-    this.sounds.update({ fight: g.fights.shown, volley: g.volley, struckDown: g.fights.struckDown, bombed: g.bombed, sparkedAt: g.fights.sparkedAt, familiars: g.familiarFx, cues: g.cues.splice(0) }, now);
+    this.sounds.update({ fight: g.fights.shown, volley: g.volley, struckDown: g.fights.struckDown, bombed: g.bombed, sparkedAt: g.fights.sparkedAt, revivedAt: g.fights.revivedAt,
+      familiars: g.familiarFx, cues: g.cues.splice(0), hero: this.heardHero() }, now);
     // Battery saver plays no ambience, as it shows no weather.
     ambience.set("board", battery ? {} : surroundingLevels(this.surroundings()));
     const lunge = lunges(g.fights.encounter, now, g.save.settings.reduceMotion || battery);
@@ -622,6 +623,14 @@ export class Renderer {
       c.restore();
     }
     if (this.decorOn) this.drawForestGrass(f, "front");
+  }
+  /** Where the hero stands, for its footsteps: a Tower floor of its own
+   * board (the Delve's labyrinth is one), and steps heard outside and,
+   * inside, only before Auto-Climb, which would keep them going all climb. */
+  private heardHero(): HeardHero {
+    const g = this.game, p = g.run.player, outside = !!g.run.outside;
+    const board = `${g.mode}:${g.run.seed}:${outside}:${g.atLake}:${g.inDivineRoom}:${g.mode === "tower" ? g.run.height : 0}`;
+    return { x: p.x, y: p.y, board, footsteps: outside || !g.autoClimbs };
   }
   /** Stills the board's lasting sounds while it isn't showing. */
   hush() {

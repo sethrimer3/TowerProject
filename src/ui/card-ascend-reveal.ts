@@ -4,6 +4,7 @@ import { CARD_RARITY_NAMES, type CardRarity } from "../cards/rarity.ts";
 import { rarityFrameHtml, rarityStarsHtml } from "./card-level-marks.ts";
 import { powerStepHtml } from "./card-power-view.ts";
 import { cardArt } from "./dom.ts";
+import { play } from "../sound.ts";
 
 /** The stars a mythic ascension sends flying out from behind its card. */
 const MYTHIC_STARS = 14;
@@ -17,6 +18,7 @@ const MYTHIC_STARS = 14;
  * closes it; with Reduce motion on, everything appears still. `onDone`
  * runs once it is pressed away. */
 export function revealAscension(card: CardId, rarity: CardRarity, reduceMotion: boolean, onDone?: () => void) {
+  play("cardAscension");
   const layer = document.createElement("div");
   layer.className = `badge-reveal card-buy-reveal card-ascend-reveal${reduceMotion ? " still" : ""}${rarity === "mythic" ? " dark" : ""}`;
   layer.setAttribute("role", "dialog");

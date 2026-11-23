@@ -5,7 +5,10 @@ import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BEDS, blendLoop, ONE_SHOTS, shotPaths, STYLE_SOUNDS } from "../src/sound-files.ts";
 import { BLACKSMITH_REACH, DOCK_FLOOR, mixLevels, surroundingLevels, type Surroundings } from "../src/ambience.ts";
-import { pickupCue } from "../src/state.ts";
+import { Game, pickupCue } from "../src/state.ts";
+import { MISSIONS } from "../src/missions/catalog.ts";
+import { playedSave } from "./first-skills.ts";
+import { nextVariant } from "../src/sound.ts";
 import { BoardSounds, type BoardCue, type Heard } from "../src/render/board-sounds.ts";
 import type { ShownFight } from "../src/shown.ts";
 import type { Volley } from "../src/volley.ts";
@@ -100,15 +103,52 @@ test("the game's own events sound once while fresh, and never once stale", () =>
   assert.deepEqual(heard, ["key", "door2"]);
 });
 
-test("Phoenix Spark and the Slime's burst sound as they happen", () => {
+test("Phoenix Spark, a revival and the Slime's and Dragon's bursts sound as they happen", () => {
   const { heard, sounds } = listen();
   const old = { bursts: [{ id: "slime" }], at: 0 };
-  sounds.update({ ...quiet, sparkedAt: [10], familiars: old }, 100);
+  sounds.update({ ...quiet, sparkedAt: [10], revivedAt: [20], familiars: old }, 100);
   assert.deepEqual(heard, []);
-  sounds.update({ ...quiet, sparkedAt: [10, 500], familiars: { bursts: [{ id: "dragon" }], at: 400 } }, 450);
+  sounds.update({ ...quiet, sparkedAt: [10, 500], revivedAt: [20, 550], familiars: { bursts: [{ id: "dragon" }], at: 400 } }, 450);
+  assert.deepEqual(heard, ["dragonFire"]);
+  sounds.update({ ...quiet, sparkedAt: [10, 500], revivedAt: [20, 550], familiars: { bursts: [{ id: "slime" }], at: 520 } }, 600);
+  assert.deepEqual([...heard].sort(), ["angelRevive", "dragonFire", "phoenixSpark", "slimeImpact"]);
+});
+
+test("a Thunderbolt zaps as it strikes, in place of an arrow", () => {
+  const { heard, sounds } = listen();
+  sounds.update(quiet, 0);
+  const bolt = { by: "hero" as const, from: { x: 0, y: 0 }, to: { x: 2, y: 0 }, damage: 4, tick: 10, thunderbolt: true as const };
+  const volley = { at: 100, ms: 100, shots: [bolt] } as unknown as Volley;
+  sounds.update({ ...quiet, volley }, 100);
+  sounds.update({ ...quiet, volley }, 10_000);
+  assert.deepEqual(heard, ["lightningZap"]);
+});
+
+test("the hero's steps sound a footstep, quick ones a run's, and none on a jump or after Auto-Climb", () => {
+  const { heard, sounds } = listen();
+  const at = (x: number, y: number, footsteps = true, board = "tower:1:true") => ({ ...quiet, hero: { x, y, board, footsteps } });
+  sounds.update(at(5, 5), 0);
+  sounds.update(at(5, 6), 100);
+  sounds.update(at(5, 7), 300);
+  sounds.update(at(5, 8), 2000);
+  assert.deepEqual(heard, ["step", "run", "step"]);
+  heard.length = 0;
+  // A new board, a jump across this one, standing still, and Auto-Climb's steps make none.
+  sounds.update(at(9, 1, true, "tower:1:false"), 3000);
+  sounds.update(at(9, 9, true, "tower:1:false"), 4000);
+  sounds.update(at(9, 9, true, "tower:1:false"), 5000);
+  sounds.update(at(9, 10, false, "tower:1:false"), 6000);
   assert.deepEqual(heard, []);
-  sounds.update({ ...quiet, sparkedAt: [10, 500], familiars: { bursts: [{ id: "slime" }], at: 520 } }, 600);
-  assert.deepEqual([...heard].sort(), ["phoenixSpark", "slimeImpact"]);
+});
+
+test("a one-shot's next variant is never the one it played last", () => {
+  for (let last = 0; last < 3; last++)
+    for (let i = 0; i < 30; i++) {
+      const v = nextVariant(3, last, i / 30);
+      assert.ok(v >= 0 && v < 3 && v !== last);
+    }
+  assert.equal(nextVariant(1, 0, 0.9), 0);
+  assert.deepEqual([0, 0.5, 0.99].map((r) => nextVariant(8, undefined, r)), [0, 4, 7]);
 });
 
 test("each pickup, chest and door has its sound, a door by the keys it takes", () => {
@@ -132,6 +172,9 @@ test("outside the wind blows with Weather sounds on, and the chimes ring on a wi
   assert.deepEqual(surroundingLevels(forest({ weather: "storm" })), { windForest: 1, windChimes: 1 });
   assert.deepEqual(surroundingLevels(forest({ weather: "cloudy", weatherSound: false })), {});
   assert.deepEqual(surroundingLevels(forest({ place: "inside" })), {});
+  // A calm evening plays its own ambience in place of the wind.
+  assert.deepEqual(surroundingLevels(forest({ weather: "evening" })), { evening: 1 });
+  assert.deepEqual(surroundingLevels(forest({ weather: "evening", weatherSound: false })), {});
 });
 
 test("the Blacksmith is louder the nearer the hero stands, and silent far off", () => {
@@ -156,4 +199,19 @@ test("by the lake the music plays, and the dock's water laps louder nearer the f
 test("each bed plays at the loudest any part of the game asks", () => {
   assert.deepEqual(mixLevels([{ meditative: 1, dockWater: 0.4 }, { meditative: 0.5 }, {}]), { meditative: 1, dockWater: 0.4 });
   assert.deepEqual(mixLevels([]), {});
+});
+
+test("climbing the stairs sounds the steps, and completing a daily mission its sound", () => {
+  const g = new Game(playedSave());
+  g.newRun({ seed: 7 });
+  g.cues = [];
+  g.advanceTowerRoom();
+  assert.ok(g.cues.some((c) => c.cue === "stoneSteps"));
+  g.missions.refresh();
+  const mission = g.save.missions.list.find((m) => m.progress < MISSIONS[m.type].target)!;
+  g.cues = [];
+  g.missions.record(mission.type, MISSIONS[mission.type].target - 1 - mission.progress);
+  assert.ok(!g.cues.some((c) => c.cue === "dailyMission"));
+  g.missions.record(mission.type, 1);
+  assert.deepEqual(g.cues.map((c) => c.cue), ["dailyMission"]);
 });

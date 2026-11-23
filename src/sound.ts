@@ -27,8 +27,9 @@ export type Cue =
   | "trained"
   /** A Bomb going off (a recording only). */
   | "blast"
-  /** The rest are recordings only, named as `ONE_SHOTS` names them. */
-  | Exclude<OneShot, "buttonThud" | "explosionSmall">;
+  /** The rest are recordings only, named as `ONE_SHOTS` names them (the
+   * thunder is the weather's own, `render/weather.ts`). */
+  | Exclude<OneShot, "buttonThud" | "explosionSmall" | "thunder">;
 
 const rand = stream("effects");
 let enabled: () => boolean = () => true;
@@ -40,6 +41,10 @@ let pressed = false;
 let out: GainNode, hall: GainNode, noiseBuf: AudioBuffer;
 /** When each cue last played, so a burst of the same event stays one sound. */
 const lastAt = new Map<Cue, number>();
+/** When a cue other than a press last played (`playUnlessOther`). */
+let lastEvent = -Infinity;
+/** The presses' sounds, which a general sound doesn't give way to. */
+const PRESSES: ReadonlySet<Cue> = new Set(["knock", "stone", "confirm"]);
 
 /** Which setting turns sound off; checked at every cue, and by the
  * ambience (`ambience.ts`) every frame. */
@@ -209,6 +214,8 @@ type Sample = { file: OneShot; gain: number; wet: number; cents: number };
 const PICKUP = { gain: 0.32, wet: 0.15, cents: 60 };
 /** How a stinger sounds (a level, a reward, the loop): as recorded, at one pitch. */
 const STINGER = { gain: 0.38, wet: 0.12, cents: 0 };
+/** How a footstep sounds: quiet, dry, never twice the same. */
+const FOOTSTEP = { gain: 0.2, wet: 0.08, cents: 120 };
 /** The cues that play a recording: which, how loud (the files are all
  * peak-normalized), how much of it rings into the hall, and how far its
  * pitch may wander (in cents) so repeats differ. */
@@ -247,12 +254,40 @@ const SAMPLED: Partial<Record<Cue, Sample>> = {
   runStuck: { file: "runStuck", ...STINGER },
   enterTower: { file: "enterTower", ...STINGER },
   enterDelve: { file: "enterDelve", ...STINGER },
+  shopPurchase: { file: "shopPurchase", ...STINGER },
+  shrineBoon: { file: "shrineBoon", ...STINGER },
+  eggHatch: { file: "eggHatch", ...STINGER },
+  cardAscension: { file: "cardAscension", ...STINGER },
+  dailyMission: { file: "dailyMission", ...STINGER },
+  eventMission: { file: "eventMission", ...STINGER },
+  openGift: { file: "openGift", ...STINGER },
+  angelRevive: { file: "angelRevive", ...STINGER },
+  bossAppears: { file: "bossAppears", ...STINGER },
+  delveGate: { file: "delveGate", ...STINGER },
+  runSummary: { file: "runSummary", gain: 0.35, wet: 0.1, cents: 0 },
+  newTower: { file: "newTower", ...STINGER },
+  stoneSteps: { file: "stoneSteps", gain: 0.28, wet: 0.2, cents: 80 },
+  step: { file: "step", ...FOOTSTEP },
+  run: { file: "run", ...FOOTSTEP, gain: 0.16 },
+  lightningZap: { file: "lightningZap", gain: 0.3, wet: 0.2, cents: 150 },
+  wolfCharge: { file: "wolfCharge", gain: 0.3, wet: 0.15, cents: 100 },
+  dragonFire: { file: "dragonFire", gain: 0.3, wet: 0.2, cents: 100 },
 };
 
 /** Recordings ringing now; past `MAX_VOICES` new ones are dropped, so a
  * burst of blows never piles up into mud. */
 let voices = 0;
 const MAX_VOICES = 12;
+/** The variant each one-shot played last, which its next never repeats. */
+const lastVariant = new Map<OneShot, number>();
+
+/** Which of `count` variants plays after `last`: any at random but `last`. */
+export function nextVariant(count: number, last: number | undefined, roll: number) {
+  if (count < 2) return 0;
+  if (last === undefined || last < 0 || last >= count) return Math.floor(roll * count) % count;
+  const pick = Math.floor(roll * (count - 1)) % (count - 1);
+  return pick >= last ? pick + 1 : pick;
+}
 
 /** Plays one of `s.file`'s variants now, unless it hasn't loaded yet. */
 function playSample(ac: AudioContext, s: Sample): boolean {
@@ -260,7 +295,9 @@ function playSample(ac: AudioContext, s: Sample): boolean {
   if (!bufs) return false;
   if (voices >= MAX_VOICES) return true;
   const src = ac.createBufferSource();
-  src.buffer = bufs[Math.floor(rand() * bufs.length) % bufs.length];
+  const variant = nextVariant(bufs.length, lastVariant.get(s.file), rand());
+  lastVariant.set(s.file, variant);
+  src.buffer = bufs[variant];
   src.playbackRate.value = vary(s.cents);
   const g = ac.createGain();
   g.gain.value = s.gain;
@@ -281,9 +318,22 @@ export function play(cue: Cue) {
   const now = performance.now();
   if (now - (lastAt.get(cue) ?? -Infinity) < 60) return;
   lastAt.set(cue, now);
+  if (!PRESSES.has(cue)) lastEvent = now;
   const ac = pressed ? audio() : null;
   if (!ac) return;
   const sampled = SAMPLED[cue];
   if (sampled && playSample(ac, sampled)) return;
   CUES[cue]?.(ac.currentTime + 0.01);
+}
+
+/** Plays `cue` a moment from now, unless another sound (not a press) began
+ * just before or begins in between: a general sound giving way to a more
+ * particular one, as Gems spent give way to the badges they drew. */
+export function playUnlessOther(cue: Cue, wait = 150, before = 500) {
+  if (!enabled()) return;
+  const asked = performance.now();
+  if (asked - lastEvent < before) return;
+  setTimeout(() => {
+    if (lastEvent < asked) play(cue);
+  }, wait);
 }

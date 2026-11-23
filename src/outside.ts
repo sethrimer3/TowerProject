@@ -17,9 +17,11 @@ export const ENTRANCE_ZOOM_MS = 1000;
 /** The row a run's hero starts the forest on: the crossroads partway up
  * the path, where it widens (`onPath`). */
 export const OUTSIDE_START_Y = 7;
-export type Weather = "cloudy" | "sunny" | "rain" | "storm";
+export type Weather = "cloudy" | "sunny" | "evening" | "rain" | "storm";
+/** A run's weather from its roll: cloudy 40%, sunny 20%, a calm evening
+ * 10% (its sunset carved from what was sunny), rain 20% and a storm 10%. */
 export function weatherForRoll(roll: number): Weather {
-  return roll < 0.4 ? "cloudy" : roll < 0.7 ? "sunny" : roll < 0.9 ? "rain" : "storm";
+  return roll < 0.4 ? "cloudy" : roll < 0.6 ? "sunny" : roll < 0.7 ? "evening" : roll < 0.9 ? "rain" : "storm";
 }
 export const outsideWeather = (seed: number) => weatherForRoll(tileRandom(81, 37, seed));
 /** A tile of the forest clearing: its cell, the run seed, and the entrance
