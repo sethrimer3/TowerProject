@@ -1,4 +1,4 @@
-// Literal PNG texels, unchanged masks, delayed loads, and real dungeon frames.
+// Literal water texels, continuous moss, unchanged masks, delayed loads, and real dungeon frames.
 import assert from "node:assert/strict";
 import { mkdirSync } from "node:fs";
 import { resolve } from "node:path";
@@ -12,11 +12,14 @@ mkdirSync("test-results/environment-sprites", { recursive: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1100, height: 900 } });
   await fixClock(page);
+  page.setDefaultTimeout(60000);
   const errors = []; page.on("pageerror", e => errors.push(e.message));
-  await page.addInitScript(() => { globalThis.__handHeld = true; globalThis.__handStartsPaused = true; });
+  await page.addInitScript(() => { globalThis.__handHeld = true; globalThis.__handStartsPaused = true; localStorage.setItem("towerdelve.v1", JSON.stringify({settings:{experimentalAtlas:false}})); });
   let release; const pending = new Promise(resolve => { release = resolve; });
   await page.route("**/env-water-deep.png", route => release(route));
-  await page.goto(server.resolvedUrls.local[0]); await page.locator("#hp").waitFor();
+  // Isolate delayed material loading from the app's all-assets boot barrier.
+  await page.route(server.resolvedUrls.local[0], route => route.fulfill({contentType:"text/html",body:"<!doctype html><html><body style='margin:0;background:#0b1017'></body></html>"}));
+  await page.goto(server.resolvedUrls.local[0]);
   await page.evaluate(async () => {
     const { DecorBaker } = await import("/src/render/decor/decor-bake.ts");
     const water = new Uint8Array(576);
@@ -64,7 +67,7 @@ try {
       const mask = new Uint8Array(576); mask[12 * 24 + 12] = variant === 1 ? 7 : 3;
       const mossSrc = { ...src, kind: () => variant === 2 ? "wall" : "floor" };
       const result = read(new DecorBaker().bake(mossSrc, 0, 0, { ...d, water: null, moss: mask }, true));
-      return { actual: rgba(result, 12, 12), expected: rgba(environmentPixels(id).data, 12, 12),
+      return { actual: rgba(result, 12, 12), expected: rgba(read(new DecorBaker().bake(mossSrc, 0, 0, { ...d, water: null, moss: mask }, false)), 12, 12),
         footprint: result.filter((a, k) => k % 4 === 3 && a).length };
     });
     return { off, on, offAgain, restored, samples, moss, waterChangedByLeaves,
@@ -76,9 +79,44 @@ try {
   assert.deepEqual(pixels.offAgain, pixels.off); assert.deepEqual(pixels.restored, pixels.on);
   assert.equal(pixels.waterChangedByLeaves, 0, "leaf sprites stay out of planned water");
   for (const moss of pixels.moss) {
-    assert.equal(moss.footprint, 1, "PNG texture respects the exact moss mask");
+    assert.equal(moss.footprint, 1, "world-space moss respects the exact coverage mask");
     moss.actual.slice(0, 3).forEach((value, i) => assert.ok(Math.abs(value - moss.expected[i]) <= 2));
   }
+  const continuity = await page.evaluate(async () => {
+    const { DecorBaker } = await import("/src/render/decor/decor-bake.ts");
+    const { TileLayerCache } = await import("/src/render/tile-cache.ts");
+    const src = {seed:77,kind:()=>"floor"}, baker = new DecorBaker(), tiles = new Map();
+    for(let y=-2;y<=2;y++)for(let x=-2;x<=2;x++) {
+      const tile=baker.bake(src,x,y,{moss:new Uint8Array(576).fill(3),water:null,vines:[],plants:[],flowers:[]},true);
+      tiles.set(`${x},${y}`,tile.getContext('2d').getImageData(0,0,24,24).data);
+    }
+    let edge=0,inside=0,edges=0,insides=0;
+    const sample=(x,y)=>{
+      const tx=Math.floor(x/24),ty=-Math.floor(y/24),i=((y%24+24)%24*24+(x%24+24)%24)*4;
+      return tiles.get(`${tx},${ty}`)?.slice(i,i+3);
+    };
+    for(let y=-24;y<24;y++)for(let x=-24;x<24;x++)for(const [dx,dy] of [[1,0],[0,1]]) {
+      const a=sample(x,y),b=sample(x+dx,y+dy);if(!a||!b)continue;
+      const delta=a.reduce((sum,v,i)=>sum+Math.abs(v-b[i]),0);
+      if((dx&&(x+1)%24===0)||(dy&&(y+1)%24===0)){edge+=delta;edges++;}else{inside+=delta;insides++;}
+    }
+    const patterns=new Set([...tiles.values()].map(data=>[...data].join(','))).size;
+    const interpolation=[];
+    for(const s of [30,36]) {
+      const source=document.createElement('canvas');source.width=source.height=24;
+      const c=source.getContext('2d');c.fillStyle='#000';c.fillRect(0,0,24,24);c.fillStyle='#fff';
+      for(let y=0;y<24;y++)for(let x=0;x<24;x++)if((x+y)%2)c.fillRect(x,y,1,1);
+      const out=document.createElement('canvas');out.width=out.height=s*3;
+      const ctx=out.getContext('2d');ctx.imageSmoothingEnabled=true;
+      new TileLayerCache(0).draw(ctx,{left:0,bottom:0,n:3,s},1,'crisp',0,[0,2], cc=>{cc.drawImage(source,0,0);return true;});
+      const data=ctx.getImageData(0,0,out.width,out.height).data;
+      interpolation.push({mixed:[...data].filter((v,i)=>i%4!==3&&v!==0&&v!==255).length,restored:ctx.imageSmoothingEnabled});
+    }
+    return {edge:edge/edges,inside:inside/insides,patterns,interpolation};
+  });
+  assert.ok(continuity.patterns>20,'moss detail never restarts as a repeated 24px patch');
+  assert.ok(continuity.edge<=continuity.inside*1.8,'tile boundaries are no sharper than the native clumps, on either axis');
+  for(const result of continuity.interpolation){assert.equal(result.mixed,0,'fractionally scaled cache retains literal black/white pixels');assert.equal(result.restored,true,'cache restores caller sampling');}
   await page.evaluate(async () => {
     const { ENVIRONMENT_SPRITES, MOSS_SPRITES, WATER_SPRITES } = await import("/src/sprites/environment.ts");
     const { kitImage } = await import("/src/sprites/kit.ts");
@@ -134,6 +172,7 @@ try {
       const hash = async () => [...new Uint8Array(await crypto.subtle.digest("SHA-256", canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data))].join(",");
       g.save.themes = [...new Set([...g.save.themes, "neonGame"])]; g.save.settings.gameTheme = "neon"; draw(); await settle(); const off = await hash();
       g.save.settings.gameTheme = "classic"; draw(); await settle(); const on = await hash();
+      if(canvas.width % (17*24)) throw Error("Classic backing resolution lost native texels");
       g.save.settings.uiTheme = "neon"; draw(); const uiTheme = await hash();
       g.save.settings.gameTheme = "neon"; draw(); await settle(); const theme = await hash();
       g.save.settings.gameTheme = "classic"; draw(); await settle(); const restored = await hash();
@@ -156,5 +195,5 @@ try {
     await page.locator("#environment-review").evaluate(e => e.remove());
   }
   assert.deepEqual(errors, []);
-  console.log("Environmental PNG texels, exact masks, late loads, native art, theme/toggle restoration and real phone/desktop dungeon frames pass.");
+  console.log("Continuous world-space moss, crisp fractional caches, native backing pixels, water texels, masks, late loads and phone/desktop frames pass.");
 } finally { await browser.close(); await server.close(); }

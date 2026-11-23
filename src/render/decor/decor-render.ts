@@ -103,7 +103,11 @@ export class DecorLayer {
     if (!d) return false;
     if (d.empty) return true;
     const img = this.baker.bake(this.src!, x, y, d, styled);
-    if (img) c.drawImage(img, 0, 0, TILE_PX, TILE_PX);
+    if (img) {
+      c.save(); c.imageSmoothingEnabled = false;
+      c.drawImage(img, 0, 0, TILE_PX, TILE_PX);
+      c.restore();
+    }
     return true;
   }
 

@@ -88,6 +88,7 @@ export class TileLayerCache {
     if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, w, h);
+    ctx.imageSmoothingEnabled = false;
     // Same device-pixel scale as the screen, so the copy is one to one.
     const sx = w / (cols * s), sy = h / (rows * s);
     let complete = true;

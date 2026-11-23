@@ -35,7 +35,8 @@ small navigation and close marks, slider tracks and handles, reward stars, and t
 Sliders still work with pointer or keyboard input and show their values as live text.
 The default interface uses custom pixel lettering, with button frames that leave room for text and icons. On phones, ad controls stack and Training values sit above their purchase buttons.
 The Classic board kit also uses pixel lettering for damage, rewards and other annotations, plus matching Target, Ignore, skipped and blocked tile marks. Torch lighting follows the active sprite shapes.
-With environmental decoration enabled, the Classic sprite kit also gives moss, pools, vine leaves, flowers and glowing mushrooms matching PNG artwork, preserving their locations, water movement and interactions.
+With environmental decoration enabled, the Classic sprite kit also gives pools, vine leaves, flowers and glowing mushrooms matching PNG artwork, preserving their locations, water movement and interactions.
+Moss uses continuous world-space pixel detail across tile edges, and Classic sprites retain native pixel detail at every board size.
 In the forest, the Classic sprite kit shows the enormous lower bases of the Tower and Delve mountain extending beyond the top of the view.
 Oak, birch and pine crowns span several tiles above smaller trees, bushes, ferns, rocks, logs, stumps, flowers and mushrooms, with paths, entrances, building yards and the mode sign kept clear.
 The whole 20-column Tower clearing is walkable wherever grass or dirt is clear of trees, rocks and buildings, including the path and grass on the right.

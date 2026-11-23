@@ -1,6 +1,6 @@
 import { tileRandom } from "../../random.ts";
 import { drawKit, kitImage, spriteRevision } from "../../sprites/kit.ts";
-import { environmentPixels, FLOWER_SPRITES, GLOWCAP_SPRITES, MOSS_SPRITES, VINE_SPRITES, WATER_SPRITES, type SpritePixels } from "../../sprites/environment.ts";
+import { environmentPixels, FLOWER_SPRITES, GLOWCAP_SPRITES, VINE_SPRITES, WATER_SPRITES, type SpritePixels } from "../../sprites/environment.ts";
 import { FLOWER_COLORS, TILE_PX, tileKey, valueNoise, type DecorSource, type Flower, type Plant, type PlantKind, type TileDecor } from "./decor.ts";
 
 /** Bakes a tile's static decor (moss, water, vines, flowers, plants) into a
@@ -216,9 +216,9 @@ function paintMoss(tp: TilePixels, moss: Uint8Array) {
   for (let k = 0; k < moss.length; k++) {
     const m = moss[k], lv = m & 3, i = k % TILE_PX, j = (k - i) / TILE_PX;
     if (!lv) continue;
-    const texture = tp.texture(MOSS_SPRITES[wall ? 2 : m >> 2 ? 1 : 0]);
-    if (texture) tp.sample(texture, i, j, wall ? 0.2 + lv * 0.16 : 0.35 + lv * 0.2);
-    else if (wall) tp.blend(i, j, WALL_MOSS[lv]);
+    // Coverage comes from the existing plan; detail comes from a continuous
+    // world-space field, never a non-periodic 24px texture restarted per tile.
+    if (wall) tp.blend(i, j, WALL_MOSS[lv]);
     else paintFloorMoss(tp, i, j, m);
     drew = true;
   }
