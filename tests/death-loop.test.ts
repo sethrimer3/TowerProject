@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { deathLoopFrame, DEATH_LOOP } from '../src/ui/death-loop.ts';
-import { infinityPixels, infinityPixelAt } from '../src/ui/infinity-pixels.ts';
+import { infinityPixels, infinityPixelAt, infinityPixelLight } from '../src/ui/infinity-pixels.ts';
 import { Renderer } from '../src/render/rendering.ts';
 import { decodePng } from '../tools/ui-atlas-png.mjs';
 
@@ -61,10 +61,10 @@ test('the native drawing sheet starts empty and ends in a pale complete infinity
 });
 
 
-test('every visible texel becomes a reproducible particle and reaches the exact spawn', () => {
+test('half the visible texels become reproducible particles and reach the exact spawn', () => {
   const rgba = [238,224,183,255, 0,0,0,0, 238,224,183,255, 255,255,255,255];
   const pixels = infinityPixels(rgba, 2);
-  assert.equal(pixels.length, 3);
+  assert.equal(pixels.length, 2);
   assert.deepEqual(pixels, infinityPixels(rgba, 2));
   assert.equal(pixels[0].color, 'rgb(238, 224, 183)');
   for (const scale of [2,3,4]) for (const target of [{x:10,y:700}, {x:900,y:150}]) for (const pixel of pixels) {
@@ -86,4 +86,11 @@ test('spawn destination measures the new board and its camera offset after respo
   assert.deepEqual(measure(), {x:270,y:530});
   box = {left:400,top:20,width:510,height:510};
   assert.deepEqual(measure(), {x:655,y:515});
+});
+
+
+test('absorption progressively warms ivory to gold and increases its glow', () => {
+  assert.deepEqual(infinityPixelLight(0), {color:'rgb(238, 224, 183)',glow:0});
+  assert.deepEqual(infinityPixelLight(1), {color:'rgb(255, 196, 64)',glow:1});
+  for (const t of [.25,.5,.75]) assert.equal(infinityPixelLight(t).glow, t);
 });

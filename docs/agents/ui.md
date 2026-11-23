@@ -269,7 +269,9 @@ Queued close events from the preceding summary are ignored while the transition 
 The old modal content, classes, styles and accessibility attributes are restored afterward, and reloading during the trace retains the saved fallen run without paying it twice.
 `node tests/death-loop.mjs` checks real death/early return and retry, cancellation, trial knockout/early exit, fade timing, modal cleanup, reduced motion, skip, palette and viewport coverage in both atlas modes.
 
-The completed loop scatters each opaque native texel for 260ms, then pulls the square particles along curved paths into the returned hero for 900ms while an independent black curtain fades away.
+The completed loop scatters half the opaque native texels for 260ms, then pulls the square particles along curved paths into the returned hero for 900ms while an independent black curtain fades away.
 `infinity-pixels.ts` uses deterministic per-texel motion without gameplay randomness.
 `AppContext.returnPoint` measures the renderer after the return is committed and on each frame, keeping the destination correct across layout changes.
 The modal blocks input until convergence; Reduce Motion retains the short still-symbol fade without particles.
+
+Particles warm from ivory to gold and gain stepped square halos during absorption, with thin rasterized trails following the last 48ms of their curved paths.

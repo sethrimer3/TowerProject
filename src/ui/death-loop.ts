@@ -1,5 +1,5 @@
 import { play } from '../sound.ts';
-import { infinityPixels, infinityPixelAt, type InfinityPixel, type PixelPoint } from './infinity-pixels.ts';
+import { infinityPixels, infinityPixelAt, infinityPixelLight, drawInfinityTrail, type InfinityPixel, type PixelPoint } from './infinity-pixels.ts';
 import { kitImage } from '../sprites/kit.ts';
 
 export const DEATH_LOOP = { width: 96, height: 40, columns: 8, frames: 48, fadeIn: 450, lead: 180, draw: 1700, hold: 360, burst: 260, pull: 900, fade: 1160 } as const;
@@ -107,10 +107,22 @@ export function playDeathLoop(modal: HTMLDialogElement, reduced: boolean, return
         cloud.dataset.targetX = String(target.x); cloud.dataset.targetY = String(target.y);
         cloud.dataset.particles = String(pixels.length);
         const origin = { x: symbol.left - box.left, y: symbol.top - box.top }, scale = symbol.width / DEATH_LOOP.width;
+        const history = [48, 32, 16].map(ago => deathLoopFrame(now - begin - ago));
         for (const pixel of pixels) {
           const point = infinityPixelAt(pixel, origin, scale, target, state.burst, state.pull);
+          const light = infinityPixelLight(state.pull);
+          cloudCtx.fillStyle = light.color;
+          const trail = history.map(past => infinityPixelAt(pixel, origin, scale, target, past.burst, past.pull));
+          // The fading tail follows the same curved path, trailing 48ms behind the head.
+          for (let i = 0; i < trail.length; i++) {
+            cloudCtx.globalAlpha = point.alpha * (i + 1) * 0.14;
+            drawInfinityTrail(cloudCtx, [trail[i], trail[i + 1] ?? point], Math.max(1, Math.round(scale / 3)));
+          }
+          cloudCtx.globalAlpha = point.alpha * light.glow * 0.12;
+          cloudCtx.fillRect(Math.round(point.x - scale * 1.5), Math.round(point.y - scale * 1.5), scale * 3, scale * 3);
+          cloudCtx.globalAlpha = point.alpha * light.glow * 0.25;
+          cloudCtx.fillRect(Math.round(point.x - scale), Math.round(point.y - scale), scale * 2, scale * 2);
           cloudCtx.globalAlpha = point.alpha;
-          cloudCtx.fillStyle = pixel.color;
           cloudCtx.fillRect(Math.round(point.x - scale / 2), Math.round(point.y - scale / 2), scale, scale);
         }
         cloudCtx.globalAlpha = 1;

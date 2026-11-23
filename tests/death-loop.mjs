@@ -65,7 +65,7 @@ try {
     assert.equal((await saved()).tower.fall,null);
     assert.ok(await page.locator('#modal[open]').count(),'input remains blocked through the reveal fade');
     assert.equal(await page.locator('#modal').getAttribute('data-death-loop-phase'),'burst');
-    assert.equal(Number(await page.locator('.death-loop-pixels').getAttribute('data-particles')),complete,'every visible texel bursts');
+    assert.equal(Number(await page.locator('.death-loop-pixels').getAttribute('data-particles')),Math.ceil(complete/2),'half the visible texels burst');
     await page.screenshot({path:`test-results/death-loop/burst-${width}.png`});
     await page.clock.runFor(600);
     opacity=Number(await page.locator('.death-loop-curtain').evaluate(e=>getComputedStyle(e).opacity));
@@ -79,6 +79,14 @@ try {
       return [p.x,p.y,Number(c.dataset.targetX),Number(c.dataset.targetY)];
     });
     assert.deepEqual(destination.slice(0,2),destination.slice(2),'pixels converge on the returned hero');
+    const light=await page.locator('.death-loop-pixels').evaluate(c=>{
+      const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+      let gold=0,tail=0;
+      for(let i=0;i<d.length;i+=4)if(d[i]>d[i+1]+10&&d[i+1]>d[i+2]+30){if(d[i+3]>150)gold++;if(d[i+3]>0&&d[i+3]<100)tail++;}
+      return {gold,tail};
+    });
+    assert.ok(light.gold>0,'the traveling heads warm to gold');
+    assert.ok(light.tail>0,'thin translucent trails and glow follow the heads');
     await page.screenshot({path:`test-results/death-loop/absorb-${width}.png`});
     await page.clock.runFor(700);
     assert.equal(await page.locator('#modal[open], #modal.death-loop').count(),0);

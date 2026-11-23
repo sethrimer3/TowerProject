@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-22", text: "The infinity burst has half as many pixels, with golden glow and thin trails as they return to the hero." },
   { date: "2026-11-22", text: "Tidier sound files." },
   { date: "2026-11-22", text: "Tidier project docs: the README is now an index of pages." },
   { date: "2026-11-22", text: "Sound in every theme: pickups, doors, Gems, levels and more, with forge, wind chimes and lakeside ambience." },

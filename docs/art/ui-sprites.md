@@ -253,5 +253,6 @@ Each frame keeps a flat slate center and complete borders for the existing six-p
 `assets/game-sprites/death-infinity.png` retains the generated ivory infinity reference.
 `node tools/prepare-death-infinity.mjs` normalizes it onto a 96 × 40 native grid and exports a 48-frame, 8 × 6 drawing sheet in `public/assets/style/death-infinity.png`.
 Its source pixels reveal along one continuous loop, with tiny hard-edged traveling glints, binary alpha and the shared ivory palette color; runtime uses integer 2×, 3× or 4× display sizes over pure black.
-After the complete trace, runtime turns each visible source texel into one ivory square, scatters it outward, and curves it into the returned hero while the black curtain fades.
+After the complete trace, runtime turns every second visible source texel into an ivory square, scatters it outward, and curves it into the returned hero while the black curtain fades.
+The particles increasingly glow gold during absorption, with crisp square halos and thin stepped trails.
 The complete frame and shortened timing serve Reduce motion without particle movement, independent of the optional ambient Animations setting.
