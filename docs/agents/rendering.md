@@ -58,7 +58,8 @@ Only world painters request the contours, so inventory/control icons retain thei
 `TileArt.outline: false` and `paintHero`'s fourth argument omit decorative contours when `EntityLighting` builds physical silhouettes and torch highlights, preserving their original size and light response.
 Other Game themes keep their own drawing and portrait art; changing UI themes affects only the interface kit.
 `sprites/environment.ts` names sixteen native environmental components: seven 24-pixel material tiles, four 8-pixel flowers, two 8-pixel vine modules and three 12-pixel glowing mushroom clusters.
-`environmentPixels` decodes material and vine PNGs once; `DecorBaker` samples their literal texels through the existing moss and pool masks, preserving coverage and bank/shore/depth selection.
+`environmentPixels` decodes material and vine PNGs once; `DecorBaker` samples water texels through the existing pool masks, preserving bank/shore/depth selection.
+Moss instead uses world-coordinate clump noise and a small stepped palette through its unchanged coverage mask, so detail continues across horizontal and vertical tile joins without restarting a non-periodic PNG.
 Vine leaves attach to the seeded stem joints, clipped to their tile and out of water; stems remain one-pixel connectors.
 Flowers and glowing caps replace their procedural bodies only after loading, and their emitted pixels and light colors follow the active PNGs.
 The light-color cache includes effective style and image revision, while source plans, light geometry, water motion and interactions stay unchanged.
@@ -140,6 +141,9 @@ The shared core and stepped blend masks come from `assets/game-sprites/dungeon-m
 Board drawing (`Renderer`, frames, lighting, decor, popups, tile caches, the forest outside, weather), the render goldens, and the Medieval and Neon themes.
 Board drawing lives in `src/render/`: the Renderer, its frame, camera, tile cache, terrain painters, tilesets and lighting at its root; the Game themes' boards (`*-board.ts`, `themed-board.ts`, `themed-boards.ts`, `themed-art.ts`, `ascii-glyphs.ts`) in `src/render/boards/`; decor (`decor*.ts`, `forest-foliage.ts`, `outside-grass.ts`) in `src/render/decor/`; and the passing effects (poofs, explosions, flashes, glows, damage labels, particles) in `src/render/effects/`.
 **Pixel-perfect scaling** (setting `pixelPerfect`, off by default; `render/pixel-scale.ts`): `ART_PX` (24) is a tile in art pixels, and while the setting is on `Renderer.beginFrame` sizes the canvas to `n × ART_PX × artPixelScale(…)`, a whole number of canvas pixels an art pixel at or just above the screen's own density (up to 4), for the browser to fit to the board's box, and puts the camera and drawn hero on whole art pixels (`onArtGrid`).
+Classic always uses a whole number of backing pixels per native sprite texel, even with Pixel-perfect scaling off, preventing detail loss from a too-small intermediate canvas.
+Pixel-perfect additionally snaps the camera and hero and permits the higher density cap.
+Ground cache builds and decor blits disable interpolation, including when a canvas resize resets its defaults.
 The view still shows `n` tiles, so tap mapping and the overlays are unchanged.
 
 The sprite modules (the PNG kit, `sprites/kit.ts`, and every `sprites/*.ts` it feeds, with the board's and the interface's sprites) are in `src/sprites/`, since the interface uses them as much as the board.

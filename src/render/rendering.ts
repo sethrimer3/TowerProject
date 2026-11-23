@@ -381,17 +381,16 @@ export class Renderer {
   private beginFrame(now: number): FrameContext {
     const g = this.game, n = this.density;
     this.snapOnNewBoard(n, now);
-    const battery = g.save.settings.batterySaver, pixelPerfect = g.save.settings.pixelPerfect && !battery, box = this.canvas.getBoundingClientRect();
-    // Pixel-perfect scaling draws a whole number of canvas pixels an art
-    // pixel (from the screen's own density, up to 4), for the browser to
-    // fit to the board's box, and keeps the camera and hero on whole art
-    // pixels.
+    const battery = g.save.settings.batterySaver, pixelPerfect = g.save.settings.pixelPerfect && !battery, nativePixels = !battery && (pixelPerfect || this.look().styledSprites), box = this.canvas.getBoundingClientRect();
+    // Native sprites always get whole backing pixels per source texel,
+    // including on small boards. Pixel-perfect additionally snaps motion
+    // to the art grid and allows the higher density cap.
     const screen = Math.min(devicePixelRatio || 1, pixelPerfect ? 4 : 2),
       // Battery saver draws whole canvas pixels a pixel of its art at about
       // one canvas pixel a CSS pixel, a quarter of a phone's usual count.
       width = battery && box.width ? n * BATTERY_GRID * Math.max(1, Math.round(box.width / (n * BATTERY_GRID)))
-        : pixelPerfect && box.width ? n * ART_PX * artPixelScale(box.width * screen, n) : Math.round(box.width * screen),
-      dpr = (pixelPerfect || battery) && box.width ? width / box.width : screen;
+        : nativePixels && box.width ? n * ART_PX * artPixelScale(box.width * screen, n) : Math.round(box.width * screen),
+      dpr = (nativePixels || battery) && box.width ? width / box.width : screen;
     if (this.canvas.width !== width) {
       this.canvas.width = width;
       this.canvas.height = this.canvas.width;
