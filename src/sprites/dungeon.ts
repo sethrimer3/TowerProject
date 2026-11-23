@@ -208,11 +208,22 @@ function paintDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diag
         drawDungeonFrame(c, image, DUNGEON_CORNER_FRAME + corner);
     }
   }
-  if (!tile.wall) {
-    if (mask) drawDungeonFrame(c, edges, DUNGEON_CONTACT_FRAME + mask);
+  if (!tile.wall && mask) {
+    drawDungeonFrame(c, edges, DUNGEON_CONTACT_FRAME + mask);
+    // A one-pixel outline along each side a wall stands on, drawn on the
+    // floor's own side: orthogonal only, so a wall's outer corner (a wall
+    // only diagonal to this tile) is never filled, like a sprite's rim.
+    c.fillStyle = WALL_OUTLINE;
+    if (mask & 1) c.fillRect(0, 0, 24, 1);
+    if (mask & 2) c.fillRect(23, 0, 1, 24);
+    if (mask & 4) c.fillRect(0, 23, 24, 1);
+    if (mask & 8) c.fillRect(0, 0, 1, 24);
   }
   return true;
 }
+
+/** The walls' outline: the same near-black as the enemies' own. */
+const WALL_OUTLINE = "#0b0a0e";
 
 const floorImages = new Map<string, HTMLCanvasElement>();
 /** The literal selected floor PNG texels for torch relief, not the old

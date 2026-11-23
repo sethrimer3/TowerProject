@@ -212,10 +212,12 @@ function bakeEnemy(e: Enemy, legacy: boolean) {
   return out;
 }
 
+/** The body grown by `ring.r` orthogonal steps (a diamond, not a disc), so
+ * every band, like the outline, steps round corners without filling them. */
 function dilated(body: HTMLCanvasElement, ring: Ring, m: number) {
   const size = body.width + 2 * m, band = square(size), c = band.getContext("2d")!;
   for (let dy = -ring.r; dy <= ring.r; dy++)
-    for (let dx = -ring.r; dx <= ring.r; dx++) if (dx * dx + dy * dy <= ring.r * ring.r) c.drawImage(body, m + dx, m + dy);
+    for (let dx = -ring.r; dx <= ring.r; dx++) if (Math.abs(dx) + Math.abs(dy) <= ring.r) c.drawImage(body, m + dx, m + dy);
   c.globalCompositeOperation = "source-in";
   c.fillStyle = ring.color;
   c.fillRect(0, 0, size, size);
@@ -238,9 +240,10 @@ export function paintHero(c: CanvasRenderingContext2D, facing = { dx: 0, dy: -1 
   else drawKit(c, `hero-${direction}`);
 }
 
-export function paintTorch(c: CanvasRenderingContext2D, t: Torch, now: number, reduceMotion: boolean, animated = false) {
-  if (animated) drawAnimatedTorch(c, t.x, t.y, now, reduceMotion);
-  else drawKit(c, "torch");
+export function paintTorch(c: CanvasRenderingContext2D, t: Torch, now: number, reduceMotion: boolean, animated = false, outline = true) {
+  if (animated && drawAnimatedTorch(c, t.x, t.y, now, reduceMotion, outline)) return;
+  if (outline) drawPixelOutline(c, "torch", "black");
+  drawKit(c, "torch");
 }
 
 /** Cheap, restrained grounding shadow: a soft dark ellipse under a sprite's

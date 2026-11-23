@@ -31,10 +31,11 @@ export function drawSquareDoor(c: CanvasRenderingContext2D, tile: Tile, outline 
   return true;
 }
 
-export function drawAnimatedTorch(c: CanvasRenderingContext2D, x: number, y: number, now: number, reduceMotion: boolean) {
+export function drawAnimatedTorch(c: CanvasRenderingContext2D, x: number, y: number, now: number, reduceMotion: boolean, outline = true) {
   const image = kitImage("torch-animation");
   if (!image) return false;
   const frame = torchAnimationFrame(x, y, now, reduceMotion);
+  if (outline) drawPixelOutline(c, "torch-animation", "black", { frame });
   c.save(); c.imageSmoothingEnabled = false;
   c.drawImage(image, frame * 24, 0, 24, 24, 0, 0, 24, 24); c.restore();
   return true;

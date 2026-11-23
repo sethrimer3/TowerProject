@@ -44,7 +44,7 @@ type ShadowLayer = { layer: CanvasRenderingContext2D | null; stamps: Stamp[] };
 export function torchShadowCaster(t: Torch): ShadowCaster {
   return { x: t.x, y: t.y, key: "torch-hardware", prop: true,
     draw: (c) => {
-      paintTorch(c, t, 0, true);
+      paintTorch(c, t, 0, true, false, false);
       // All animated flames share the original hardware below row 11.
       c.clearRect(0, 0, 24, 11);
     },

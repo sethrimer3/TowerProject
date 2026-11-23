@@ -236,7 +236,7 @@ export class DecorLayer {
           out.push({ x, y, base, prop: true,
             key: `prop:${crate.kind}:${crate.x},${crate.y},${crate.w},${crate.h},${crate.lift},${crate.tone}`,
             sampleX: x + (crate.x + crate.w / 2) / TILE_PX, sampleY: y + 1 - base / TILE_PX,
-            draw: (c) => drawCrates(c, 0, 0, [crate], false, !!f.styledSprites),
+            draw: (c) => drawCrates(c, 0, 0, [crate], false, !!f.styledSprites, false),
           });
         }
       for (const plant of d.plants) {
