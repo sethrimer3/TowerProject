@@ -278,3 +278,8 @@ Particles warm from ivory to gold and gain stepped square halos during absorptio
 
 Particle opacity follows the squared fraction of remaining distance to the hero, reaching exactly zero at the destination.
 Heads, halos and trails share this opacity so their overlapping light fades before arrival.
+
+Tutorial hands (`.tutorial-pointer-art`) explicitly use an automatic height and square aspect ratio, overriding the generic one-em icon height before direction rotation.
+Card level-ups use square stepped halos, native point icons and pixel sparkles with stepped motion; no radial gradients, soft shadows or animated scaling remain.
+
+`node tests/pointers-level.mjs` checks hand proportions across directions and font sizes, Medieval/Neon themes and both atlas modes, plus native level-up drawing, timing, Reduce Motion and card-effect cleanup.

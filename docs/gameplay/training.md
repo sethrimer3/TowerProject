@@ -101,3 +101,6 @@ While it lasts, ranks in training go twice as fast, their countdowns dropping tw
 With Permanent Ad-Disable the boost runs for good, no ad needed, and in the box's place a glowing "×2" stands on the trainers' row; the Special Gold Bundle and the Champion's Bundle make training ×2 and ×3 as fast besides, all three multiplying (×12 with all three), the speed glowing there too.
 A Champion (the Shop's Champion's Bundle) has a **Daily Training Points** button under the trainers' row: *Claim* with the 1 point it pays, once each day from 00:00 GMT, then the countdown to the next; the Champion's Club's tiers may make a claim ×2, ×3 or ×5.
 **Faster Trainers** (2 Inspiration, after Critical, right of it) opens Faster Trainers research: +2% training speed a level for 100 levels (+200%, a rank then taking a third of its time), the n-th level costing 250 × n + 2 × n³ Gold and taking Research Speed's time or 1.75 × n + n²/20 hours, whichever is shorter (1 minute first, Research Speed's to level 27, then 88 hours at 28; 2 million Gold and 28 days at level 100), about 2.9 years in all.
+
+Gaining a hero level celebrates with pixel-art rings, square sparks and bitmap LEVEL UP lettering, followed by the training points rising over the hero.
+Reduce Motion keeps the celebration still.

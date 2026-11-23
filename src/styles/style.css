@@ -1677,16 +1677,15 @@ html.reduce-motion .rarity-frame.r-rare::after, html.reduce-motion .rarity-frame
 .card-level-up-glow {
   position: absolute;
   inset: -3px;
-  border-radius: 5px;
-  background: radial-gradient(closest-side, #fff0b0aa, #ffd76a66 65%, #ffc94a33);
-  box-shadow: 0 0 0 2px #fff0b0, 0 0 22px 8px #ffc94a;
-  animation: card-level-glow 3s ease-out forwards;
+  border-radius: 0;
+  background: #e1bb7822;
+  box-shadow: 0 0 0 2px #eee0b7, 0 0 0 4px #e1bb7888, 0 0 0 8px #be8c4833;
+  animation: card-level-glow 3s steps(12, end) forwards;
 }
 .card-level-up.ghost .card-level-up-glow {
   inset: -14%;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, #ffe58acc, #ffc94a77 55%, transparent);
-  box-shadow: none;
+  border-radius: 0;
+  background: #e1bb7822;
 }
 .card-level-up-ghost {
   position: absolute;
@@ -1694,16 +1693,17 @@ html.reduce-motion .rarity-frame.r-rare::after, html.reduce-motion .rarity-frame
   opacity: 0.25;
   animation: card-level-ghost 3s ease-out forwards;
 }
-.card-level-up-ghost .card-art { border-radius: 3px; }
+.card-level-up-ghost .card-art { border-radius: 0; }
 .card-level-up-icon {
   position: absolute;
   left: 50%;
   top: 50%;
   width: 34px;
   height: 34px;
-  filter: drop-shadow(0 0 4px #fff3b8);
+  filter: none;
+  image-rendering: pixelated;
   transform: translate(-50%, -50%);
-  animation: card-level-icon 3s ease-out forwards;
+  animation: card-level-icon 3s steps(12, end) forwards;
 }
 .card-level-up-icon > * { display: block; width: 100%; height: 100%; }
 @keyframes card-level-glow {
@@ -1716,10 +1716,10 @@ html.reduce-motion .rarity-frame.r-rare::after, html.reduce-motion .rarity-frame
   100% { opacity: 0; }
 }
 @keyframes card-level-icon {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
-  8% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
-  14%, 33.3% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  66.7%, 100% { opacity: 0; transform: translate(-50%, -190%) scale(1); }
+  0% { opacity: 0; transform: translate(-50%, -50%); }
+  8% { opacity: 1; transform: translate(-50%, -50%); }
+  14%, 33.3% { opacity: 1; transform: translate(-50%, -50%); }
+  66.7%, 100% { opacity: 0; transform: translate(-50%, calc(-50% - 48px)); }
 }
 @keyframes card-level-icon-still {
   0%, 33.3% { opacity: 1; transform: translate(-50%, -50%); }
@@ -6017,3 +6017,8 @@ html:has(#settings.active .arcana-lab) #training-bar { display: none !important;
 @keyframes hatch-ascend { from { transform: translateY(0); } to { transform: translateY(-64px); } }
 @keyframes hatch-left { 0% { opacity: 1; transform: none; } 70% { opacity: 1; } 100% { opacity: 0; transform: translateX(-130px) rotate(-22deg); } }
 @keyframes hatch-right { 0% { opacity: 1; transform: none; } 70% { opacity: 1; } 100% { opacity: 0; transform: translateX(130px) rotate(22deg); } }
+
+/* Hard pixel sparkles around a card that levels up. */
+.card-level-up-glow::after { content: ""; position: absolute; left: 50%; top: -8px; width: 3px; height: 3px; background: #eee0b7; box-shadow: -20px 14px #e1bb78, 20px 8px #eee0b7, -28px 40px #be8c48, 28px 34px #e1bb78; animation: card-level-sparks 3s steps(8, end) forwards; }
+@keyframes card-level-sparks { 0% { opacity: 0; } 15%, 35% { opacity: 1; } 70%, 100% { opacity: 0; transform: translateY(-12px); } }
+html.reduce-motion .card-level-up-glow::after { animation: card-level-glow 3s steps(12, end) forwards; }

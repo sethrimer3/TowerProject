@@ -590,6 +590,24 @@ function playNewSpellArt(_name: string, seed: number, canvas: HTMLCanvasElement,
     g.run.timeDilation.left = 0; renderer.draw(2600); grab("expired");
   });
 }
+function playPixelLevelUp(_name: string, seed: number, canvas: HTMLCanvasElement, grab: Grab) {
+  seeded(seed, () => {
+    const {g}=dungeonSpriteScene("tower", {reduceMotion:false,weatherSound:false});
+    quiet(g);g.gains=[];g.areaBursts=[];
+    let best=Infinity;
+    for(let y=1;y<16;y++)for(let x=1;x<16;x++){
+      const distance=Math.abs(x-8)+Math.abs(y-8);
+      if(g.world.tile(x,y).kind==='floor' && distance<best){Object.assign(g.run.player,{x,y});best=distance;}
+    }
+    const r=new Renderer(canvas,g);
+    for(let now=1000;now<=1400;now+=50)r.draw(now);
+    g.levelUpAt=1500;g.levelUpPoints=3;
+    for(const [age,name] of [[100,"flash"],[450,"burst"],[1100,"settled"],[1800,"fade"],[2200,"points"]] as const){r.draw(1500+age);grab(name);}
+    g.save.settings.reduceMotion=true;g.levelUpAt=5000;r.draw(5100);grab("reducedMotion");
+    r.draw(8500);grab("expired");
+  });
+}
+
 /** Every scene retains its seed, including gaps left by retired scenes. */
 export const JOBS: Job[] = [
   ...Object.keys(BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
@@ -603,6 +621,7 @@ export const JOBS: Job[] = [
   ...Object.keys(STELLAR_BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
   ...Object.keys(NEW_TOWER_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
   { name: "nativeSpellArt", canvas: "board" as const, run: playNewSpellArt },
+  { name: "pixelLevelUp", canvas: "board" as const, run: playPixelLevelUp },
 ].map(({ name, canvas, run }, i) => {
   // Keep the fourth seed reserved for the retired sprite-opt-out scene.
   const seed = i + 1 + (i >= 3 ? 1 : 0) + (i >= Object.keys(BOARD_SCENES).length ? 5 : 0);

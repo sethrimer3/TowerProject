@@ -532,7 +532,7 @@ html.ui-sprites .page-title :is(h2, small):not(#_) { color: #10151c; text-shadow
 .sprite-icon { position: relative; display: inline-block; vertical-align: middle; }
 .sprite-native { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
 /* An atlas region has no size of its own, so a hand given only a width takes its square here. */
-.tutorial-pointer-art { width: 100%; aspect-ratio: 1; }
+.tutorial-pointer-art { display: block; width: 100%; height: auto; aspect-ratio: 1; }
 .sprite-card-label { display: none !important; }
 .sprite-ready > .sprite-replacement:not(#_) {
   display: block !important;

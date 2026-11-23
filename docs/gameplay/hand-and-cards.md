@@ -124,7 +124,7 @@ Each rarity has its own frame, worn in the hand (in runs too), on the Deck page 
 A card shows its level in small type at its top left, in the hand and on the Deck page, from level 1.
 On the Deck page the grey rule between a card's picture and its name is its XP bar, filling in white toward its next level (full at level 60, and while it waits to ascend).
 A card's pop-up shows its rarity with its stars, then its level of its max level and its XP toward the next (*Level 4 / 10 · 340/1,800 XP*), with **Ready to ascend** or **MAX** in green after them once it can't level further.
-A card can level up during a run: if the card is in view in the hand, a golden glow covers it with the training point icon at its centre for a second, which then rises and fades over the next second, and the glow fades over a third.
+A card can level up during a run: if the card is in view in the hand, a stepped pixel-art golden halo and square sparkles cover it with the training point icon at its centre for a second, which then rises and fades over the next second, and the glow fades over a third.
 A card out of view (in a hand scrolled sideways) shows as a ghost at 75% transparency over the board's top left, a golden glow behind it, with the same icon, the ghost fading once the icon is gone.
 Several level-ups play one after another, and wait while a page covers the board.
 

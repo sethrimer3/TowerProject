@@ -230,5 +230,12 @@
  "nativeSpellArt.activation": "43f79dfaad6f9041",
  "nativeSpellArt.later": "17c8adff2fc85681",
  "nativeSpellArt.reducedMotion": "bc06285a4319878f",
- "nativeSpellArt.expired": "75e5027f39e17cd0"
+ "nativeSpellArt.expired": "75e5027f39e17cd0",
+ "pixelLevelUp.flash": "a50591088c313fbe",
+ "pixelLevelUp.burst": "ae5448ac7c8ca983",
+ "pixelLevelUp.settled": "59661b546755e312",
+ "pixelLevelUp.fade": "b21cee1be05b441c",
+ "pixelLevelUp.points": "d0f6cd9a38f6c76f",
+ "pixelLevelUp.reducedMotion": "ad8be9c307d7357e",
+ "pixelLevelUp.expired": "43494c36c166abca"
 }

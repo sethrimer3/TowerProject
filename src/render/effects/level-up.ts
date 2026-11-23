@@ -1,3 +1,4 @@
+import { drawPixelLevelUp } from './pixel-level-up.ts';
 import { boardFont } from "../../sprites/font.ts";
 import { tileTransform, type FrameContext } from "../render-frame.ts";
 import { REVIVE_MS } from "../../combat.ts";
@@ -42,13 +43,6 @@ type Blaze = {
   fill: [string, string, string];
 };
 
-const LEVEL_UP: Blaze = {
-  ms: LEVEL_UP_MS, fadeMs: 500, burstMs: 800, flames: 16, glow: 36, reach: 1,
-  glowColors: ["255, 214, 120", "255, 140, 40", "255, 70, 0"],
-  flameTail: "255, 60, 0", flameMid: "255, 140, 30", flameTip: "255, 240, 170", flashEdge: "255, 180, 60",
-  text: "LEVEL UP!", textSize: 0.085, textMin: 20, outline: "#3a1200", shadow: "rgba(255, 110, 20, 0.9)",
-  fill: ["#fff3b8", "#ffc24a", "#ff6a1a"],
-};
 /** A lesser, golder blaze than the level-up's, for a revival. */
 const REVIVAL: Blaze = {
   ms: REVIVE_MS, fadeMs: 400, burstMs: 600, flames: 10, glow: 26, reach: 0.6,
@@ -102,45 +96,10 @@ export function drawWarpLoot(f: FrameContext, age: number, silver: number) {
   drawWords(f, age, fade, WARP_LOOT, `+${amount}`, 0.6, 0.1, coinImage("silver"));
 }
 
-/** The hero's level-up, drawn over the board: a fiery flash bursting
- * outward from the hero, a glow around the hero, and "LEVEL UP!" across
- * the board, `age` ms after the level was reached. */
+/** The hero's native pixel celebration and training points, with bitmap
+ * letters and square sparks in every theme. */
 export function drawLevelUp(f: FrameContext, age: number, points = 0) {
-  drawBlaze(f, age, LEVEL_UP);
-  if (points > 0) drawPoints(f, age - LEVEL_UP_MS, points);
-}
-
-/** "+3" and the training points' golden arrow rising off the hero and
- * fading, `age` ms after the level-up's burst ended. */
-function drawPoints(f: FrameContext, age: number, points: number) {
-  if (age < 0 || age >= POINTS_MS) return;
-  const t = age / POINTS_MS, c = f.c, rise = f.look.reduceMotion ? 0 : 14 * t;
-  c.save();
-  c.setTransform(tileTransform(f, f.playerX, f.playerY));
-  c.globalAlpha = Math.min(1, age / 150, (1 - t) / 0.3);
-  c.translate(12, -8 - rise);
-  c.font = boardFont(f.look.styledSprites, 17);
-  c.textAlign = "right";
-  c.textBaseline = "middle";
-  c.lineJoin = "round";
-  c.lineWidth = 4;
-  c.strokeStyle = "#3a1200";
-  c.fillStyle = "#ffe68a";
-  const text = `+${points}`;
-  c.strokeText(text, 1, 0);
-  c.fillText(text, 1, 0);
-  // The arrow, as the Training tab draws it (24 units scaled to 16).
-  c.translate(2, -8.5);
-  c.scale(16 / 24, 16 / 24);
-  c.beginPath();
-  c.moveTo(12, 3); c.lineTo(21, 13); c.lineTo(15.5, 13); c.lineTo(15.5, 21);
-  c.lineTo(8.5, 21); c.lineTo(8.5, 13); c.lineTo(3, 13); c.closePath();
-  c.fillStyle = "#ffc94a";
-  c.strokeStyle = "#5a3200";
-  c.lineWidth = 2.5;
-  c.stroke();
-  c.fill();
-  c.restore();
+  drawPixelLevelUp(f, age, points, LEVEL_UP_MS, POINTS_MS);
 }
 
 /** The hero rising from a strike that would have felled it: a smaller,
@@ -334,7 +293,7 @@ function drawBurst(c: CanvasRenderingContext2D, t: number, b: Blaze) {
     c.stroke();
     // An ember flung a little further between each pair of flames.
     const ember = angle + Math.PI / b.flames, far = 8 + (reach + 8) * out;
-    c.fillStyle = b === LEVEL_UP ? `rgba(255, ${170 + 60 * (i % 2)}, 60, ${alpha})` : `rgba(255, ${210 + 30 * (i % 2)}, 90, ${alpha})`;
+    c.fillStyle = `rgba(255, ${210 + 30 * (i % 2)}, 90, ${alpha})`;
     c.beginPath();
     c.arc(12 + Math.cos(ember) * far, 12 + Math.sin(ember) * far, 2.4 * (1 - 0.5 * t), 0, Math.PI * 2);
     c.fill();

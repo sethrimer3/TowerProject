@@ -467,3 +467,8 @@ The appended `nativeSpellArt` render scene captures activation, later frames, re
 
 `Renderer.heroClientPoint()` measures the current hero's tile center in client pixels using the canvas rect and settled camera target, without drawing or mutating game state.
 The death loop calls it after returning or retrying, so its particles converge on the new spawn across responsive layouts.
+
+Hero level-ups use `effects/pixel-level-up.ts`: a cached native 24-pixel-per-tile surface, stepped diamond rings, square sparks, bitmap lettering and a bitmap training-point arrow, blitted without interpolation in every theme.
+The two-second celebration and subsequent training-point timing remain unchanged; Reduce Motion keeps the rings stationary and suppresses flying sparks.
+Revival, area and Warp Loot effects retain their separate existing painters.
+The appended `pixelLevelUp` scene covers burst, hold, fade, points, reduced motion and expiry without shifting other scene seeds.
