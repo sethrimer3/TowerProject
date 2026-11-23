@@ -31,7 +31,7 @@ The game cross-fades each loop's end into its start.
 | events/provision.ogg | use provision.mp3 |
 | events/elixir.ogg | use elixer provision.mp3 |
 | events/phoenix-spark.ogg | undo death dodge.m4a |
-| events/time-loop.ogg | time loop sound effect.m4a (the same recording as time loop animation sound.m4a) |
+| events/time-loop.ogg | time loop sound effect.m4a |
 | events/warp.ogg | warp effect.mp3 |
 | events/run-stuck.ogg | run stuck.mp3 |
 | events/enter-tower.ogg | entering tower.m4a |
