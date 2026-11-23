@@ -1,3 +1,4 @@
+import { play } from "../sound.ts";
 import { GOLD_SHOP, type GoldItemId } from "../economy/provisions.ts";
 import { provisionOpen, provisionPrice, provisionsOpen, provisionText } from "../progression/loadout.ts";
 import { whole } from "../whole.ts";
@@ -45,6 +46,7 @@ export class GearPage {
   openEquipment() {
     this.tab = "equipment";
     this.equipment.opened();
+    play("equipmentTab");
   }
 
   /** Opens on the Arcana screen (its lesson's hand leads here). */
@@ -88,7 +90,10 @@ export class GearPage {
     const { game } = this.ctx;
     const handlers: Record<string, (value: string) => void> = {
       geartab: (v) => {
-        if (v === "equipment" && this.tab !== "equipment") this.equipment.opened();
+        if (v === "equipment" && this.tab !== "equipment") {
+          this.equipment.opened();
+          play("equipmentTab");
+        }
         this.tab = v as GearTab;
         this.rerender();
       },

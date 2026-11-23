@@ -13,7 +13,7 @@ import { MODES } from "../modes.ts";
 import { canClaimGoldBoost, claimGoldBoost, goldBoostLeft, GOLD_BOOST_FACTOR, GOLD_BOOST_MS, noteGoldBoost } from "../economy/gold-boost.ts";
 import { random, stream } from "../random.ts";
 import { adsOff } from "../shop/entitlements.ts";
-import type { GainArt } from "../shown.ts";
+import type { GainArt, GameCue } from "../shown.ts";
 import type { DeskHost } from "./desk.ts";
 import { earn } from "../save/profile.ts";
 import type { CardId } from "../cards/cards.ts";
@@ -36,6 +36,8 @@ export interface GemHost extends DeskHost {
   /** The cards of the run's hand and Manual hand. */
   readonly held: readonly CardId[];
   gain(x: number, y: number, text: string, art: GainArt | null): void;
+  /** Asks the board for an event's sound. */
+  cue(cue: GameCue): void;
   /** Card `id` gains `xp` toward its levels. */
   gainCardXp(id: CardId, xp: number): void;
 }
@@ -197,6 +199,7 @@ export class GemFinder {
     // GEM gains its XP from each Gem collected, Gem XP raising it.
     if (this.host.held.includes("gem")) this.host.gainCardXp("gem", Math.round(value * powerFactor(this.host.powerBonus, "gemXp")));
     this.sparkle = { x, y, at: performance.now(), kind };
+    this.host.cue(kind === "golden" ? "gemGolden" : kind === "stellar" ? "gemStellar" : "gem");
     this.host.gain(x, y, gemText(gems, kind), { gem: true, ...(kind === "plain" ? {} : { kind }) });
     return gems;
   }

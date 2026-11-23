@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-22", text: "Sound in every theme: pickups, doors, Gems, levels and more, with forge, wind chimes and lakeside ambience." },
   { date: "2026-11-22", text: "Gifts: every weekly mission prize holds one, shown on the Relics page; the Champion's Bundle gives 10." },
   { date: "2026-11-22", text: "Card powers no longer mention Steel Doors, which no floor has." },
   { date: "2026-11-22", text: "The Deck shows card powers only up to the next rarity; the Codex pictures coloured doors, without Steel Doors." },

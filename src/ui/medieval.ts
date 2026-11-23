@@ -1,9 +1,9 @@
 import { batteryLight } from "../battery-light.ts";
-import { soundEnabledBy, play } from "../sound.ts";
+import { soundEnabledBy, soundStyleBy, play, unlockAudio } from "../sound.ts";
 import { applyLayout } from "./layout.ts";
 import { flourishesEnabledBy, sparks } from "./flourish.ts";
 import type { Save } from "../save/shape.ts";
-import { uiLook } from "../theme-collection.ts";
+import { uiLook, type UiLook } from "../theme-collection.ts";
 import { usesUiSprites, usesGameSprites } from "../sprites/style.ts";
 import { loadSpriteFont } from "../sprites/font.ts";
 
@@ -115,16 +115,23 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
   applyLayout(save);
 }
 
-/** Sounds, sparks and the button knock exist only while the Medieval UI
- * theme is worn. */
-export function bindMedievalFeedback(isOn: () => boolean, reduceMotion: () => boolean) {
-  soundEnabledBy(isOn);
-  flourishesEnabledBy(() => isOn() && !reduceMotion());
+/** What the page's presses sound and look like. Every UI theme hears the
+ * game's sounds while `sound` is on (Sound effects), a theme's own
+ * recordings where it has any (`look`, sound-files.ts's `STYLE_SOUNDS`): a
+ * button knocks, a tab on the tab row is stone, and a dialog's confirming
+ * button confirms. Sparks fly from a press only under the Medieval UI
+ * theme (`medieval`), and not with Reduce motion on. */
+export function bindFeedback({ sound, look, medieval, reduceMotion }: { sound: () => boolean; look: () => UiLook; medieval: () => boolean; reduceMotion: () => boolean }) {
+  soundEnabledBy(sound);
+  soundStyleBy(look);
+  flourishesEnabledBy(() => medieval() && !reduceMotion());
+  // Browsers start a page's sound only from a press.
+  window.addEventListener("pointerdown", unlockAudio);
+  window.addEventListener("keydown", unlockAudio);
   document.addEventListener("click", (e) => {
-    if (!isOn()) return;
     const target = (e.target as Element).closest?.("button, input[type=checkbox]");
     if (!target) return;
-    play(target.closest("nav") ? "stone" : "knock");
-    if (e.detail > 0) sparks(e.clientX, e.clientY, "embers");
+    play(target.closest("nav") ? "stone" : target.id === "confirm" ? "confirm" : "knock");
+    if (medieval() && e.detail > 0) sparks(e.clientX, e.clientY, "embers");
   });
 }

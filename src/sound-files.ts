@@ -1,18 +1,68 @@
-/** The recorded sounds in `public/assets/sounds/` (brought over from Tower
- * Defense), fetched and decoded on first use. One-shots are short clips the
- * cues in `sound.ts` play (a variant at random where there are several);
- * beds are long loops, each baked once into a buffer whose end is
- * cross-faded into its start, so a recording that wasn't cut as a clean loop
- * still repeats without a click. Nothing here plays anything: it only hands
- * out buffers once they are ready, and null until then (or for good, if a
- * file fails to load), so callers fall back to the sounds made in code. */
+import type { UiLook } from "./theme-collection.ts";
+
+/** The recorded sounds in `public/assets/sounds/` (Ogg Vorbis; `SOURCES.md`
+ * lists where each came from), fetched and decoded on first use. One-shots
+ * are short clips the cues in `sound.ts` play (a variant at random where
+ * there are several); beds are long loops, each baked once into a buffer
+ * whose end is cross-faded into its start, so a recording that wasn't cut
+ * as a clean loop still repeats without a click. Nothing here plays
+ * anything: it only hands out buffers once they are ready, and null until
+ * then (or for good, if a file fails to load), so callers fall back to the
+ * sounds made in code. */
 
 const BASE = (import.meta as ImportMeta & { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "./";
 
-/** Each short clip and its variants, by path under `assets/sounds/`. */
+/** Each short clip and its variants, by path under `assets/sounds/`. Every
+ * UI theme hears these; `STYLE_SOUNDS` may swap one for a theme. */
 export const ONE_SHOTS = {
-  /** An oak button pressed. */
+  /** A button pressed. */
   buttonThud: ["ui/button-thud"],
+  /** A dialog's confirming button pressed. */
+  confirm: ["ui/confirm"],
+  /** A card levelling up. */
+  cardLevelUp: ["ui/card-level-up"],
+  /** Badges drawn. (For now the same recording as a card's level-up, in
+   * its own file, so either may change alone.) */
+  badgeDraw: ["ui/badge-draw"],
+  /** The hero's level rising. */
+  heroLevelUp: ["ui/hero-level-up"],
+  /** The Equipment screen opened. */
+  equipmentTab: ["ui/equipment-tab"],
+  /** The Gem bank filling up. */
+  gemBankFull: ["ui/gem-bank-full"],
+  /** A Tournament's prize claimed. */
+  tournamentRewards: ["ui/tournament-rewards"],
+  /** The story that begins the game. */
+  tutorialStart: ["ui/tutorial-start"],
+  /** A Gem, a Golden Gem and a Stellar Gem collected. */
+  gem: ["pickups/gem"],
+  gemGolden: ["pickups/gem-golden"],
+  gemStellar: ["pickups/gem-stellar"],
+  /** An ATK shard, a DEF shard, a potion and a key picked up. */
+  attackShard: ["pickups/attack-shard"],
+  defenseShard: ["pickups/defense-shard"],
+  potion: ["pickups/potion"],
+  key: ["pickups/key"],
+  /** A chest opening. */
+  chestCreak: ["doors/chest-creak"],
+  /** A door opening on one key, two, or three or more. */
+  door1: ["doors/door-1-key"],
+  door2: ["doors/door-2-keys"],
+  door3: ["doors/door-3-keys"],
+  /** A provision used: the Traveler's elixir, or another. */
+  elixir: ["events/elixir"],
+  provision: ["events/provision"],
+  /** Phoenix Spark shrugging off a defeating hit. */
+  phoenixSpark: ["events/phoenix-spark"],
+  /** The infinity loop drawing itself as a run begins again. */
+  timeLoop: ["events/time-loop"],
+  /** A Warp to another floor. */
+  warp: ["events/warp"],
+  /** The hand finding nothing it can do. */
+  runStuck: ["events/run-stuck"],
+  /** Walking from the forest into the Tower, or into the Delve's cave. */
+  enterTower: ["events/enter-tower"],
+  enterDelve: ["events/enter-delve"],
   /** An arrow or a Ranged enemy's shot striking. */
   arrowHit: ["battle/arrow-hit-flesh"],
   /** A blow landing in a fight. */
@@ -21,13 +71,31 @@ export const ONE_SHOTS = {
   explosionSmall: ["battle/explosion-small"],
   /** An enemy or the hero falling. */
   bodyFall: ["battle/body-fall-1", "battle/body-fall-2"],
+  /** The Lightning Slime's burst. */
+  slimeImpact: ["battle/slime-impact"],
 } as const satisfies Record<string, readonly string[]>;
 export type OneShot = keyof typeof ONE_SHOTS;
+
+/** A UI theme's own recordings in place of the default ones, by one-shot.
+ * None yet: every theme hears the defaults. A theme listed here hears its
+ * paths for those one-shots and the defaults for the rest. */
+export const STYLE_SOUNDS: Partial<Record<UiLook, Partial<Record<OneShot, readonly string[]>>>> = {};
+
+/** The paths one-shot `name` plays under UI theme `look`. */
+export const shotPaths = (name: OneShot, look?: UiLook): readonly string[] => (look && STYLE_SOUNDS[look]?.[name]) || ONE_SHOTS[name];
 
 /** The long loops. */
 export const BEDS = {
   /** Wind through the trees of the forest outside. */
   windForest: "ambience/wind-forest",
+  /** Wind chimes, outside on a windy day. */
+  windChimes: "ambience/wind-chimes",
+  /** The Blacksmith at work, near his forge. */
+  blacksmith: "ambience/blacksmith",
+  /** Water lapping at the lake's shore, near the fisherman's dock. */
+  dockWater: "ambience/dock-water",
+  /** Soft, meditative music by the lake and at sea with the fisherman. */
+  meditative: "ambience/meditative",
 } as const satisfies Record<string, string>;
 export type Bed = keyof typeof BEDS;
 
@@ -36,12 +104,12 @@ export const LOOP_FADE = 2;
 
 type Slot<T> = { state: "loading" } | { state: "ready"; value: T } | { state: "failed" };
 /** Decoded audio belongs to the context that decoded it, so each context
- * keeps its own. */
-const shots = new WeakMap<BaseAudioContext, Map<OneShot, Slot<AudioBuffer[]>>>();
+ * keeps its own, each one-shot by the paths it plays. */
+const shots = new WeakMap<BaseAudioContext, Map<string, Slot<AudioBuffer[]>>>();
 const beds = new WeakMap<BaseAudioContext, Map<Bed, Slot<AudioBuffer>>>();
 
 async function decode(ctx: BaseAudioContext, path: string): Promise<AudioBuffer> {
-  const res = await fetch(`${BASE}assets/sounds/${path}.mp3`);
+  const res = await fetch(`${BASE}assets/sounds/${path}.ogg`);
   if (!res.ok) throw new Error(`${path}: ${res.status}`);
   return ctx.decodeAudioData(await res.arrayBuffer());
 }
@@ -65,15 +133,16 @@ function fetchInto<K, T>(map: Map<K, Slot<T>>, key: K, load: () => Promise<T>): 
   return null;
 }
 
-/** One-shot `name`'s decoded variants, or null while they load (asking for
- * them starts the load). */
-export function oneShot(ctx: BaseAudioContext, name: OneShot): AudioBuffer[] | null {
-  return fetchInto(mapOf(shots, ctx), name, () => Promise.all(ONE_SHOTS[name].map((p) => decode(ctx, p))));
+/** One-shot `name`'s decoded variants under UI theme `look`, or null while
+ * they load (asking for them starts the load). */
+export function oneShot(ctx: BaseAudioContext, name: OneShot, look?: UiLook): AudioBuffer[] | null {
+  const paths = shotPaths(name, look);
+  return fetchInto(mapOf(shots, ctx), paths.join("|"), () => Promise.all(paths.map((p) => decode(ctx, p))));
 }
 
 /** Starts loading every one-shot, so the first of each isn't missed. */
-export function preloadOneShots(ctx: BaseAudioContext) {
-  for (const name of Object.keys(ONE_SHOTS) as OneShot[]) oneShot(ctx, name);
+export function preloadOneShots(ctx: BaseAudioContext, look?: UiLook) {
+  for (const name of Object.keys(ONE_SHOTS) as OneShot[]) oneShot(ctx, name, look);
 }
 
 /** Bed `name` as a seamless loop, or null while it loads. */

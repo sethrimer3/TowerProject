@@ -62,7 +62,7 @@ import { holdTabs, renderBoardLesson } from "./ui/board-lesson.ts";
 import { renderSettingsPage } from "./ui/settings-page.ts";
 import { ShopPage } from "./ui/shop-page.ts";
 import { play } from "./sound.ts";
-import { applyUiTheme, bindMedievalFeedback } from "./ui/medieval.ts";
+import { applyUiTheme, bindFeedback } from "./ui/medieval.ts";
 import { gemSparkle, goldSparkle } from "./ui/flourish.ts";
 import { TournamentClient } from "./tournament/client.ts";
 import { stubTournament } from "./tournament/server.ts";
@@ -101,7 +101,12 @@ stampProfile(game.save, game.clock());
 // saves (and marks the app open now): it may owe Offline Gold.
 const offlineGrant = game.arriveOffline();
 applyUiTheme(game.save);
-bindMedievalFeedback(() => uiLook(game.save) === "medieval", () => game.save.settings.reduceMotion);
+bindFeedback({
+  sound: () => game.save.settings.sound,
+  look: () => (game.save.settings.batterySaver ? "battery" : uiLook(game.save)),
+  medieval: () => uiLook(game.save) === "medieval",
+  reduceMotion: () => game.save.settings.reduceMotion,
+});
 // The frame loop settles fights as they finish playing out.
 game.fights.playsFights = true;
 // The hero walks in through the forest's entrance before the run begins.

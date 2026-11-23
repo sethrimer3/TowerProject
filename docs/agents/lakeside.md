@@ -18,6 +18,7 @@ Closing the greeting or returning from trials places the hero at (14,7), facing 
 
 `render/lakeside.ts` draws native water-panel samples and dock PNGs through the renderer's existing ground cache, then reuses forest trees and draws reeds and the seated fisherman.
 The lake skips clearing grass and the clearing-specific tower/cloud height map, retaining rain and storm weather.
+At the lake the ambience plays the meditative music and the dock's water, louder nearer the fisherman; the voyage scene keeps the music playing at sea (`docs/agents/sound.md`).
 Five original palette-matched sprites live in `public/assets/style/lake-*.png`, with editable source in `tools/prepare-lakeside-sprites.py` (Python + Pillow).
 Rebuilding the sprites also updates the style manifest; follow it with `npm run sprites:manifest` to refresh the startup inventory.
 

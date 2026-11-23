@@ -1,3 +1,4 @@
+import { play } from "../sound.ts";
 import { controlIcon } from "./control-icon.ts";
 import type { TournamentClient } from "../tournament/client.ts";
 import { caveLabel, LEAGUE_INFO, LEAGUES, type League } from "../tournament/leagues.ts";
@@ -173,6 +174,7 @@ export class TournamentPage {
     const prize = await this.client.claim();
     this.busy = false;
     this.message = prize ? "" : REFUSALS.offline;
+    if (prize) play("tournamentRewards");
     if (prize)
       revealReward(
         { icon: gemIcon(), amount: `+${prize.gems.toLocaleString("en-US")}`, kicker: "TOURNAMENT PRIZE", name: "Gems", text: `+${prize.arcanite.toLocaleString("en-US")} Arcanite`, permanent: false },

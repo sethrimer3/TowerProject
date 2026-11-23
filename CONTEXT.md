@@ -48,6 +48,10 @@ _Avoid_: run stats, run log
 Inside a run, the board alone on the screen, every control, stat and menu hidden, the hero playing on. A setting allows it; a pinch in (or two idle minutes, dimming the board) enters it, and a pinch out, three quick taps or the gear a tap shows leaves it. Never saved.
 _Avoid_: fullscreen, zen mode, screensaver
 
+**Ambience**:
+The long loops playing under the sound effects where the hero is: the forest's wind and wind chimes, the Blacksmith's forge, and the lake's water and meditative music. Each is a bed.
+_Avoid_: background music, soundscape
+
 ### Gems
 
 **Gem Card**:

@@ -15,6 +15,12 @@ import type { StepEffect } from "./step-effects.ts";
  * a plus, `raised`, the max HP Max HP's badge added), or as `text` where it
  * has none. A kill's drops carry their `drop` place, so they rise together. */
 /** A reward that is a strike's number, in that strike's colours (a Bomb's). */
+/** A sound one of the game's own events asks the board for (`Game.cue`):
+ * a pickup, a chest or a door; a provision used; a Gem collected; the hero's
+ * level rising; walking into the Tower or the Delve, or a Warp; the hand
+ * finding nothing it can do. */
+export type GameCue = "attackShard" | "defenseShard" | "potion" | "key" | "chestCreak" | "door1" | "door2" | "door3" | "elixir" | "provision" | "gem" | "gemGolden" | "gemStellar"
+  | "heroLevelUp" | "enterTower" | "enterDelve" | "warp" | "runStuck";
 export type GainStrike = "crit" | "superCrit";
 export type Gain = { x: number; y: number; text: string; art: GainArt | null; drop?: Drop; strike?: GainStrike };
 /** Where one of a kill's or a chest's drops rises: `row` rows above its tile (below,

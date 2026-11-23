@@ -1,3 +1,4 @@
+import { play } from "../sound.ts";
 import { kitIcon } from "../sprites/kit.ts";
 import { levelProgress, badgeDef, badgeLevel, type BadgeDraw, type BadgeId } from "../cards/badges.ts";
 import { RARITIES } from "../shop/rarity.ts";
@@ -25,6 +26,7 @@ export type DrawAgain = { count: number; gems: number; affordable: () => boolean
  * screen offers `again`, the same purchase once more. */
 export function revealDraws(draws: readonly BadgeDraw[], reduceMotion: boolean, pickOf: (id: BadgeId) => number = () => 0, again?: DrawAgain) {
   if (!draws.length) return;
+  play("badgeDraw");
   const layer = document.createElement("div");
   layer.className = `badge-reveal${reduceMotion ? " still" : ""}`;
   layer.setAttribute("role", "dialog");

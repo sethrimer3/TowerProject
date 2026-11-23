@@ -24,7 +24,7 @@ import { firstLevelOf } from "../cards/rarity.ts";
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
 const PAGE = [
-  "experimentalAtlas", "legacyBorders", "legacyEnemies", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "pixelPerfect", "autoLandscape", "hand", "batterySaver", "batteryWhite", "reduceMotion", "weatherSound",
+  "experimentalAtlas", "legacyBorders", "legacyEnemies", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "pixelPerfect", "autoLandscape", "hand", "batterySaver", "batteryWhite", "reduceMotion", "sound", "weatherSound",
   "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems", "gemBankChime",
 ] as const satisfies readonly SettingKey[];
 /** The dev section's settings, shown under Dev Mode while it is on. */
@@ -84,8 +84,10 @@ const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s:
   // (and its white's slider shows only while it is on).
   batterySaver: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); ctx.renderPage(); },
   batteryWhite: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); },
-  // The board silences the weather itself once sound is off.
+  // The board silences the weather itself once sound is off, and the
+  // ambience everything once Sound effects is.
   weatherSound: (ctx) => ctx.update(),
+  sound: (ctx) => ctx.update(),
   infoDisplay: (ctx, overlay, s) => {
     if (s.infoDisplay === "status" || s.infoDisplay === "none") overlay.hideInspect();
     ctx.save();

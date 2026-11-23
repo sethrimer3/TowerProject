@@ -17,6 +17,9 @@ export const SETTINGS = {
   legacyEnemies: { kind: "toggle", default: false, page: { id: "legacy-enemies", label: "Legacy Enemies" } },
   spriteAnimations: { kind: "toggle", default: false, page: { id: "sprite-animations", label: "Animations" } },
   squareDoors: { kind: "toggle", default: false, page: { id: "square-doors", label: "Square doors" } },
+  /** Every sound the game makes: its sound effects, under every UI theme,
+   * and the ambience (sound.ts, ambience.ts). */
+  sound: { kind: "toggle", default: true, page: { id: "sound-effects", label: "Sound effects" } },
   weatherSound: { kind: "toggle", default: true, page: { id: "weather-sound", label: "Weather sounds" } },
   /** Hide the procedural environment dressing: moss, vines, plants, crates,
    * pools, and the forest's wind-blown grass. */

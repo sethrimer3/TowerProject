@@ -1,3 +1,4 @@
+import { play } from "../sound.ts";
 import type { BoardLesson, Game } from "../state.ts";
 import { el, POINTER_SVG } from "./dom.ts";
 import { DEATH_LOOP, drawLoopFrame } from "./death-loop.ts";
@@ -161,6 +162,8 @@ function drawLesson(game: Game, onBoard: boolean, dismissed: () => void, onUpgra
   if (!lesson) return;
   if (!note && lesson === "story") {
     const reduceMotion = game.save.settings.reduceMotion;
+    // The story begins the game; picked up part way through, it only goes on.
+    if (storyPage === 0) play("tutorialStart");
     frame.insertAdjacentHTML("beforeend", `<button type="button" class="board-tip dismissable story-tip" data-lesson="story" data-page="${storyPage}" aria-live="polite">${storyHtml(storyPage)}</button>`);
     const story = frame.querySelector<HTMLElement>(".board-tip")!;
     // The only thing left to press: Enter and Space go on from the keyboard too.

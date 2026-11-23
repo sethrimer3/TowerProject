@@ -1,6 +1,6 @@
 import { paintShockStatus, paintDilationGuard } from "../sprites/spell-art.ts";
 import { boardFont } from "../sprites/font.ts";
-import { LakeWorld } from "../lakeside.ts";
+import { FISHERMAN, LakeWorld } from "../lakeside.ts";
 import { drawLakeGround, drawLakeObjects } from "./lakeside.ts";
 import { forestArrivalPose } from "../forest-arrival.ts";
 import { drawBoardMark } from "../sprites/board-marks.ts";
@@ -11,7 +11,7 @@ import type { Tile, Torch } from "../entities.ts";
 import { TIER_BONUS_TENTHS, tierNumeral } from "../tiers.ts";
 import { LEAGUE_INFO } from "../tournament/leagues.ts";
 import { factorText } from "../economy/gold-multipliers.ts";
-import { drawBlacksmith, drawEntrance, drawTournamentHall, ENTRANCE_ZOOM_MS, OutsideWorld, OUTSIDE_SIZE, outsideWeather, roadsOf } from "../outside.ts";
+import { BLACKSMITH, drawBlacksmith, drawEntrance, drawTournamentHall, ENTRANCE_ZOOM_MS, OutsideWorld, OUTSIDE_SIZE, outsideWeather, roadsOf } from "../outside.ts";
 import { DecorLayer, type DecorFrame, type MirroredSprites } from "./decor/decor-render.ts";
 import { torchShadowCaster } from "./entity-lighting.ts";
 import { OutsideGrass } from "./decor/outside-grass.ts";
@@ -21,6 +21,7 @@ import { TileLayerCache } from "./tile-cache.ts";
 import { OutdoorWeather } from "./weather.ts";
 import { BoardSounds } from "./board-sounds.ts";
 import { play } from "../sound.ts";
+import { ambience, surroundingLevels, type Surroundings } from "../ambience.ts";
 import { CloudShadows } from "./cloud-shadows.ts";
 import { MODES } from "../modes.ts";
 import { torchAnimationFrame } from "../sprites/options.ts";
@@ -157,15 +158,8 @@ export class Renderer {
     preloadAreaBurst();
     this.playerX = game.run.player.x;
     this.playerY = game.run.player.y;
-    const unlock = () => {
-      if (game.run.outside && game.save.settings.weatherSound) this.weather.unlock();
-    };
-    if (typeof window !== "undefined") {
-      window.addEventListener("pointerdown", unlock);
-      window.addEventListener("keydown", unlock);
-    }
     if (typeof document !== "undefined") {
-      document.addEventListener("visibilitychange", () => { if (document.hidden) { this.weather.silence(); this.weather.blow(false); } });
+      document.addEventListener("visibilitychange", () => { if (document.hidden) this.weather.silence(); });
     }
   }
   /** Inside the Delve the camera trails the hero (render/camera.ts); the Tower and
@@ -258,7 +252,6 @@ export class Renderer {
    * glows or entrance zoom. */
   private drawBattery(f: FrameContext) {
     const g = this.game, wrap = g.mode === "delve" ? g.world.width : 0;
-    this.weather.blow(false);
     const board = f.look.outside && !(g.world instanceof LakeWorld) ? BATTERY_FOREST : BATTERY_BOARD;
     drawThemedBoard(f, board, this.enemyLunge, () => drawBatteryRoute(f, g.shownPath.length ? g.shownPath : this.previewRoute ?? [], g.run.player), g.run.player, wrap, () => this.drawFloorFields(f));
     this.echoes.draw(f, (c, facing) => BATTERY_BOARD.hero(c, facing));
@@ -410,7 +403,9 @@ export class Renderer {
     this.follow(n, dt, now);
     this.inFlight.update(g.volley, now, g.mode === "delve" ? g.world.width : 0);
     this.popups.update({ run: g.run, gains: g.gains, fight: g.fights.shown, lastHeal: g.lastHeal, volley: g.volley, save: g.save }, now);
-    this.sounds.update({ fight: g.fights.shown, volley: g.volley, struckDown: g.fights.struckDown, bombed: g.bombed }, now);
+    this.sounds.update({ fight: g.fights.shown, volley: g.volley, struckDown: g.fights.struckDown, bombed: g.bombed, sparkedAt: g.fights.sparkedAt, familiars: g.familiarFx, cues: g.cues.splice(0) }, now);
+    // Battery saver plays no ambience, as it shows no weather.
+    ambience.set("board", battery ? {} : surroundingLevels(this.surroundings()));
     const lunge = lunges(g.fights.encounter, now, g.save.settings.reduceMotion || battery);
     this.enemyLunge = { ...(g.fights.encounter?.to ?? { x: 0, y: 0 }), ...lunge.enemy };
     const c = this.ctx, s = this.size, outside = !!g.run.outside, settings = g.save.settings;
@@ -457,7 +452,6 @@ export class Renderer {
       this.echoes.clear();
       this.outside = !!g.run.outside;
       this.weather.silence();
-      if (!this.outside) this.weather.blow(false);
       this.seed = g.run.seed;
       this.playerX = p.x;
       this.playerY = p.y;
@@ -623,11 +617,22 @@ export class Renderer {
   }
   /** Stills the board's lasting sounds while it isn't showing. */
   hush() {
-    this.weather.blow(false);
+    ambience.set("board", {});
+  }
+  /** Where the hero stands, for the ambience: inside, the forest clearing
+   * (with the Blacksmith's forge, once it stands) or the lake. */
+  private surroundings(): Surroundings {
+    const g = this.game, w = g.world, p = g.run.player;
+    const place = !(w instanceof OutsideWorld) ? "inside" : w instanceof LakeWorld ? "lake" : "forest";
+    const forge = place === "forest" && (w as OutsideWorld).blacksmith ? { x: (w as OutsideWorld).entranceX + BLACKSMITH.dx + 1, y: BLACKSMITH.y + 1 } : undefined;
+    return {
+      place, weather: outsideWeather(g.run.seed), weatherSound: g.save.settings.weatherSound, hero: { x: p.x, y: p.y },
+      ...(forge ? { blacksmith: forge } : {}),
+      ...(place === "lake" ? { fisherman: FISHERMAN } : {}),
+    };
   }
   private drawWeather(f: FrameContext) {
     const g = this.game;
-    this.weather.blow(g.save.settings.weatherSound && !document.hidden);
     this.weather.draw(f.c, f.width, g.run.seed, { dt: f.dt, reduceMotion: g.save.settings.reduceMotion,
       active: !g.paused && !g.fallen && !document.hidden, sound: g.save.settings.weatherSound }, seconds => {
         if (!(g.world instanceof OutsideWorld) || g.atLake) return;

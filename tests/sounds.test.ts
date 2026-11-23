@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { existsSync, readdirSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { BEDS, blendLoop, ONE_SHOTS } from "../src/sound-files.ts";
+import { BEDS, blendLoop, ONE_SHOTS, shotPaths, STYLE_SOUNDS } from "../src/sound-files.ts";
+import { BLACKSMITH_REACH, DOCK_FLOOR, mixLevels, surroundingLevels, type Surroundings } from "../src/ambience.ts";
+import { pickupCue } from "../src/state.ts";
 import { BoardSounds, type BoardCue, type Heard } from "../src/render/board-sounds.ts";
 import type { ShownFight } from "../src/shown.ts";
 import type { Volley } from "../src/volley.ts";
@@ -11,11 +13,13 @@ import type { Volley } from "../src/volley.ts";
 const ROOT = new URL("../public/assets/sounds/", import.meta.url);
 const ROOT_DIR = fileURLToPath(ROOT);
 
-test("every listed sound has its file, and every file is listed", () => {
-  const listed = new Set([...Object.values(ONE_SHOTS).flat(), ...Object.values(BEDS)].map((p) => `${p}.mp3`));
+test("every listed sound has its Ogg file, and every file is listed", () => {
+  const styled = Object.values(STYLE_SOUNDS).flatMap((shots) => Object.values(shots ?? {}).flat());
+  const listed = new Set([...Object.values(ONE_SHOTS).flat(), ...Object.values(BEDS), ...styled].map((p) => `${p}.ogg`));
   for (const path of listed) assert.ok(existsSync(new URL(path, ROOT)), `missing ${path}`);
-  const files = readdirSync(ROOT, { recursive: true, withFileTypes: true })
-    .filter((d) => d.isFile() && d.name.endsWith(".mp3"))
+  const all = readdirSync(ROOT, { recursive: true, withFileTypes: true }).filter((d) => d.isFile() && d.name !== "SOURCES.md");
+  for (const d of all) assert.ok(d.name.endsWith(".ogg"), `not Ogg: ${d.name}`);
+  const files = all
     // Each file's path under the sounds folder, with "/" on every OS.
     .map((d) => relative(ROOT_DIR, join(d.parentPath, d.name)).split(sep).join("/"));
   for (const f of files) assert.ok(listed.has(f), `unused ${f}`);
@@ -80,4 +84,76 @@ test("what is already on the board as it first shows stays quiet", () => {
   const { heard, sounds } = listen();
   sounds.update({ fight: fight(0, [strike("hero", 100, 0)]), volley: null, struckDown: [50], bombed: { at: 40 } }, 5000);
   assert.deepEqual(heard, []);
+});
+
+test("a theme hears the default recordings unless it has its own", () => {
+  assert.deepEqual(shotPaths("key"), ONE_SHOTS.key);
+  assert.deepEqual(shotPaths("key", "neon"), STYLE_SOUNDS.neon?.key ?? ONE_SHOTS.key);
+});
+
+test("the game's own events sound once while fresh, and never once stale", () => {
+  const { heard, sounds } = listen();
+  sounds.update(quiet, 0);
+  sounds.update({ ...quiet, cues: [{ cue: "key", at: 1000 }, { cue: "key", at: 1000 }, { cue: "door2", at: 1000 }] }, 1100);
+  assert.deepEqual(heard, ["key", "door2"]);
+  sounds.update({ ...quiet, cues: [{ cue: "potion", at: 1000 }] }, 5000);
+  assert.deepEqual(heard, ["key", "door2"]);
+});
+
+test("Phoenix Spark and the Slime's burst sound as they happen", () => {
+  const { heard, sounds } = listen();
+  const old = { bursts: [{ id: "slime" }], at: 0 };
+  sounds.update({ ...quiet, sparkedAt: [10], familiars: old }, 100);
+  assert.deepEqual(heard, []);
+  sounds.update({ ...quiet, sparkedAt: [10, 500], familiars: { bursts: [{ id: "dragon" }], at: 400 } }, 450);
+  assert.deepEqual(heard, []);
+  sounds.update({ ...quiet, sparkedAt: [10, 500], familiars: { bursts: [{ id: "slime" }], at: 520 } }, 600);
+  assert.deepEqual([...heard].sort(), ["phoenixSpark", "slimeImpact"]);
+});
+
+test("each pickup, chest and door has its sound, a door by the keys it takes", () => {
+  assert.equal(pickupCue({ kind: "attack" }), "attackShard");
+  assert.equal(pickupCue({ kind: "defense" }), "defenseShard");
+  assert.equal(pickupCue({ kind: "potion" }), "potion");
+  assert.equal(pickupCue({ kind: "key", color: "red" }), "key");
+  assert.equal(pickupCue({ kind: "treasure" }), "chestCreak");
+  assert.equal(pickupCue({ kind: "door", color: "blue" }), "door1");
+  assert.equal(pickupCue({ kind: "door", door: { type: "keys", keys: ["yellow", "blue"], mode: "all" } }), "door2");
+  assert.equal(pickupCue({ kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "any" } }), "door1");
+  assert.equal(pickupCue({ kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red", "red"], mode: "all" } }), "door3");
+  assert.equal(pickupCue({ kind: "door", door: { type: "wood", durability: 5 } }), "door1");
+  assert.equal(pickupCue({ kind: "floor" }), null);
+});
+
+const forest = (over: Partial<Surroundings> = {}): Surroundings => ({ place: "forest", weather: "sunny", weatherSound: true, hero: { x: 9, y: 4 }, ...over });
+
+test("outside the wind blows with Weather sounds on, and the chimes ring on a windy day", () => {
+  assert.deepEqual(surroundingLevels(forest()), { windForest: 1 });
+  assert.deepEqual(surroundingLevels(forest({ weather: "storm" })), { windForest: 1, windChimes: 1 });
+  assert.deepEqual(surroundingLevels(forest({ weather: "cloudy", weatherSound: false })), {});
+  assert.deepEqual(surroundingLevels(forest({ place: "inside" })), {});
+});
+
+test("the Blacksmith is louder the nearer the hero stands, and silent far off", () => {
+  const forge = { x: 4, y: 9 };
+  const at = (x: number, y: number) => surroundingLevels(forest({ hero: { x, y }, blacksmith: forge })).blacksmith ?? 0;
+  assert.equal(at(4, 9), 1);
+  assert.ok(at(5, 7) > at(9, 4));
+  assert.equal(at(4 + BLACKSMITH_REACH, 9), 0);
+  assert.equal(surroundingLevels(forest()).blacksmith, undefined);
+});
+
+test("by the lake the music plays, and the dock's water laps louder nearer the fisherman", () => {
+  const fisherman = { x: 5, y: 8 };
+  const lake = (x: number, y: number) => surroundingLevels(forest({ place: "lake", hero: { x, y }, fisherman }));
+  assert.equal(lake(14, 7).meditative, 1);
+  assert.ok(lake(6, 8).dockWater! > lake(10, 8).dockWater!);
+  assert.ok(lake(10, 8).dockWater! > lake(19, 0).dockWater!);
+  assert.equal(lake(19, 19).dockWater, DOCK_FLOOR);
+  assert.equal(lake(14, 7).blacksmith, undefined);
+});
+
+test("each bed plays at the loudest any part of the game asks", () => {
+  assert.deepEqual(mixLevels([{ meditative: 1, dockWater: 0.4 }, { meditative: 0.5 }, {}]), { meditative: 1, dockWater: 0.4 });
+  assert.deepEqual(mixLevels([]), {});
 });

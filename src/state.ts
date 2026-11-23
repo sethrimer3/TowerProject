@@ -134,7 +134,7 @@ import { warpLootSilver } from "./economy/warp-loot.ts";
 import { CardActivation } from "./game/card-activation.ts";
 import { Finds, rubiesText } from "./game/finds.ts";
 import { FightPlayback } from "./game/fight-playback.ts";
-import type { Coin, Dash, Drop, Facing, Gain, GainArt, GainStrike, Heal, ShownClock, ShownTurn } from "./shown.ts";
+import type { Coin, Dash, Drop, Facing, Gain, GainArt, GainStrike, GameCue, Heal, ShownClock, ShownTurn } from "./shown.ts";
 /** How a new run starts: out in the forest or at the entrance, and from
  * which seed (rolled from the game's randomness when left out). */
 export type RunStart = { outside?: boolean; seed?: number; height?: number };
@@ -300,6 +300,10 @@ export class Game {
   effect = { text: "", x: 0, y: 0, until: 0 };
   /** Rewards picked up since the board last took them, oldest first. */
   gains: Gain[] = [];
+  /** The sounds the game's own events asked for since the board last took
+   * them, oldest first, each with when it happened (`performance.now()`):
+   * `BoardSounds` plays them. */
+  cues: { cue: GameCue; at: number }[] = [];
   /** The free levels Free Training gave last, as the board announces them
    * ("+1 ATK"), and when (`performance.now()`). */
   freeTrained: { lines: string[]; at: number } | null = null;
@@ -1060,7 +1064,7 @@ export class Game {
     if (!plan && !this.autoClimbs) return this.awaitCard(lost);
     // Stuck with tiles marked ?: the nearest becomes ! for Deprioritize's card.
     while (!plan && this.handRules.raiseBang()) plan = planHand(this.handRules, this.hand, this.mode);
-    this.handStuck = !plan;
+    this.markStuck(!plan);
     if (!plan) return this.handWaits();
     this.activeCard = plan.card;
     const id = this.held[plan.card];
@@ -1398,7 +1402,7 @@ export class Game {
   private awaitCard(lost: CardId | null) {
     let plan = planHand(this.handRules, this.hand, this.mode);
     while (!plan && this.handRules.raiseBang()) plan = planHand(this.handRules, this.hand, this.mode);
-    this.handStuck = !plan;
+    this.markStuck(!plan);
     if (!plan) return this.handWaits();
     this.cardPlan = null;
     this.activeCard = null;
@@ -1846,6 +1850,7 @@ export class Game {
       p.hp = full;
       this.recordHeal(healed);
       this.message = "Traveler's elixir · HP full";
+      this.cue("elixir");
     } else {
       const stat = PROVISION_BOOSTS[id];
       if (this.run.boosts?.[stat]) return "active";
@@ -1855,6 +1860,7 @@ export class Game {
       run.boosts = { ...run.boosts, [stat]: { amount, turns } };
       this.gain(p.x, p.y, `+${wholeChange(amount)} ${word}`, { tile: { kind: stat } });
       this.message = `${id === "edge" ? "Vanguard Banner" : "Aegis charm"} · +${percent}% ${word} for ${turns} turns`;
+      this.cue("provision");
     }
     run.provisionsUsed = { ...run.provisionsUsed, [id]: (run.provisionsUsed?.[id] ?? 0) + 1 };
     this.countProvisionsUsed();
@@ -2216,6 +2222,8 @@ export class Game {
     this.newRun({ outside: true, height: floor });
     if (!earned) this.run.preview = true;
     this.enterFromOutside();
+    this.cues = this.cues.filter((c) => c.cue !== "enterTower" && c.cue !== "enterDelve");
+    this.cue("warp");
     this.message = `Warped to floor ${floor + 1}`;
     return true;
   }
@@ -2227,6 +2235,16 @@ export class Game {
       y: this.run.player.y,
       until: performance.now() + ms,
     };
+  }
+  /** Asks the board for the sound of one of the game's events. */
+  cue(cue: GameCue) {
+    this.cues.push({ cue, at: performance.now() });
+    if (this.cues.length > MAX_GAINS) this.cues.shift();
+  }
+  /** Whether the hand is stuck, sounding as it becomes so. */
+  private markStuck(stuck: boolean) {
+    if (stuck && !this.handStuck) this.cue("runStuck");
+    this.handStuck = stuck;
   }
   /** Queues a reward to rise from (x, y), unless the Settings turn off
    * gains of its `kind` (by default, the kind its art raises). */
@@ -2255,6 +2273,7 @@ export class Game {
     const reached = levelForXp(this.save.xp);
     if (reached > level) {
       this.levelUpAt = performance.now();
+      this.cue("heroLevelUp");
       this.levelUpPoints = TRAINING_PER_LEVEL * (reached - level);
       if (!this.run.outside) startLevelBoost(this.run, this.clock());
     }
@@ -2509,11 +2528,14 @@ export class Game {
     }
     if (torch) this.putOutTorch(x, y);
     if (t.kind === "reward") {
+      this.cue("chestCreak");
       this.run.changes[`${x},${y}`] = { kind: "openedChest", tier: t.tier };
       this.openAreaChest(t.tier);
       return;
     }
     this.finds.pickup(t, x, y, outcome);
+    const heard = pickupCue(t);
+    if (heard) this.cue(heard);
     this.pickedUp(t);
     this.consumeTile(t, x, y);
     if (t.kind === "attack") this.chargePowerStrike(x, y);
@@ -3089,6 +3111,7 @@ export class Game {
     syncShield(this.save, this.run, this.mode);
     const p = this.run.player;
     this.run.outside = false;
+    this.cue(this.mode === "tower" ? "enterTower" : "enterDelve");
     this.run.notes = newNotes(this.clock());
     if (this.mode === "tower") this.save.offline.climbAway = 0;
     this.save.tutorials.enter = true;
@@ -3690,6 +3713,23 @@ type FightEnd = { enemy: Enemy; damage: number; at: { x: number; y: number }; re
 
 /** How Skip's message names what vanished, by tile kind. */
 const SKIPPED_NAMES: Partial<Record<Tile["kind"], string>> = { door: "The door", key: "The key", potion: "The potion", attack: "The ATK shard", defense: "The DEF shard", treasure: "The chest", reward: "The chest" };
+
+/** The sound of stepping onto `t`, if it is a pickup, a chest or a door: a
+ * door by the keys it takes (one, two, or three and more). */
+export function pickupCue(t: Tile): GameCue | null {
+  switch (t.kind) {
+    case "attack": return "attackShard";
+    case "defense": return "defenseShard";
+    case "potion": return "potion";
+    case "key": return "key";
+    case "treasure": return "chestCreak";
+    case "door": {
+      const rule = doorRule(t), keys = rule.type === "keys" && rule.mode === "all" ? rule.keys.length : 1;
+      return keys >= 3 ? "door3" : keys === 2 ? "door2" : "door1";
+    }
+    default: return null;
+  }
+}
 
 /** Whether the door `t` has a lock of `color` among its locks. */
 function lockedBy(t: Tile, color: KeyColor) {

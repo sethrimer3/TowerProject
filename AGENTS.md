@@ -98,6 +98,7 @@ Read the area's doc before changing code there or answering questions about it; 
 - `economy-and-online.md`: Gems, the Shop, Gold bonuses, Spare Change and Wishing Well, the Tournament, Mail, Missions, Events and relics.
 - `rendering.md`: board drawing, lighting, decor, popups, the forest and weather, the render goldens, the Medieval and Neon themes.
 - `lakeside.md`: the lake west of Tower I, its dock and fisherman, travel, dialogue, saved location and native sprites.
+- `sound.md`: the recordings (`sound-files.ts`), cues (`sound.ts`), the board's and the game's sounds (`render/board-sounds.ts`, `Game.cue`), the ambience (`ambience.ts`), the Sound effects setting and theme overrides.
 - `ui.md`: `main.ts`, pages, the HUD, dialogs, the desks and `Game`'s UI commands, board lessons, the frame loop, the UI golden.
 - `proving-grounds.md`: the forest trial entrance, tactical Light Elemental and Keymaster encounters, rendering and persistence.
 - `saves.md`: loading and decoding the save, adding save state, settings rows.
@@ -164,6 +165,7 @@ While iterating, run only the tests for the area you touched, then `npm test` on
 | Saves and settings | `tests/save.test.ts tests/settings.test.ts` |
 | Board drawing, camera, lighting, decor art | `tests/render-calls.test.ts tests/camera.test.ts tests/lighting-passes.test.ts tests/art-modules.test.ts tests/decor.test.ts tests/themed-boards.test.ts` |
 | Outside and weather | `tests/outside*.test.ts tests/outdoor-art.test.ts tests/torch-light.test.ts` |
+| Sound and ambience (`sound.ts`, `sound-files.ts`, `ambience.ts`, `render/board-sounds.ts`) | `tests/sounds.test.ts tests/outdoor-art.test.ts tests/settings.test.ts tests/save.test.ts` |
 
 ## Agent docs
 

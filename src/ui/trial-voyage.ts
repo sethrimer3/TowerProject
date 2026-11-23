@@ -1,9 +1,13 @@
 import { drawKit } from "../sprites/kit.ts";
+import { ambience } from "../ambience.ts";
 
 export const VOYAGE_FADE_MS = 600;
 export const VOYAGE_MENU_DELAY_MS = 500;
+/** What the voyage plays: the lake's music, carried on unbroken. */
+const AT_SEA = { meditative: 1 } as const;
 
-/** A transient ocean backdrop. All motion uses visual time, never game turns. */
+/** A transient ocean backdrop. All motion uses visual time, never game turns.
+ * The lake's meditative music plays on at sea, for as long as it shows. */
 export class TrialVoyage {
   readonly element = document.createElement("div");
   private canvas = document.createElement("canvas");
@@ -32,6 +36,7 @@ export class TrialVoyage {
   }
   private draw = (now: number) => {
     const elapsed = now - this.started;
+    ambience.set("voyage", AT_SEA);
     const c = this.canvas.getContext("2d")!;
     const width = Math.ceil(innerWidth * devicePixelRatio), height = Math.ceil(innerHeight * devicePixelRatio);
     if (this.canvas.width !== width || this.canvas.height !== height) {
@@ -102,6 +107,7 @@ export class TrialVoyage {
     this.frame = requestAnimationFrame(this.draw);
   };
   destroy() {
+    ambience.set("voyage", {});
     cancelAnimationFrame(this.frame); this.element.remove();
     document.documentElement.classList.remove("trial-at-sea");
     window.removeEventListener("keydown", this.key, true);

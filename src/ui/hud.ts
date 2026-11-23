@@ -1,3 +1,4 @@
+import { play } from "../sound.ts";
 import { kitIcon } from "../sprites/kit.ts";
 import { spriteFontRevision } from "../sprites/font.ts";
 import { amountUnit, enemyStat, keyCount, shortAmount, stepsIn, whole, wholeHp } from "../whole.ts";
@@ -887,11 +888,8 @@ function renderGemBank(game: Game) {
     }
   }
   const full = banking && bank.full;
-  // TODO(sfx): play the bank-full chime (`settings.gemBankChime`) as it
-  // fills, once the game has sound effects.
-  if (full && !bankWasFull && game.save.settings.gemBankChime) {
-    /* the chime goes here */
-  }
+  // The bank-full chime (`settings.gemBankChime`) rings as it fills.
+  if (full && !bankWasFull && game.save.settings.gemBankChime) play("gemBankFull");
   bankWasFull = full;
 }
 

@@ -1,3 +1,4 @@
+import { play } from '../sound.ts';
 import { infinityPixels, infinityPixelAt, type InfinityPixel, type PixelPoint } from './infinity-pixels.ts';
 import { kitImage } from '../sprites/kit.ts';
 
@@ -40,6 +41,7 @@ const playing = new WeakSet<HTMLDialogElement>();
 export function playDeathLoop(modal: HTMLDialogElement, reduced: boolean, returnToWorld: () => void, destination?: () => PixelPoint) {
   if (playing.has(modal)) return;
   playing.add(modal);
+  play('timeLoop');
   const content = modal.innerHTML;
   const attributes = ['class', 'style', 'aria-label', 'aria-labelledby'].map(name => [name, modal.getAttribute(name)] as const);
   const previousFocus = document.activeElement as HTMLElement | null;

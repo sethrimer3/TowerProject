@@ -1,3 +1,4 @@
+import { play } from "../sound.ts";
 import { CARDS, type CardId } from "../cards/cards.ts";
 import type { Game } from "../state.ts";
 import { cardArt, el, pointsIcon } from "./dom.ts";
@@ -46,6 +47,7 @@ export class CardLevelUps {
     layer.innerHTML = `<div class="card-level-up-glow"></div>${ghost}<div class="card-level-up-icon">${pointsIcon()}</div>`;
     el("board").append(layer);
     this.playing = { card: next.card, inHand, layer, at: now };
+    play("cardLevelUp");
     if (inHand) this.place(this.playing);
     else this.placeGhost(layer);
   }

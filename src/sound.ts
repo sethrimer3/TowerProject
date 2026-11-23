@@ -1,59 +1,68 @@
 import { stream } from "./random.ts";
 import { oneShot, preloadOneShots, type OneShot } from "./sound-files.ts";
+import type { UiLook } from "./theme-collection.ts";
 
-/** The keep's sounds. Most are made here with Web Audio; a few cues play a
- * recording from `sound-files.ts` instead (`SAMPLED`), falling back to their
- * made voice while it loads (those with no made voice stay silent). Each cue
- * is built from a few voices (a wooden knock is a burst of filtered noise on
- * a low thump; a bell is a handful of inharmonic sine partials; a horn is a
- * sawtooth through a closing low-pass) and everything rings into a short
- * generated stone-hall echo. Nothing plays until the player's first press,
- * which is when browsers let a page make sound. */
+/** The game's sounds, heard under every UI theme while Sound effects is on.
+ * Most cues play a recording from `sound-files.ts` (`SAMPLED`); a few are
+ * made here with Web Audio (a wooden knock is a burst of filtered noise on
+ * a low thump; a bell is a handful of inharmonic sine partials), and the
+ * button knock falls back to its made voice while its recording loads.
+ * Everything rings into a short generated stone-hall echo. Nothing plays
+ * until the player's first press, which is when browsers let a page make
+ * sound. */
 export type Cue =
-  /** Pressing an oak button. */
+  /** Pressing a button. */
   | "knock"
   /** A card refused by a full hand: two low, descending notes. */
   | "error"
-  /** Choosing a page on the stone tab row. */
+  /** Choosing a page on the tab row. */
   | "stone"
-  /** Spending at the Armory or on Training: coins on a counter. */
+  /** Spending on Training: coins on a counter. */
   | "coin"
   /** A skill-tree rank: a glass phial chiming. */
   | "chime"
   /** A skill-tree node's first rank: the chime, and a rising shimmer. */
   | "unlock"
-  /** A wave held: a short brass call. */
-  | "wave"
-  /** A wave held past the best: a fanfare and a bell. */
-  | "record"
-  /** A Commander level gained: bells climbing a chord. */
-  | "levelUp"
   /** A Training rank completed: one bright hand bell. */
   | "trained"
-  /** A boss wave: a low war horn. */
-  | "horn"
-  /** The keep falls: a tolling bell. */
-  | "fallen"
-  /** A blow landing in a fight (a recording only). */
-  | "punch"
-  /** An arrow or a Ranged enemy's shot striking (a recording only). */
-  | "arrowHit"
-  /** An enemy or the hero falling (a recording only). */
-  | "bodyFall"
   /** A Bomb going off (a recording only). */
-  | "blast";
+  | "blast"
+  /** The rest are recordings only, named as `ONE_SHOTS` names them. */
+  | Exclude<OneShot, "buttonThud" | "explosionSmall">;
 
 const rand = stream("effects");
 let enabled: () => boolean = () => true;
+let look: () => UiLook | undefined = () => undefined;
 let ctx: AudioContext | null = null;
+/** Whether the player has pressed anything yet: until then nothing builds
+ * the audio graph, which a browser would only leave suspended. */
+let pressed = false;
 let out: GainNode, hall: GainNode, noiseBuf: AudioBuffer;
 /** When each cue last played, so a burst of the same event stays one sound. */
 const lastAt = new Map<Cue, number>();
 
-/** Which setting turns sound off; checked at every cue. */
+/** Which setting turns sound off; checked at every cue, and by the
+ * ambience (`ambience.ts`) every frame. */
 export function soundEnabledBy(isOn: () => boolean) {
   enabled = isOn;
 }
+/** Whether sound is on now. */
+export const soundOn = () => enabled();
+/** Which UI theme is worn, so a theme's own recordings (`STYLE_SOUNDS`)
+ * play in place of the defaults. */
+export function soundStyleBy(worn: () => UiLook | undefined) {
+  look = worn;
+}
+
+/** Builds the audio graph, or wakes it, from a press: browsers let a page
+ * start sound only then. */
+export function unlockAudio() {
+  pressed = true;
+  if (enabled()) audio();
+}
+/** The audio context, if a press has already started it and it is
+ * running; null otherwise (never builds one). */
+export const runningAudio = (): AudioContext | null => (ctx && ctx.state === "running" ? ctx : null);
 
 /** The audio graph, built on first use: voices → dry out and a hall send →
  * a gentle compressor → the speakers. */
@@ -79,7 +88,7 @@ function audio(): AudioContext | null {
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = rand() * 2 - 1;
-    preloadOneShots(ctx);
+    preloadOneShots(ctx, look());
   }
   if (ctx.state === "suspended") void ctx.resume();
   return ctx;
@@ -121,30 +130,14 @@ function envelope(at: number, peak: number, attack: number, end: number) {
   return g;
 }
 
-type Tone = { type?: OscillatorType; freq: number; to?: number; at: number; peak: number; attack?: number; end: number; wet?: number; lowpass?: number; lowpassTo?: number; vibrato?: number };
-/** One oscillator voice, optionally gliding to `to` and through a low-pass. */
-function tone({ type = "sine", freq, to, at, peak, attack = 0.005, end, wet = 1, lowpass, lowpassTo, vibrato }: Tone) {
+type Tone = { type?: OscillatorType; freq: number; to?: number; at: number; peak: number; attack?: number; end: number; wet?: number };
+/** One oscillator voice, optionally gliding to `to`. */
+function tone({ type = "sine", freq, to, at, peak, attack = 0.005, end, wet = 1 }: Tone) {
   const osc = ctx!.createOscillator();
   osc.type = type;
   osc.frequency.setValueAtTime(freq, at);
   if (to) osc.frequency.exponentialRampToValueAtTime(to, at + end);
-  if (vibrato) {
-    const lfo = ctx!.createOscillator(), depth = ctx!.createGain();
-    lfo.frequency.value = 5.5;
-    depth.gain.value = vibrato;
-    lfo.connect(depth).connect(osc.frequency);
-    lfo.start(at);
-    lfo.stop(at + end + 0.05);
-  }
-  let node: AudioNode = osc;
-  if (lowpass) {
-    const f = ctx!.createBiquadFilter();
-    f.type = "lowpass";
-    f.frequency.setValueAtTime(lowpass, at);
-    if (lowpassTo) f.frequency.exponentialRampToValueAtTime(lowpassTo, at + end);
-    node = node.connect(f);
-  }
-  route(node.connect(envelope(at, peak, attack, end)), wet);
+  route(osc.connect(envelope(at, peak, attack, end)), wet);
   osc.start(at);
   osc.stop(at + end + 0.05);
 }
@@ -206,52 +199,53 @@ const CUES: Partial<Record<Cue, (t: number) => void>> = {
     [784, 988, 1175, 1568, 1976].forEach((f, i) => tone({ freq: f, at: t + 0.08 + i * 0.05, peak: 0.06, attack: 0.02, end: 0.8, wet: 1.4 }));
     tone({ type: "triangle", freq: 196, at: t, peak: 0.08, attack: 0.2, end: 1.4, wet: 1 });
   },
-  wave(t) {
-    // A fourth and a fifth on a brass horn: G, C, then D over G.
-    const horn = (f: number, at: number, len: number, peak = 0.13) =>
-      tone({ type: "sawtooth", freq: f, at, peak, attack: 0.03, end: len, lowpass: 2400, lowpassTo: 700, wet: 0.8, vibrato: 3 });
-    horn(392, t, 0.18);
-    horn(523, t + 0.16, 0.18);
-    horn(392, t + 0.34, 0.6, 0.09);
-    horn(587, t + 0.34, 0.6, 0.11);
-  },
-  record(t) {
-    const horn = (f: number, at: number, len: number, peak = 0.12) =>
-      tone({ type: "sawtooth", freq: f, at, peak, attack: 0.03, end: len, lowpass: 2800, lowpassTo: 800, wet: 0.9, vibrato: 3 });
-    horn(392, t, 0.14);
-    horn(392, t + 0.13, 0.14);
-    horn(523, t + 0.26, 0.2);
-    for (const f of [523, 659, 784]) horn(f, t + 0.46, 1, 0.08);
-    bell(1046, t + 0.46, 0.1, 2);
-  },
-  levelUp(t) {
-    [659, 784, 988, 1318].forEach((f, i) => bell(f, t + i * 0.09, 0.08, 1.2 + i * 0.2));
-  },
   trained(t) {
     bell(1568 * vary(10), t, 0.09, 1.4);
   },
-  horn(t) {
-    const horn = (f: number, at: number, len: number) =>
-      tone({ type: "sawtooth", freq: f, to: f * 0.97, at, peak: 0.16, attack: 0.12, end: len, lowpass: 900, lowpassTo: 300, wet: 1.2, vibrato: 2 });
-    horn(147, t, 0.9);
-    horn(110, t + 0.75, 1.5);
-    tone({ type: "sawtooth", freq: 73.5, at: t + 0.75, peak: 0.08, attack: 0.2, end: 1.5, lowpass: 500, wet: 1 });
-  },
-  fallen(t) {
-    bell(165, t, 0.2, 3.2, 1.4);
-    bell(147, t + 1.1, 0.16, 3.6, 1.4);
-  },
 };
 
+type Sample = { file: OneShot; gain: number; wet: number; cents: number };
+/** How a pickup, a door or a chest sounds: a little pitch wander, a little hall. */
+const PICKUP = { gain: 0.32, wet: 0.15, cents: 60 };
+/** How a stinger sounds (a level, a reward, the loop): as recorded, at one pitch. */
+const STINGER = { gain: 0.38, wet: 0.12, cents: 0 };
 /** The cues that play a recording: which, how loud (the files are all
  * peak-normalized), how much of it rings into the hall, and how far its
  * pitch may wander (in cents) so repeats differ. */
-const SAMPLED: Partial<Record<Cue, { file: OneShot; gain: number; wet: number; cents: number }>> = {
+const SAMPLED: Partial<Record<Cue, Sample>> = {
   knock: { file: "buttonThud", gain: 0.45, wet: 0.2, cents: 80 },
+  confirm: { file: "confirm", gain: 0.4, wet: 0.15, cents: 0 },
   punch: { file: "punch", gain: 0.3, wet: 0.15, cents: 200 },
   arrowHit: { file: "arrowHit", gain: 0.3, wet: 0.15, cents: 200 },
   bodyFall: { file: "bodyFall", gain: 0.4, wet: 0.2, cents: 150 },
   blast: { file: "explosionSmall", gain: 0.5, wet: 0.35, cents: 150 },
+  slimeImpact: { file: "slimeImpact", gain: 0.35, wet: 0.15, cents: 150 },
+  cardLevelUp: { file: "cardLevelUp", ...STINGER },
+  badgeDraw: { file: "badgeDraw", ...STINGER },
+  heroLevelUp: { file: "heroLevelUp", ...STINGER },
+  equipmentTab: { file: "equipmentTab", gain: 0.35, wet: 0.15, cents: 0 },
+  gemBankFull: { file: "gemBankFull", gain: 0.35, wet: 0.2, cents: 0 },
+  tournamentRewards: { file: "tournamentRewards", ...STINGER },
+  tutorialStart: { file: "tutorialStart", ...STINGER },
+  gem: { file: "gem", ...PICKUP },
+  gemGolden: { file: "gemGolden", ...PICKUP },
+  gemStellar: { file: "gemStellar", ...PICKUP },
+  attackShard: { file: "attackShard", ...PICKUP },
+  defenseShard: { file: "defenseShard", ...PICKUP },
+  potion: { file: "potion", ...PICKUP },
+  key: { file: "key", ...PICKUP },
+  chestCreak: { file: "chestCreak", ...PICKUP },
+  door1: { file: "door1", ...PICKUP },
+  door2: { file: "door2", ...PICKUP },
+  door3: { file: "door3", ...PICKUP },
+  elixir: { file: "elixir", ...PICKUP },
+  provision: { file: "provision", ...PICKUP },
+  phoenixSpark: { file: "phoenixSpark", ...STINGER },
+  timeLoop: { file: "timeLoop", ...STINGER },
+  warp: { file: "warp", ...STINGER },
+  runStuck: { file: "runStuck", ...STINGER },
+  enterTower: { file: "enterTower", ...STINGER },
+  enterDelve: { file: "enterDelve", ...STINGER },
 };
 
 /** Recordings ringing now; past `MAX_VOICES` new ones are dropped, so a
@@ -260,8 +254,8 @@ let voices = 0;
 const MAX_VOICES = 12;
 
 /** Plays one of `s.file`'s variants now, unless it hasn't loaded yet. */
-function playSample(ac: AudioContext, s: NonNullable<(typeof SAMPLED)[Cue]>): boolean {
-  const bufs = oneShot(ac, s.file);
+function playSample(ac: AudioContext, s: Sample): boolean {
+  const bufs = oneShot(ac, s.file, look());
   if (!bufs) return false;
   if (voices >= MAX_VOICES) return true;
   const src = ac.createBufferSource();
@@ -286,7 +280,7 @@ export function play(cue: Cue) {
   const now = performance.now();
   if (now - (lastAt.get(cue) ?? -Infinity) < 60) return;
   lastAt.set(cue, now);
-  const ac = audio();
+  const ac = pressed ? audio() : null;
   if (!ac) return;
   const sampled = SAMPLED[cue];
   if (sampled && playSample(ac, sampled)) return;
