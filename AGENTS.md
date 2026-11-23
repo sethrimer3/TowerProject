@@ -117,8 +117,9 @@ Read the area's doc before changing code there or answering questions about it; 
 - Keep this file and the topic docs current.
   When a change adds, renames, or removes modules, alters architecture or generation invariants, changes commands/scripts or test setup, or changes save rules, update the topic doc for its area in the same change, and this file only for what every task needs (commands, the core architecture, invariants, conventions).
   A new area gets its own topic doc and a line in the list above naming what it covers.
-  Keep the README's short "How it's built" overview accurate as well.
-- The player-facing rules live in `docs/gameplay/`, one topic a page, indexed by the README's Gameplay reference; the README itself stays slim (`tests/readme-index.test.ts` caps its size and requires every page in the index).
+  Keep `docs/project/how-its-built.md`'s short overview accurate as well.
+- The README is an index: the player-facing rules live in `docs/gameplay/`, one topic a page, indexed by its Gameplay reference; the project docs (`docs/project/`) and the design notes (`docs/*.md`, `docs/art/`) are indexed below it.
+  It stays slim (`tests/readme-index.test.ts` caps its size, requires every such page in an index, and checks their links); a new section belongs in a page it links to, not in the README.
   A change to what the player sees or does updates that topic's page in the same change; a new topic gets its own page and a row in the index.
   `CLAUDE.md` only imports this file; don't add content there.
 - Every change adds a line to the DEVLOG (`DEVLOG` in `src/devlog.ts`), the list of changes the Settings page's DEVLOG button opens.

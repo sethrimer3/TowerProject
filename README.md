@@ -16,23 +16,13 @@ npm run preview
 
 Open the local URL printed by Vite.
 
-## How to play
-
-A new game starts inside its first Tower run.
-Inside a run, your **hand** of cards moves the hero: press a card and the hero walks to its target (the stairs, a door, a key, an enemy …), and fights play out on their own.
-A new game's hand holds only Stairs; the Inspiration tree's first skills add Door and Key, then Enemy, then **Auto-Climb**, after which the first card that can reach a target leads on its own.
-Each new Tower floor climbed pays **Inspiration**, and each Tower Goal claimed a **Breakthrough** point; both buy skills in the trees on the Upgrades page.
-The Delve opens only during a Tournament, whose runs it plays.
-**Gold** and **XP** last between runs: Gold buys provisions, trainers and Archives research, and each level earns training points.
-**Silver**, found inside a run, buys training for that run only.
-When no card can act, End Climb returns the hero to the forest, where the next climb is entered.
-
 ## Gameplay reference
 
 The player-facing rules, in full, one topic a page:
 
 | Page | What it covers |
 |---|---|
+| [How to play](docs/gameplay/how-to-play.md) | The game in brief: the hand, the currencies, ending a climb |
 | [First steps](docs/gameplay/first-steps.md) | The first runs and their lessons, the tab bar and its dots, the forest and its sign, moving by hand, the Archives lesson |
 | [The hand and cards](docs/gameplay/hand-and-cards.md) | The hand and every card, card levels, rarity, ascension and powers, the Deck page, pressing a card, Ignore and Target, Badges |
 | [Upgrades](docs/gameplay/upgrades.md) | The skill trees' tabs, prices and help, Critical |
@@ -56,28 +46,29 @@ The player-facing rules, in full, one topic a page:
 | [Familiars](docs/gameplay/familiars.md) | Medal-hatched beasts that help in climbs |
 | [Sound](docs/gameplay/sound.md) | Sound effects, ambience and their settings |
 
-## How it's built
+## Project docs
 
-Two modes share one page: **Tower** (compact 17 × 17 puzzle floors, generated strategy-first like a Magic Tower) and **Delve** (one endless, wrapping labyrinth).
-Worlds are generated deterministically from the run seed, and only your changes to them are saved.
-The viewport shows 17 × 17 tiles with the entrance at the bottom center (20 × 20 in the forest outside); in the Delve, terrain below the last milestone gate can't be revisited.
-Tower I's west forest path leads to a lakeside dock and fisherman, who takes characters at level 10 or higher out to sea to choose a trial.
+| Page | What it covers |
+|---|---|
+| [How it's built](docs/project/how-its-built.md) | The two modes, saved worlds, and where the code lives |
+| [Development](docs/project/development.md) | Browser tests and the GitHub Pages deploy |
+| [Prototype boundaries](docs/project/prototype-boundaries.md) | What the prototype leaves simple or out |
+| [AGENTS.md](AGENTS.md) | Commands, architecture and conventions for contributors, with each area in [docs/agents/](docs/agents/) |
 
-Code lives in `src/`, with the Tower generator and its floors in `src/tower/`, the Delve labyrinth and its board in `src/delve/`, the Shop's offers, entitlements and transactions in `src/shop/`, Equipment in `src/equipment/`, the Tournament in `src/tournament/`, Mail in `src/mail/`, the daily and weekly missions (their catalogue, rewards and saved state) in `src/missions/`, Events (missions paying Medals toward relics, and their Store) in `src/events/`, Shrines and their boons in `src/shrines.ts`, Familiars in `src/familiars/`, board drawing (the Renderer, terrain, lighting, the Game themes' boards, decor and effects) in `src/render/`, the sprites in `src/sprites/`, the enemies (bestiary, legacy roster, curves, schedule, stage and traits) in `src/enemies/`, the cards, their trees, levels, buys and badges in `src/cards/`, the Archives, loadout, skill trees and Training in `src/progression/`, Gems, Gold bonuses and relics in `src/economy/`, the save, its decoder, settings and profile in `src/save/`, the Codex's categories, briefs and discoveries in `src/codex/`, and the pages, HUD and dialogs in `src/ui/`.
-Design documents are in `docs/`, and the gameplay rules in [docs/gameplay/](docs/gameplay/).
-Architecture notes, generation invariants, and development commands for contributors (human or AI) are in [AGENTS.md](AGENTS.md), with each area's details in [docs/agents/](docs/agents/).
+## Design notes
 
-## Browser verification
-
-The default PNG sprite kit shares one palette across the interface, characters, items, cards and terrain; non-default UI and Game themes take precedence in their own areas.
-Its art guidelines and export tools are described in [UI sprites](docs/art/ui-sprites.md).
-
-Start `npm run dev` in another terminal, then run `npm run test:browser`. See [docs/agents/testing.md](docs/agents/testing.md) for browser-channel and screenshot details.
-
-## GitHub Pages
-
-The included `.github/workflows/static.yml` installs dependencies, runs tests and the production build, then deploys **dist/** on pushes to `main` or manual workflow dispatch. In repository Settings → Pages, select **GitHub Actions** as the source. Vite uses relative asset paths for repository subpaths.
-
-## Prototype boundaries
-
-Room variety and balancing are introductory. Locked passages gate both ascent routes and reward branches; enemies inside chambers are often avoidable. Fights play out unless Animate fights is turned off. Automation prioritizes nearby upgrades and safe ascent, rather than globally optimal inventory planning. The Tower only climbs: a floor left behind can't be revisited in the run. Unsupported save-format versions reset safely. Layout-version migration retains progression, stats, and inventory, clears old map edits, and relocates the player to their current section entrance. All text uses the bundled variable Cinzel font from `assets/fonts/Cinzel/`; no remote font service is used. Sound is Ogg recordings in `public/assets/sounds/`, under every UI theme. The Archives' research is the only progression that runs while the game is closed; there is no cloud save or installable PWA.
+| Note | What it covers |
+|---|---|
+| [Delve](docs/DELVE.md) | The endless labyrinth and its Automove |
+| [Door and key schedule](docs/DOOR_AND_KEY_SCHEDULE.md) | How often each door and key appears, by tower and floor |
+| [Enemy schedule](docs/ENEMY_SCHEDULE.md) | How many enemies a floor holds and how strong |
+| [Progression and difficulty](docs/PROGRESSION_AND_DIFFICULTY.md) | The planned progression curve and its gates |
+| [Research curves](docs/RESEARCH_CURVES.md) | Pricing long Archives research |
+| [Equipment](docs/EQUIPMENT.md) | Equipment's design source of truth |
+| [Crafting and equipment](docs/CRAFTING_AND_EQUIPMENT.md) | Retired: the crafting design Equipment replaced |
+| [Shop](docs/SHOP.md) | The Shop's offers |
+| [Missions](docs/MISSIONS.md) | Daily and weekly missions |
+| [Events](docs/EVENTS.md) | Fortnightly events, Medals and relics |
+| [Tournament](docs/TOURNAMENT.md) | The Tournament's plan |
+| [Mail](docs/MAIL.md) | Mail's plan |
+| [UI sprites](docs/art/ui-sprites.md), [UI atlas](docs/art/ui-atlas.md), [Sprite batches](docs/art/remaining-sprite-batches.md) | The sprite kit, its atlas and the art still to make |
