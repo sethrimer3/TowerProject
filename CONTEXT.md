@@ -1125,6 +1125,10 @@ _Avoid_: known tiles, visit map
 - **Landscape layout**: the board beside the HUD, filling the screen's height, worn while the screen is wide enough and the setting allows it; the portrait layout stacks the HUD over the board.
 - **Handedness**: which side the controls gather on, under the thumb; Left mirrors the layout.
 - **Death loop**: the pale infinity symbol that draws on black when the delver returns after defeat or ends a run early.
-- **Chronos Anchor**: the divine relic the weakest delver found, which sends their soul back in time; why each climb ends and begins again, and why upgrades and knowledge carry over.
+- **Chrono Anchor**: the Divine Relic the weakest delver found on floor 999999, which sends their soul back in time; why each climb ends and begins again, and why upgrades and knowledge carry over.
+- **Divine Relic**: a unique relic granted by the builders themselves, kept in the Relics page's gold Divine category; it gives no bonus but changes what the hero can do.
+- **Divine Portal**: the golden vortex on floor 2 of the very first climb, leading to the builders' room, and the portal back from it ("Return to source").
+- **Builders' room**: the narrative floor 999999, not generated as floors are: a walled room with a torch in each corner and the Divine Relic's chest in the middle.
+- **Story**: the Codex category telling the tale so far, a chapter a section, starting with the Intro once the first climb ends.
 - **Codex**: the in-game reference, opened from the menu, a category a tab; what the player hasn't reached shows as ???.
 - **Story**: the forest's first lesson after the first climb, telling the world's premise in notes tapped through.

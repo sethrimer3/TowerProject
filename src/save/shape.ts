@@ -258,6 +258,8 @@ export type Save = {
   events: EventsSave;
   /** The relics owned, by id (economy/relics.ts), each once, kept between runs. */
   relics: string[];
+  /** The Divine Relics owned (divine.ts), each once, kept between runs. */
+  divineRelics: import("../divine.ts").DivineRelicId[];
   /** The gifts received, how many of each, and their saved stream (economy/gifts.ts), kept between runs. */
   gifts: GiftSave;
   /** The Review Prompt's button: when it was last pressed, and whether it is done with (review-prompt.ts). */

@@ -78,10 +78,11 @@ export type CodexEntry = {
   ready?: boolean;
 };
 /** A collapsible group of entries; `table` draws them as rows of the run's
- * enemy table instead of a list. */
-export type CodexSection = { id: string; title: string; entries: CodexEntry[]; hint?: string; collapsed?: boolean; table?: boolean };
+ * enemy table instead of a list, and `prose` is a passage of paragraphs in
+ * their place (the Story's chapters). */
+export type CodexSection = { id: string; title: string; entries: CodexEntry[]; hint?: string; collapsed?: boolean; table?: boolean; prose?: readonly string[] };
 export type CodexCategoryId =
-  | "general" | "currencies" | "elements" | "cards" | "badges" | "inspiration" | "breakthrough" | "training"
+  | "general" | "story" | "currencies" | "elements" | "cards" | "badges" | "inspiration" | "breakthrough" | "training"
   | "arcana" | "familiars" | "equipment" | "enemies" | "combat" | "shrines" | "environments" | "archives";
 export type CodexCategory = { id: CodexCategoryId; name: string; icon: CodexIcon; open: boolean; summary: string; links: CodexLink[]; sections: CodexSection[] };
 
@@ -183,6 +184,26 @@ function general(src: CodexSource): CodexCategory {
   });
   return { id: "general", name: "General", icon: { kind: "ui", id: "tower" }, open: true, links: [],
     summary: "The big ideas of the game, and where to find them.", sections: [{ id: "topics", title: "Topics", entries }] };
+}
+
+// —— Story ———————————————————————————————————————————————————————————
+
+/** The Story's Intro, told once the first Tower climb has ended. */
+export const STORY_INTRO: readonly string[] = [
+  "This is a land of magical adventure and dangerous dungeons. Dungeons that descend deep into the earth and mighty towers that stretch high into the sky.",
+  "They have been present since the earliest history books, and nobody has reached the top of one of the towers, nor have they seen the bottom of one of the dungeons.",
+  "They are full of magic, treasure, and unspeakable danger. Adventurers climb the towers and descend into the depths in search of magic and wonders, which become more potent the further they go.",
+  "Our story begins with one young adventurer, turning to delving out of necessity to support their family and raise them out of debt.",
+  "In an unprecedented stroke of luck, the adventurer obtained the Chrono Anchor, a unique divine gift. Looking at the tower, they wonder if it was all just a vision or a dream.",
+];
+
+/** The story so far, a chapter a collapsible section: the Intro once the
+ * first Tower climb has ended (`tutorials.chamber`), which opens the tab. */
+function story(src: CodexSource): CodexCategory {
+  const told = src.save.tutorials.chamber || seesAll(src.save);
+  return { id: "story", name: "Story", icon: { kind: "kit", id: "relic-divine-chrono-anchor" }, open: told, links: [],
+    summary: "The tale of the tower, and of the adventurer who climbs it.",
+    sections: told ? [{ id: "intro", title: "Intro", entries: [], prose: STORY_INTRO }] : [] };
 }
 
 // —— Currencies ———————————————————————————————————————————————————————
@@ -626,7 +647,7 @@ function archives(src: CodexSource): CodexCategory {
 /** Every category, in the order the Codex's tabs list them. */
 export function codexCategories(src: CodexSource): CodexCategory[] {
   return [
-    general(src), currencies(src), elements(src), cards(src), badges(src), skillTree(src, "inspiration"), skillTree(src, "breakthrough"),
+    general(src), story(src), currencies(src), elements(src), cards(src), badges(src), skillTree(src, "inspiration"), skillTree(src, "breakthrough"),
     training(src), arcana(src), familiars(src), equipment(src), enemies(src), combat(src), shrines(src), environments(src), archives(src),
   ];
 }

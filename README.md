@@ -23,7 +23,7 @@ The player-facing rules, in full, one topic a page:
 | Page | What it covers |
 |---|---|
 | [How to play](docs/gameplay/how-to-play.md) | The game in brief: the hand, the currencies, ending a climb |
-| [First steps](docs/gameplay/first-steps.md) | The first runs and their lessons, the tab bar and its dots, the forest and its sign, moving by hand, the Archives lesson |
+| [First steps](docs/gameplay/first-steps.md) | The first runs and their lessons, the Divine Portal, the tab bar and its dots, the forest and its sign, moving by hand, the Archives lesson |
 | [The hand and cards](docs/gameplay/hand-and-cards.md) | The hand and every card, card levels, rarity, ascension and powers, the Deck page, pressing a card, Ignore and Target, Badges |
 | [Upgrades](docs/gameplay/upgrades.md) | The skill trees' tabs, prices and help, Critical |
 | [Gear and Equipment](docs/gameplay/gear-and-equipment.md) | Provisions, the Blacksmith and Equipment |

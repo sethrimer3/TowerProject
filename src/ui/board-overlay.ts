@@ -76,6 +76,15 @@ export class BoardOverlay {
       this.hall();
       return;
     }
+    // The Divine Portal and the Divine Relic's chest say what they are and
+    // the hero walks there; in the builders' room it walks wherever tapped.
+    const game = this.game, divine = game.atPortal(x, y) || (game.inDivineRoom && game.world.tile(x, y).kind === "reward");
+    if (!game.run.outside && (divine || game.inDivineRoom)) {
+      if (divine) this.preview(x, y);
+      else this.hide();
+      game.walkTo(x, y);
+      return;
+    }
     if (this.game.run.outside || this.isHighlighted({ x, y })) {
       this.hide();
       this.game.walkTo(x, y);

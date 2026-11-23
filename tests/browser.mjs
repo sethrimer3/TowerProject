@@ -1,6 +1,6 @@
 import { chromium } from "@playwright/test";
 import { fixClock } from "./fixed-clock.mjs";
-import { openMenu } from "./run-menu.mjs";
+import { holdAnchor, openMenu } from "./run-menu.mjs";
 const browser = await chromium.launch({
   headless: true,
   channel: process.env.PLAYWRIGHT_CHANNEL || "msedge",
@@ -86,7 +86,9 @@ await openMenu(page); await page.locator("#auto-settings").click();
 await page.locator("#settings-back").click();
 if (!(await page.locator("#world").isVisible()))
   throw Error("Back should return to the board");
-// Inside a run the tabs are hidden: end the first Tower run to reach the forest.
+// Inside a run the tabs are hidden: end the first Tower run to reach the forest
+// (with the Chrono Anchor, which the first climb needs to end).
+await holdAnchor(page);
 await openMenu(page); await page.locator("#end-run").click();
 await page.locator("#confirm").click();
 await toDelve();

@@ -18,7 +18,9 @@ import { goldIcon, itemSprite, uiSprite } from "./dom.ts";
 
 /** What the inspect panel says about one board tile. */
 export type TileInfo = { color: string; title: string; body: string };
-type Board = Pick<Game, "world" | "run" | "mode" | "stepRules" | "save" | "enemyGold" | "chestGold"> & { fights?: Pick<Game["fights"], "brokenAt"> };
+type Board = Pick<Game, "world" | "run" | "mode" | "stepRules" | "save" | "enemyGold" | "chestGold"> & { fights?: Pick<Game["fights"], "brokenAt"> } & Partial<Pick<Game, "atPortal" | "inDivineRoom">>;
+/** The Divine Portal's and the Divine Relic's gold (divine.ts). */
+const DIVINE_COLOR = "#ffd76a";
 type Describe = (t: Tile, p: Player, g: Board, at: { x: number; y: number }) => Omit<TileInfo, "color">;
 
 const KIND_COLORS: Partial<Record<Kind, string>> = {
@@ -257,6 +259,9 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
 /** Title, colour and HTML body for the tile at (x, y), as seen by the player. */
 export function tileInfo(g: Board, x: number, y: number): TileInfo {
   const t = g.world.tile(x, y);
+  if (g.atPortal?.(x, y)) return { color: DIVINE_COLOR, title: "Divine Portal", body: g.inDivineRoom ? "Return to source." : "A unique opportunity." };
+  if (g.inDivineRoom && t.kind === "reward") return { color: DIVINE_COLOR, title: "Divine Relic", body: "A unique opportunity, granted by the builders themselves." };
+  if (g.inDivineRoom && t.kind === "floor" && litTorches(g.world).has(point(x, y))) return { color: "#f2b25c", title: "Torch", body: "A torch the builders lit, burning for good." };
   const describe = DESCRIBE[t.kind];
   if (t.flyer) return { color: KIND_COLORS.enemy!, title: enemyTitle(t.flyer, g.save.settings.legacyEnemies), body: flyerInfo(t.flyer, g.run.player, g.run.outside ? 0 : g.enemyGold(x, y)) };
   if (t.kind === "door") return { color: doorColor(t), ...describe!(t, g.run.player, g, { x, y }) };

@@ -23,4 +23,5 @@ The game is silent until the first press or key, which is when browsers let a pa
 - In the forest clearing, the Blacksmith works at his forge, louder the closer the hero stands.
 - At the lake, soft meditative music plays, and water laps at the shore, louder the closer the hero is to the fisherman.
   The music plays on at sea, sailing with the fisherman.
+- On floor 999999, the [Divine Portal](first-steps.md#the-divine-portal)'s room, only the Divine Relic's hum plays, louder the closer the hero is to its chest; opening the chest plays its own fanfare.
 - Inside the Tower and the Delve there is no ambience; Battery saver plays none.

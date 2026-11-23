@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-23", text: "A Divine Portal on the first climb's floor 2 leads to floor 999999 and the Chrono Anchor; the Codex gains a Story." },
   { date: "2026-11-23", text: "Every outline now skips diagonal corners, and torches, barrels, crates and walls wear one too." },
   { date: "2026-11-22", text: "Infinity pixels, glow and trails fade smoothly to invisible as they reach the returning hero." },
   { date: "2026-11-22", text: "Moss grows seamlessly across the floor, and native sprites stay crisp on small and large screens." },

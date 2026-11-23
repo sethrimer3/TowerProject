@@ -25,7 +25,7 @@ export const PROVISIONS_NOTE = { title: "Provisions unlocked.", text: "Press the
 
 /** The `story` lesson's notes, tapped through one after the other. */
 export const STORY = [
-  "The weakest delver has discovered the divine Chronos Anchor and can move their soul backwards in time!",
+  "The weakest delver has discovered the divine Chrono Anchor and can move their soul backwards in time!",
   "Make the most of each tower climb to gain inspiration and resources.",
   "Use your gains to upgrade your abilities for future climbs.",
   "Unlock permanent powers and knowledge that stay with you across time in the world.",

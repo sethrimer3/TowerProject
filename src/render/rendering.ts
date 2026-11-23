@@ -47,6 +47,9 @@ import { drawPhantasms } from "./effects/phantasm.ts";
 import { drawFrostFields } from "./effects/necrotic-frost.ts";
 import { FamiliarLayer, drawEnemyStates } from "./effects/familiars.ts";
 import { drawVortex } from "./effects/voidwell.ts";
+import { drawDivinePortal, drawPortalFade, drawRelicSparkles } from "./effects/divine.ts";
+import { DIVINE_CHEST } from "../tower/divine-room.ts";
+import { PORTAL_FADE_MS } from "../divine.ts";
 import { drawOverseerBeams } from "./effects/overseer-beams.ts";
 import { drawSmite, SMITE_MS } from "./effects/smite.ts";
 import { drawExplosion, EXPLOSION_MS } from "./effects/explosion.ts";
@@ -275,6 +278,10 @@ export class Renderer {
    * the lights on the stairs and hero, the boss's flash and the chests'
    * stars, which its own sprites show). */
   private drawOverlays(f: FrameContext, battery = false) {
+    // The Divine Portal and the Divine Relic's sparkles shine above the darkness.
+    const portal = this.game.divinePortal;
+    if (portal) drawDivinePortal(f, portal);
+    if (this.game.inDivineRoom && this.game.world.tile(DIVINE_CHEST.x, DIVINE_CHEST.y).kind === "reward") drawRelicSparkles(f, DIVINE_CHEST);
     // Overseer's beams lighten the board above the darkness, under everything marked on it.
     const beams = this.game.arcana.beams;
     if (beams) drawOverseerBeams(f, beams, this.game.turnClock);
@@ -329,6 +336,8 @@ export class Renderer {
     if (vanished) drawPoof(f, vanished.x, vanished.y, f.now - vanished.at);
     const bombed = this.game.bombed;
     if (bombed) drawExplosion(f, bombed.x, bombed.y, f.now - bombed.at);
+    // Last of all, the floor fading through a Divine Portal.
+    drawPortalFade(f, this.game.portalWarp, this.game.portalArrived);
   }
   /** The forest clearing: its contents, the entrance, the route, the hero
    * in its grass, and the weather. */
@@ -622,12 +631,13 @@ export class Renderer {
    * (with the Blacksmith's forge, once it stands) or the lake. */
   private surroundings(): Surroundings {
     const g = this.game, w = g.world, p = g.run.player;
-    const place = !(w instanceof OutsideWorld) ? "inside" : w instanceof LakeWorld ? "lake" : "forest";
+    const place = g.inDivineRoom ? "divine" : !(w instanceof OutsideWorld) ? "inside" : w instanceof LakeWorld ? "lake" : "forest";
     const forge = place === "forest" && (w as OutsideWorld).blacksmith ? { x: (w as OutsideWorld).entranceX + BLACKSMITH.dx + 1, y: BLACKSMITH.y + 1 } : undefined;
     return {
       place, weather: outsideWeather(g.run.seed), weatherSound: g.save.settings.weatherSound, hero: { x: p.x, y: p.y },
       ...(forge ? { blacksmith: forge } : {}),
       ...(place === "lake" ? { fisherman: FISHERMAN } : {}),
+      ...(place === "divine" ? { relic: DIVINE_CHEST } : {}),
     };
   }
   private drawWeather(f: FrameContext) {
@@ -902,7 +912,7 @@ export class Renderer {
    * effect is playing. (Torches and grass still sway.) Used by Battery saver. */
   isIdle(now: number) {
     const g = this.game;
-    return this.settled() && !g.walkIn && !g.forestArrival && !g.route.length && !g.fights.encounter && this.popups.idle(now) && !this.decor.busy && this.effectsOver(now);
+    return this.settled() && !g.walkIn && !g.forestArrival && !g.portalWarp && now - g.portalArrived > PORTAL_FADE_MS && !g.route.length && !g.fights.encounter && this.popups.idle(now) && !this.decor.busy && this.effectsOver(now);
   }
   /** Where the hero is drawn headed: its tile, or walking in through the
    * forest's entrance, up in its arch. */

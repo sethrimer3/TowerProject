@@ -1,4 +1,5 @@
 import { play } from "../sound.ts";
+import { DIVINE_FLOOR } from "../divine.ts";
 import { kitIcon } from "../sprites/kit.ts";
 import { spriteFontRevision } from "../sprites/font.ts";
 import { amountUnit, enemyStat, keyCount, shortAmount, stepsIn, whole, wholeHp } from "../whole.ts";
@@ -298,7 +299,7 @@ export function renderMissionsButton(game: Game) {
 export function renderEventsButtons(game: Game) {
   const button = el("events-button"), events = game.events;
   button.hidden = !events.unlocked;
-  el("relics-button").hidden = !game.run.outside || (!events.unlocked && game.save.relics.length === 0);
+  el("relics-button").hidden = !game.run.outside || (!events.unlocked && game.save.relics.length === 0 && game.save.divineRelics.length === 0);
   el("shrines-button").hidden = !game.run.outside || !shrinesOpen(game.save);
   if (button.hidden) return;
   text("events-state", shortCountdown(events.info.endsAt - events.now));
@@ -784,7 +785,7 @@ function renderProgress(game: Game) {
   text("height-label", (outside ? rules.words.tierName : rules.words.progress).toUpperCase());
   const rawRunBest = game.run.maxHeight ?? game.run.height;
   const rawAllBest = game.save[game.mode].best;
-  text("height", outside ? (game.mode === "delve" ? `${LEAGUE_INFO[game.delveLeague].cave}+` : game.save.tower.tier) : displayedProgress(game.run.height));
+  text("height", outside ? (game.mode === "delve" ? `${LEAGUE_INFO[game.delveLeague].cave}+` : game.save.tower.tier) : game.inDivineRoom ? DIVINE_FLOOR : displayedProgress(game.run.height));
   // Once Note Taking is researched, the floor number opens the run's notes.
   const notes = !outside && notesResearched(game.save), height = document.querySelector<HTMLElement>(".height")!;
   if (height.classList.contains("takes-notes") !== notes) {

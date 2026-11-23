@@ -136,6 +136,7 @@ export class CodexPage {
 
   private sectionHtml(category: CodexCategory, s: CodexSection) {
     const key = `${category.id}/${s.id}`, open = this.expanded.has(key) ? !!s.collapsed : !s.collapsed;
+    if (s.prose) return `<details class="codex-section codex-story" data-codex-section="${key}"${open ? " open" : ""}><summary><span>${s.title}</span>${pngIcon("ui-chevron-down", "codex-chevron")}</summary><div class="codex-prose">${s.prose.map((p) => `<p>${p}</p>`).join("")}</div></details>`;
     const body = !s.entries.length
       ? `<p class="hint">${s.hint ?? "None yet."}</p>`
       : s.table

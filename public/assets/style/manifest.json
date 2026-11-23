@@ -4414,6 +4414,11 @@
       "file": "familiar-stun.png",
       "width": 11,
       "height": 8
+    },
+    "relic-divine-chrono-anchor": {
+      "file": "relic-divine-chrono-anchor.png",
+      "width": 24,
+      "height": 24
     }
   }
 }

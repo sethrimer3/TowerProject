@@ -11,6 +11,7 @@ Pressing a section's heading collapses or expands it, the chevron at its right s
 An entry with more to tell expands under a + (a − once open); one with a single stat or rank shows it after its name instead.
 
 - **General**: the game's big ideas (the Tower, its floors, cards and ascension, keys and doors, Goals, new towers, the Delve, the Proving Grounds, Missions, Events, Relics, the Shop), Free Daily Gems, with a button to that offer in the Shop, and How to progress, a list of tips for when you're stuck.
+- **Story**: the tale so far, a chapter a collapsible section, opened once the first climb has ended: its **Intro** tells of the towers and dungeons, the young adventurer delving to raise their family out of debt, and the Chrono Anchor.
 - **Currencies**: every currency you've earned, what it's for and, after its name, how much you hold, as *(Have 120)* (Silver only inside a climb).
 - **Tower Elements**: stairs, each colour of key beside its door's coloured tile, Wooden and Multi Doors, potions, shards, chests, torches, Gems, then Heart Doors.
   Blue, red and Heart Doors show once you've climbed to them, and Multi Doors with red.

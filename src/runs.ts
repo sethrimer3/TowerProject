@@ -223,6 +223,10 @@ export type TowerRun = RunCore & {
   /** The run's boons (shrines.ts): absent until Shrines are researched and
    * the first is earned. */
   shrine?: ShrineRun;
+  /** The hero stands in the builders' room on floor 999999 (divine.ts,
+   * tower/divine-room.ts), through the Divine Portal on floor 2; the run's
+   * `height` stays floor 2's, whose start it returns to. */
+  divine?: true;
 };
 /** A Delve descent. */
 export type DelveRun = RunCore & {

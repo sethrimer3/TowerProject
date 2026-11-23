@@ -625,6 +625,7 @@ export const SPRITE_ASSETS = [
   "assets/style/relic-crystalCaverns-2027-free2.png",
   "assets/style/relic-crystalCaverns-2027-premium1.png",
   "assets/style/relic-crystalCaverns-2027-premium2.png",
+  "assets/style/relic-divine-chrono-anchor.png",
   "assets/style/relic-dragonsHatchery-2027-free1.png",
   "assets/style/relic-dragonsHatchery-2027-free2.png",
   "assets/style/relic-dragonsHatchery-2027-premium1.png",

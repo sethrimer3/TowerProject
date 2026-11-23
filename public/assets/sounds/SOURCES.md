@@ -36,6 +36,7 @@ The game cross-fades each loop's end into its start.
 | events/run-stuck.ogg | run stuck.mp3 |
 | events/enter-tower.ogg | entering tower.m4a |
 | events/enter-delve.ogg | entering cave delve.mp3 |
+| events/divine-relic.ogg | obtain divine relic.m4a |
 | battle/arrow-hit-flesh.ogg | arrow hits flesh.mp3 |
 | battle/melee-punch.ogg | impact or punch or hit.mp3 |
 | battle/explosion-small.ogg | freesound_community-medium-explosion-40472.mp3 |
@@ -47,3 +48,4 @@ The game cross-fades each loop's end into its start.
 | ambience/blacksmith.ogg | blacksmith ambient noises when player is by blacksmith shop.m4a |
 | ambience/dock-water.ogg | dock water lapping at shore.mp3 |
 | ambience/meditative.ogg | soft meditative sound loop music.mp3 |
+| ambience/divine-relic.ogg | divine relic ambiance.m4a |

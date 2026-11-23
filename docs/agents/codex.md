@@ -23,6 +23,9 @@ A locked skill's cost to reach (`costToReach`) sums its next rank's price and th
 Links name a `CodexTarget`; `main.ts`'s `followCodex` opens the page on what it points at (`DeckPage.focus` opens a card's details, `SkillTreePage.focus`/`showTree`, `ResearchPage.show`, `GearPage.openEquipment`/`openArcana`, `ShopPage.focusOffer` scrolls to and lights an offer).
 A link to a page only the forest opens (Deck, Upgrades, Gear, Goals, Relics, Shrine Boons) is disabled inside a climb, with a note.
 
+The Story category (`story` in codex.ts) tells the tale a chapter a section: a section's `prose` (its paragraphs) draws as a collapsible passage instead of entries (`codex-story`, `.codex-prose`).
+Its Intro (`STORY_INTRO`) shows, and the tab opens, once the first Tower climb has ended (`tutorials.chamber`), or with Access to Everything; its tab wears the Chrono Anchor (docs/agents/divine.md).
+
 The Familiars category opens with Events (or a familiar hatched) and shows each with its brief (`FAMILIAR_BRIEFS`), a hatched one its levels.
 
 **Adding to it.**

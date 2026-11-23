@@ -12,6 +12,7 @@ import type { Save } from "./save/shape.ts";
 import { LAYOUT_VERSION, World } from "./delve/world.ts";
 import { depthAt } from "./delve/labyrinth.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
+import { DivineRoom } from "./tower/divine-room.ts";
 import type { Board } from "./board.ts";
 import { runExtras, runFoeCut } from "./cards/powers.ts";
 import { weakened } from "./shrines.ts";
@@ -112,7 +113,7 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
     width: TOWER_WIDTH,
     entranceX: TOWER_START_X,
     layoutVersion: TOWER_LAYOUT_VERSION,
-    board: (run) => new RoomWorld(run.seed, run.height, run.changes, run.percentPotions, run.tier, runExtras(run), weakened((run as TowerRun).shrine?.applied?.foes, runFoeCut(run)), run.chestOdds, run.doorOdds, run.treasureFloor, run.levelSkips),
+    board: (run) => (run as TowerRun).divine ? new DivineRoom(run.changes) : new RoomWorld(run.seed, run.height, run.changes, run.percentPotions, run.tier, runExtras(run), weakened((run as TowerRun).shrine?.applied?.foes, runFoeCut(run)), run.chestOdds, run.doorOdds, run.treasureFloor, run.levelSkips),
     endGold: () => 0,
     // Tower floors reuse the same x/y space, so the floor is part of the key.
     lootKey: (run, x, y) => `${run.seed}:${run.height}:${x},${y}`,

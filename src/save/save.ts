@@ -27,6 +27,7 @@ import { decodeMail, defaultMail } from "../mail/progress.ts";
 import { decodeMissions, defaultMissions } from "../missions/progress.ts";
 import { decodeEvents, defaultEvents } from "../events/progress.ts";
 import { decodeRelics } from "../economy/relics.ts";
+import { decodeDivineRelics, hasAnchor } from "../divine.ts";
 import { decodeGifts, defaultGifts } from "../economy/gifts.ts";
 import { decodeReview, defaultReview } from "../review-prompt.ts";
 import { decodeMusic } from "../events/music.ts";
@@ -113,6 +114,7 @@ export function defaults(): Save {
     missions: defaultMissions(),
     events: defaultEvents(),
     relics: [],
+    divineRelics: [],
     gifts: defaultGifts(),
     review: defaultReview(),
     shrines: defaultShrines(),
@@ -191,7 +193,7 @@ const validPlayer = (p: any, width: number) =>
 const validCore = (r: any, width: number) =>
   !!r && validOutside(r) && validCounters(r) && validPlayer(r.player, r.outside ? Math.max(width, OUTSIDE_SIZE) : width) && validChanges(r.changes);
 const validDelveState = (r: any) => Number.isInteger(r.milestone) && finite(r.milestone);
-const TOWER_FIELDS = ["forestArea", "damaged", "enemiesLeft", "summoned", "start", "shrine"];
+const TOWER_FIELDS = ["forestArea", "damaged", "enemiesLeft", "summoned", "start", "shrine", "divine"];
 const DELVE_FIELDS = ["milestone", "tournament"];
 /** Training ranks bought in a run: known rows, each a whole number of
  * ranks, no more than the row reaches in a run with every Limit Break. */
@@ -293,7 +295,7 @@ function decodeTowerRun(r: any): TowerRun | null {
   if (!validCore(r, TOWER_WIDTH)) return null;
   // Older runs have no damage history; do not assume a perfect attempt.
   r.damaged = r.damaged !== false;
-  dropInvalid(r, { summoned: (v: unknown) => Array.isArray(v) && v.every(Number.isInteger), start: (v: unknown) => Number.isInteger(v) && (v as number) > 0, shrine: validShrineRun, enemiesLeft: (v: unknown) => v === true });
+  dropInvalid(r, { summoned: (v: unknown) => Array.isArray(v) && v.every(Number.isInteger), start: (v: unknown) => Number.isInteger(v) && (v as number) > 0, shrine: validShrineRun, enemiesLeft: (v: unknown) => v === true, divine: (v: unknown) => v === true && !r.outside && (r.tier ?? 1) === 1 });
   return without(r, [...DELVE_FIELDS, "keysSpent", "floors"]);
 }
 /** Validate an untrusted Delve run; null unless it has the shape a
@@ -543,6 +545,7 @@ export function decode(raw: string | null): Save {
     d.missions = decodeMissions(s.missions);
     d.events = decodeEvents(s.events);
     d.relics = decodeRelics(s.relics);
+    d.divineRelics = decodeDivineRelics(s.divineRelics);
     d.gifts = decodeGifts(s.gifts);
     settlePerks(d);
     d.review = decodeReview(s.review);
@@ -574,6 +577,8 @@ export function decode(raw: string | null): Save {
     d.cardAscension = decodeCardAscension(s.cardAscension);
     d.badges = decodeBadges(s.badges, d.upgrades, researched(d.archives, "badgeSlots"), d.goals);
     for (const k of ["story", "arcana", "deck", "removeCard", "addCard", "upgrades", "gear", "onTheJob", "speed", "climb", "keys", "autoClimb", "stuck", "enemy", "enter", "training", "delve", "chamber", "research", "archives", "goals", "autoClimbHint", "trainerGift", "trainers"] as const) d.tutorials[k] = s.tutorials?.[k] === true;
+    // A player whose first climb ended before the Divine Portal has looped through time already: they hold the Chrono Anchor.
+    if (d.tutorials.chamber && !hasAnchor(d)) d.divineRelics = decodeDivineRelics([...d.divineRelics, "chronoAnchor"]);
     // A player who already has a trainer from before the gift needs no lesson on hiring one.
     if (beforeTrainerGift(s, d)) d.tutorials.trainerGift = d.tutorials.trainers = true;
     // A player who has already researched in the Archives needs no lesson on them.

@@ -16,22 +16,27 @@ const ARM_POINTS = 24;
 /** How long the vortex takes to turn once, in ms. */
 const TURN_MS = 9000;
 
-/** The vortex round (x, y), `radius` wide, its rim `rim` thick: `still`, it doesn't turn. */
-export function paintVortex(c: CanvasRenderingContext2D, x: number, y: number, radius: number, rim: number, now: number, still: boolean) {
+/** A vortex's colours: its middle, its edge, its rim and its arms. */
+export type VortexPalette = { core: string; edge: string; rim: string; arm: string };
+const VOIDWELL: VortexPalette = { core: CORE, edge: EDGE, rim: RIM, arm: ARM };
+
+/** The vortex round (x, y), `radius` wide, its rim `rim` thick, in
+ * `palette`'s colours (Voidwell's by default): `still`, it doesn't turn. */
+export function paintVortex(c: CanvasRenderingContext2D, x: number, y: number, radius: number, rim: number, now: number, still: boolean, palette: VortexPalette = VOIDWELL) {
   c.save();
   const shade = c.createRadialGradient(x, y, 0, x, y, radius);
-  shade.addColorStop(0, CORE);
-  shade.addColorStop(1, EDGE);
+  shade.addColorStop(0, palette.core);
+  shade.addColorStop(1, palette.edge);
   c.beginPath();
   c.arc(x, y, radius, 0, Math.PI * 2);
   c.fillStyle = shade;
   c.fill();
   c.lineWidth = rim;
-  c.strokeStyle = RIM;
+  c.strokeStyle = palette.rim;
   c.stroke();
   c.lineCap = "round";
   c.lineWidth = Math.max(1, radius / 24);
-  c.strokeStyle = ARM;
+  c.strokeStyle = palette.arm;
   const spin = still ? 0 : (-now / TURN_MS) * Math.PI * 2;
   for (let arm = 0; arm < ARMS; arm++) {
     const start = spin + (arm / ARMS) * Math.PI * 2;

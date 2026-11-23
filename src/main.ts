@@ -82,6 +82,7 @@ import { RelicsPage } from "./ui/relics-page.ts";
 import { CodexPage } from "./ui/codex-page.ts";
 import type { CodexTarget } from "./codex/codex.ts";
 import { noteDiscoveries } from "./codex/discovery.ts";
+import { showDivineRelic } from "./ui/relic-pop.ts";
 import { ShrinesPage } from "./ui/shrines-page.ts";
 import { showShrine } from "./ui/shrine-dialog.ts";
 import { uiLook } from "./theme-collection.ts";
@@ -255,12 +256,22 @@ function update() {
   researchToasts.add(finished);
   // The Codex remembers the arcana and Uniques the player has come across.
   if (!provingGrounds.active) noteDiscoveries(game.save.codex, game.save, game.arcana.held.map((h) => h.id));
+  showDivineReveal();
   save();
   tournamentEntry.check();
   runEnd.check();
   // The run's end, a fall or a lesson takes cinematic mode away at once.
   if (cinematic.active) cinematic.tick();
   renderBatteryHud(shownGame());
+}
+/** The Divine Relic just taken from the builders' chest rises to the middle
+ * of the screen, once; dismissed, the portal back opens (`Game.divineReveal`). */
+let divineShown: Game["divineReveal"] = null;
+function showDivineReveal() {
+  const reveal = game.divineReveal;
+  if (!reveal || reveal === divineShown) return;
+  divineShown = reveal;
+  showDivineRelic(reveal.relic, { obtained: true, reduceMotion: game.save.settings.reduceMotion, dismissed: () => { game.dismissDivineReveal(); update(); } });
 }
 /** The board follows the game's mode: walking down the forest path
  * swaps it (`Game.swapForest`) without a tab press. */

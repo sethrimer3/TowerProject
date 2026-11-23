@@ -435,6 +435,10 @@ test("a first stuck run's lesson waits on End Run; the forest's then lead to Doo
   blocked(g, { kind: "wall" });
   g.autoTurn();
   assert.ok(g.handStuck);
+  // The first climb can't end until the Chrono Anchor is held (divine.ts).
+  assert.equal(g.boardLesson, null);
+  assert.ok(g.endLocked);
+  g.save.divineRelics = ["chronoAnchor"];
   assert.equal(g.boardLesson, "stuck");
   g.endRunPressed();
   assert.ok(g.save.tutorials.stuck);
@@ -461,6 +465,7 @@ test("a first stuck run's lesson waits on End Run; the forest's then lead to Doo
 test("stuck behind an enemy without Enemy, with its Inspiration held, the lesson sends the player to buy it", () => {
   const g = new Game(taught());
   g.save.tutorials.stuck = true;
+  g.save.divineRelics = ["chronoAnchor"];
   g.save.upgrades.cardEnemy = 0;
   g.save.hand = g.run.hand = ["stairs", "door", "key"];
   blocked(g, SLIME);

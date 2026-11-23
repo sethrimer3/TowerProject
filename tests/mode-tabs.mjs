@@ -2,7 +2,7 @@ import { chromium, expect } from "@playwright/test";
 import {mkdirSync} from "node:fs";
 import { fixClock } from "./fixed-clock.mjs";
 import assert from "node:assert/strict";
-import { openMenu } from "./run-menu.mjs";
+import { holdAnchor, openMenu } from "./run-menu.mjs";
 
 const browser = await chromium.launch({
   headless: true,
@@ -33,6 +33,8 @@ await expect(page.locator("#world")).toBeVisible({timeout:30000});
 // keep their row; ending the run returns to the forest and shows them.
 assert.equal(await page.locator('[data-tab="board"]').isVisible(), false, "Tabs should be hidden inside a run");
 assert.ok((await page.locator("nav").boundingBox()).height > 40, "The tab row should keep its space inside a run");
+// The first climb ends only with the Chrono Anchor (src/divine.ts).
+await holdAnchor(page);
 await openMenu(page); await page.locator("#end-run").click();
 await page.locator("#confirm").click();
 

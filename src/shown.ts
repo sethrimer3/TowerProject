@@ -20,7 +20,7 @@ import type { StepEffect } from "./step-effects.ts";
  * level rising; walking into the Tower or the Delve, or a Warp; the hand
  * finding nothing it can do. */
 export type GameCue = "attackShard" | "defenseShard" | "potion" | "key" | "chestCreak" | "door1" | "door2" | "door3" | "elixir" | "provision" | "gem" | "gemGolden" | "gemStellar"
-  | "heroLevelUp" | "enterTower" | "enterDelve" | "warp" | "runStuck";
+  | "heroLevelUp" | "enterTower" | "enterDelve" | "warp" | "runStuck" | "divineRelic";
 export type GainStrike = "crit" | "superCrit";
 export type Gain = { x: number; y: number; text: string; art: GainArt | null; drop?: Drop; strike?: GainStrike };
 /** Where one of a kill's or a chest's drops rises: `row` rows above its tile (below,

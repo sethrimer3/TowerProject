@@ -106,6 +106,7 @@ Read the area's doc before changing code there or answering questions about it; 
 - `arcana.md`: Arcana (`src/arcana/`, `game/arcana-desk.ts`): the catalog and triggers, buying, Arcanum Damage, Ricochet Shot, Aurum Bloom, Overseer, Thunderbolt, Lifespring, Time Dilation, Phantasm, Necrotic Frost, Voidwell, the run's toggles, the Shrine boons, their UI and how they work in a trial.
 - `environments.md`: Floor Environments (`src/environments.ts`): Treasure, Golden and Stellar Floors, their rolls, their Gold and Silver, drawing and the enemy stats box's table.
 - `familiars.md`: Familiars (`src/familiars/`, `game/familiar-desk.ts`): the catalog and prices, paths, the turn, burn, linger, the tag and the Falcon's Gold, their tab, reveal and drawing.
+- `divine.md`: the first climb's Divine Portal (`src/divine.ts`), the builders' room on floor 999999 (`tower/divine-room.ts`), the Chrono Anchor, the End Climb lock and the Divine Relics.
 - `codex.md`: the Codex (`src/codex/`, `ui/codex-page.ts`): its categories as data, briefs, discovery (`save.codex`), links and its tests.
 - `goldens.md`: which goldens a change moves, the browser goldens, recording them.
 - `testing.md`: browser test setup.
@@ -164,6 +165,7 @@ While iterating, run only the tests for the area you touched, then `npm test` on
 | Arcana (`arcana/`, `game/arcana-desk.ts`, `volley.ts`, `proving-grounds/trial-arcana.ts`) | `tests/arcana.test.ts tests/arcana-boons.test.ts tests/overseer.test.ts tests/thunderbolt.test.ts tests/thunderbolt-research.test.ts tests/ricochet-shock.test.ts tests/lifespring.test.ts tests/time-dilation.test.ts tests/phantasm.test.ts tests/phantasm-research.test.ts tests/necrotic-frost.test.ts tests/necrotic-frost-research.test.ts tests/voidwell.test.ts tests/volley.test.ts tests/shrines.test.ts tests/save.test.ts` |
 | Familiars (`familiars/`, `game/familiar-desk.ts`) | `tests/familiar*.test.ts tests/marks-reload.test.ts tests/engine-independence.test.ts tests/save.test.ts` |
 | Saves and settings | `tests/save.test.ts tests/settings.test.ts` |
+| Divine Portal and Relics (`divine.ts`, `tower/divine-room.ts`) | `tests/divine.test.ts tests/game-commands.test.ts tests/codex.test.ts tests/save.test.ts tests/sounds.test.ts` |
 | Board drawing, camera, lighting, decor art | `tests/render-calls.test.ts tests/camera.test.ts tests/lighting-passes.test.ts tests/art-modules.test.ts tests/decor.test.ts tests/themed-boards.test.ts` |
 | Outside and weather | `tests/outside*.test.ts tests/outdoor-art.test.ts tests/torch-light.test.ts` |
 | Sound and ambience (`sound.ts`, `sound-files.ts`, `ambience.ts`, `render/board-sounds.ts`) | `tests/sounds.test.ts tests/outdoor-art.test.ts tests/settings.test.ts tests/save.test.ts` |

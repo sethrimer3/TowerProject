@@ -8,7 +8,8 @@ import { GIFT_RARITIES, GIFTS, giftCount, giftTotals } from "../economy/gifts.ts
 import { GIFT_STAT_NAMES, GIFT_TEXT } from "../economy/gift-effects.ts";
 import { RARITIES as RARITY_TABLE } from "../shop/rarity.ts";
 import { giftItemIcon } from "./gift-icons.ts";
-import { relicButton } from "./relic-pop.ts";
+import { divineRelicIcon, relicButton, showDivineRelic } from "./relic-pop.ts";
+import { DIVINE_RELICS, DIVINE_RELIC_IDS, type DivineRelicId } from "../divine.ts";
 import { seesAll } from "../access.ts";
 
 /** The Relics screen (docs/EVENTS.md): every relic the player has won over
@@ -51,7 +52,7 @@ export class RelicsPage {
     el("relics").innerHTML =
       `<button class="missions-close" id="relics-close" aria-label="Close" title="Close">${controlIcon("close")}</button>` +
       `<div class="page-title"><small>KEEPSAKES OF EVENTS AND TOWERS</small><h2>Relics${helpButton("About relics", "relics-help")}</h2></div>` +
-      this.giftsHtml() + RARITIES.map(section).join("");
+      this.giftsHtml() + RARITIES.map(section).join("") + this.divineHtml();
     el("relics-close").onclick = () => this.ctx.navigate(this.from || "board");
     const gifts = el("relics-gifts") as HTMLDetailsElement;
     gifts.ontoggle = () => {
@@ -62,6 +63,17 @@ export class RelicsPage {
     el("relics-help").onclick = () => this.showHelp();
     const byId = new Map(relics), reduceMotion = this.ctx.game.save.settings.reduceMotion;
     el("relics").querySelectorAll<HTMLButtonElement>("[data-relic]").forEach((b) => relicButton(b, byId.get(b.dataset.relic!)!, reduceMotion));
+    el("relics").querySelectorAll<HTMLButtonElement>("[data-divine]").forEach((b) => (b.onclick = () => showDivineRelic(b.dataset.divine as DivineRelicId, { reduceMotion })));
+  }
+
+  /** The Divine category, after the rarities: the unique relics the
+   * builders themselves grant (divine.ts), in gold. */
+  private divineHtml() {
+    const save = this.ctx.game.save, owned = seesAll(save) ? DIVINE_RELIC_IDS : save.divineRelics;
+    const cell = (id: DivineRelicId) =>
+      `<button class="relic-cell divine" data-divine="${id}" aria-label="${DIVINE_RELICS[id].name}: ${DIVINE_RELICS[id].text}">${divineRelicIcon(id)}<small>${DIVINE_RELICS[id].name}</small></button>`;
+    return `<section class="relic-rarity divine" aria-label="Divine relics"><h3>Divine</h3>` +
+      (owned.length ? `<div class="relic-grid">${owned.map(cell).join("")}</div>` : `<p class="hint">None yet.</p>`) + `</section>`;
   }
 
   /** The Gifts section: its gift box and count in the heading, shown

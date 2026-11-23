@@ -47,10 +47,11 @@ export function closeRunMenu(reduceMotion = true) {
  * folded into it; in the forest those two stand in the column, under the
  * hamburger, so they are always in sight. */
 export function renderRunMenu(game: Game) {
-  const inside = !game.run.outside, stuck = inside && game.handStuck;
+  // The first climb can't end until the Chrono Anchor is held (divine.ts): no End Climb shows.
+  const inside = !game.run.outside, stuck = inside && game.handStuck, locked = game.endLocked;
   // The forest's menu has no Shop under the hamburger: one row of cells.
   el("run-menu").classList.toggle("forest", !inside);
-  el("end-run").hidden = !inside;
+  el("end-run").hidden = !inside || locked;
   el("run-research").hidden = !inside || !researchOpen(game.save);
   const tournament = el("tournament-button"), events = el("events-button");
   if (inside) {
@@ -63,7 +64,7 @@ export function renderRunMenu(game: Game) {
   setEndRunLabel(game);
   el("end-run").classList.toggle("deadlocked", stuck);
   el("stuck-end-run").classList.toggle("deadlocked", stuck);
-  el("stuck-end-run").hidden = !stuck;
+  el("stuck-end-run").hidden = !stuck || locked;
 }
 
 /** Names the End Run buttons for the mode: End Climb in the Tower, End Run

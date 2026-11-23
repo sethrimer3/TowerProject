@@ -58,6 +58,8 @@ export const ONE_SHOTS = {
   timeLoop: ["events/time-loop"],
   /** A Warp to another floor. */
   warp: ["events/warp"],
+  /** A Divine Relic obtained from the builders' chest. */
+  divineRelic: ["events/divine-relic"],
   /** The hand finding nothing it can do. */
   runStuck: ["events/run-stuck"],
   /** Walking from the forest into the Tower, or into the Delve's cave. */
@@ -96,6 +98,8 @@ export const BEDS = {
   dockWater: "ambience/dock-water",
   /** Soft, meditative music by the lake and at sea with the fisherman. */
   meditative: "ambience/meditative",
+  /** The Divine Relic's hum in the builders' room, louder nearer its chest. */
+  divineRelic: "ambience/divine-relic",
 } as const satisfies Record<string, string>;
 export type Bed = keyof typeof BEDS;
 

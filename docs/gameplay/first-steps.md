@@ -73,9 +73,22 @@ A new game starts inside its first Tower run with a hand of one card, **Stairs**
 Until the Inspiration tree's **Auto-Climb** is owned, the hand moves only when you press a card: the hero heads for that card's target, and once it gets there the hand waits for your next press (see Pressing a card in hand-and-cards.md).
 A note over the board, headed *Welcome, adventurer!* and then *Press the Stairs card to climb*, says each card sends the hero toward what it names, while a hand points at Stairs; play and the speed arrows stay closed until Stairs is pressed, and the hero then walks at 2 steps a second.
 Floor 1's stairs always stand open, so Stairs climbs it, paying the run's first Inspiration; floor 2's stairs are behind a gold door Stairs can't open.
-The first time no card can take the hero further, a note says the Inspiration the run earned unlocks new abilities and to press **End Climb**, which pulses slowly until it is pressed.
+
+### The Divine Portal
+
+On floor 2 of that first climb a golden vortex swirls a few steps from the way in: the **Divine Portal**.
+Tapping it says *Divine Portal* and *A unique opportunity.*, and the hero walks to it; nothing else on the floor can be reached, and the climb can't be ended yet (the End Climb buttons stay hidden).
+Stepping in plays the warp's sound, the floor fades, and the hero arrives on floor **999999**: a quiet room walled round its edge, a torch lit in each corner, and a sparkling golden chest in the middle.
+Tapping the chest says *Divine Relic* and *A unique opportunity, granted by the builders themselves.*; in this room the hero walks wherever you tap, and the only sound is the relic's hum, louder the nearer the chest.
+Opening the chest gives the **Chrono Anchor**: it rises to the middle of the screen in golden light with its name, *A unique, one-in-a-trillion artifact, enabling you to loop through time.* and *Click anywhere to dismiss.*
+Once dismissed, a second portal opens at the top of the room; tapped, it says *Divine Portal* and *Return to source.*, and stepping in brings the hero back to floor 2's entrance, the floor starting again.
+The portal never appears again, and the Chrono Anchor stays in the Relics page's gold **Divine** section for good.
+Holding it is what lets a climb end and begin again, keeping what was earned.
+
+The first time no card can take the hero further (back on floor 2 with the Chrono Anchor), a note says the Inspiration the run earned unlocks new abilities and to press **End Climb**, which pulses slowly until it is pressed.
+Ending that first climb also opens the Codex's **Story** tab, its Intro telling the tale so far.
 Back in the forest the story comes first, in four notes over the board, each tap showing the next while the time loop's infinity symbol draws further across their header, closing on the last:
-*The weakest delver has discovered the divine Chronos Anchor and can move their soul backwards in time!*, *Make the most of each tower climb to gain inspiration and resources.*, *Use your gains to upgrade your abilities for future climbs.* and *Unlock permanent powers and knowledge that stay with you across time in the world.*
+*The weakest delver has discovered the divine Chrono Anchor and can move their soul backwards in time!*, *Make the most of each tower climb to gain inspiration and resources.*, *Use your gains to upgrade your abilities for future climbs.* and *Unlock permanent powers and knowledge that stay with you across time in the world.*
 Until the last note is tapped, nothing else on the screen can be pressed.
 In the forest a note then says to spend the Inspiration, a hand pointing at the **Upgrades** tab, while **Door & Key** can be bought.
 On the Inspiration tree a note asks you to unlock Door & Key, a hand pointing at it; once it is bought, the note says Door and Key have joined your hand, that in a run they collect keys and open doors, that each door costs 1 key, that with no key some HP can break down a Wooden Door, that the tower's other items become accessible later as you unlock their cards, and to press the Tower button to go back, a hand pointing at it.

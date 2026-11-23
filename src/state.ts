@@ -52,6 +52,9 @@ import type {
   KeyColor,
 } from "./entities.ts";
 import { isStunned, point } from "./entities.ts";
+import { DIVINE_FLOOR, DIVINE_RELICS, PORTAL_FADE_MS, PORTAL_HEIGHT, decodeDivineRelics, endLocked, hasAnchor, portalOpen, portalSpot, type DivineRelicId } from "./divine.ts";
+import { DIVINE_ARRIVAL, DIVINE_RETURN } from "./tower/divine-room.ts";
+import { ENTRY } from "./tower/embedder.ts";
 import { World, LAYOUT_VERSION } from "./delve/world.ts";
 import { RoomWorld, TOWER_LAYOUT_VERSION } from "./tower/room-world.ts";
 import { chestKindAt, litTorches, type Board } from "./board.ts";
@@ -358,6 +361,22 @@ export class Game {
   /** Where a Greater Boss last appeared, and when (performance.now()), for
    * the board's poof. */
   summoned: { x: number; y: number; at: number } | null = null;
+  /** The Divine Portal's warp under way (divine.ts): the floor fading out
+   * since `at` (performance time), then the hero arriving in the builders'
+   * room or (`back`) at floor 2's start. Never saved: a reload leaves the
+   * hero on the portal, which a tap enters again. */
+  portalWarp: { at: number; to: "divine" | "back" } | null = null;
+  /** When a Divine Portal warp last arrived (performance time), for the board's fade back in. */
+  portalArrived = -Infinity;
+  /** A Divine Relic just taken from the builders' chest, waiting for its
+   * celebration to be dismissed (`dismissDivineReveal`); the portal back
+   * opens once it is. Never saved. */
+  divineReveal: { relic: DivineRelicId; at: number } | null = null;
+  /** Whether the route walked is the tap that heads for the Divine Portal,
+   * which the hero then enters; walked over on another way, it does nothing. */
+  private portalBound = false;
+  /** Floor 2's portal tile, worked out once a run (`divinePortal`). */
+  private portalCache: { seed: number; at: { x: number; y: number } | null } | null = null;
   /** The enemies Avenging Angel last smote, for the board's slashes and
    * poofs. */
   smitten: Smitten[] = [];
@@ -594,8 +613,11 @@ export class Game {
     if (!this.run.outside) {
       if (!tower || this.fallen) return null;
       if (!t.climb) return "climb";
-      if (this.handStuck && !t.stuck) return "stuck";
-      if (this.handStuck && this.enemyBlocks && !owned.cardEnemy && this.affords("cardEnemy")) return "enemy";
+      if (this.inDivineRoom) return null;
+      // Until the first climb can end, nothing points at End Climb.
+      const locked = this.endLocked;
+      if (this.handStuck && !t.stuck && !locked) return "stuck";
+      if (this.handStuck && this.enemyBlocks && !owned.cardEnemy && this.affords("cardEnemy") && !locked) return "enemy";
       if (!t.keys && this.hand.includes("door") && this.hand.includes("key")) return "keys";
       if (owned.cardEnemy && !owned.autoClimb && !t.autoClimbHint && this.run.height >= AUTO_CLIMB_HINT_HEIGHT) return "autoClimbHint";
       return owned.autoClimb && !t.autoClimb ? "autoClimb" : null;
@@ -716,6 +738,8 @@ export class Game {
    * board). */
   private stopPlay() {
     this.walkIn = null;
+    this.portalWarp = null;
+    this.portalBound = false;
     this.forestArrival = null;
     this.fishermanRequested = false;
     this.route = [];
@@ -837,11 +861,12 @@ export class Game {
   }
   /** Whether play waits: paused, fallen, or a fight playing out. */
   private get busy() {
-    return this.paused || this.fallen || !!this.fights.encounter || !!this.walkIn || !!this.forestArrival;
+    return this.paused || this.fallen || !!this.fights.encounter || !!this.walkIn || !!this.forestArrival || !!this.portalWarp;
   }
   walkTo(x: number, y: number) {
     if (this.busy) return;
-    if (!this.manualMoves) {
+    const toPortal = this.atPortal(x, y);
+    if (!this.manualMoves && !toPortal && !this.inDivineRoom) {
       this.handMovesNote();
       return;
     }
@@ -857,7 +882,103 @@ export class Game {
       return;
     }
     this.route = route;
+    this.portalBound = toPortal;
     this.message = route.length ? "Walking to destination." : "Already here.";
+    // A hero already standing on the portal (back from a reload mid-warp) steps in.
+    if (toPortal && !route.length) this.enterPortal();
+  }
+  /** Whether the hero stands in the builders' room on floor 999999 (divine.ts). */
+  get inDivineRoom() {
+    return this.mode === "tower" && !this.run.outside && !!(this.run as TowerRun).divine;
+  }
+  /** The Divine Portal standing on the board, if one does: on Tower I's floor
+   * 2 while it can still open (`portalOpen`), and in the builders' room the
+   * portal back, once its relic is held and its celebration dismissed. */
+  get divinePortal(): { x: number; y: number } | null {
+    if (this.mode !== "tower" || this.run.outside) return null;
+    const run = this.towerRun;
+    if (run.divine) return hasAnchor(this.save) && !this.divineReveal ? DIVINE_RETURN : null;
+    const world = this.world;
+    if (run.height !== PORTAL_HEIGHT || (run.tier ?? 1) !== 1 || !portalOpen(this.save) || !(world instanceof RoomWorld)) return null;
+    if (this.portalCache?.seed !== run.seed) {
+      // Read from the floor as generated, so the spot never moves as the floor changes.
+      const avoid = new Set([point(TOWER_START_X, 0), point(...ENTRY), ...world.torches.map((t) => point(t.x, t.y))]);
+      this.portalCache = { seed: run.seed, at: portalSpot((x, y) => world.cells.get(point(x, y)) ?? { kind: "wall" }, avoid) };
+    }
+    return this.portalCache.at;
+  }
+  /** Whether (x, y) is the Divine Portal's tile. */
+  atPortal(x: number, y: number) {
+    const portal = this.divinePortal;
+    return !!portal && portal.x === x && portal.y === y;
+  }
+  /** Whether the first climb can't be ended yet (divine.ts): until the Chrono
+   * Anchor is held and the hero is back on floor 2. The End Climb buttons
+   * hide, and the lessons that point at them wait. */
+  get endLocked() {
+    return this.mode === "tower" && !this.run.outside && endLocked(this.save, this.inDivineRoom);
+  }
+  /** The hero steps into the Divine Portal: the warp's sound, and the floor
+   * fades (`portalWarpFrame`). */
+  private enterPortal() {
+    const back = this.inDivineRoom;
+    this.route = [];
+    this.portalBound = false;
+    this.auto = false;
+    this.dropHandPlan();
+    this.cue("warp");
+    this.portalWarp = { at: performance.now(), to: back ? "back" : "divine" };
+    this.message = back ? "Return to source." : "The Divine Portal draws you in.";
+  }
+  /** The Divine Portal's warp at `now`: once the floor has faded out
+   * (`PORTAL_FADE_MS`; at once with motion reduced or transitions off), the
+   * hero arrives (`completePortalWarp`). Whether it did. */
+  portalWarpFrame(now: number) {
+    const w = this.portalWarp, settings = this.save.settings;
+    if (!w) return false;
+    if (!settings.reduceMotion && settings.transition !== "instant" && now - w.at < PORTAL_FADE_MS) return false;
+    this.completePortalWarp(now);
+    return true;
+  }
+  /** Ends the Divine Portal's warp: the hero arrives in the builders' room on
+   * floor 999999, at the middle of its lowest row, or back at floor 2's
+   * start with the floor as it was generated (its changes dropped either
+   * way); back on floor 2, the hand plays on. */
+  completePortalWarp(now = performance.now()) {
+    const w = this.portalWarp;
+    if (!w) return;
+    const run = this.towerRun;
+    this.stopPlay();
+    run.changes = {};
+    if (w.to === "divine") {
+      run.divine = true;
+      Object.assign(run.player, DIVINE_ARRIVAL);
+      this.message = `Floor ${DIVINE_FLOOR.toLocaleString("en-US")}.`;
+    } else {
+      delete run.divine;
+      Object.assign(run.player, { x: TOWER_START_X, y: 0 });
+      this.message = "Back on floor 2.";
+    }
+    this.facing = { dx: 0, dy: 1 };
+    this.handStuck = false;
+    this.world = this.buildWorld();
+    this.portalArrived = now;
+    if (w.to === "back" && this.handStartsPlaying) this.playHand();
+  }
+  /** The builders' chest opened: the Divine Relic is the hero's for good,
+   * and its celebration waits to be dismissed. */
+  private openDivineChest(x: number, y: number) {
+    const relic: DivineRelicId = "chronoAnchor";
+    this.cue("chestCreak");
+    this.cue("divineRelic");
+    this.run.changes[point(x, y)] = { kind: "openedChest", tier: "gold" };
+    this.save.divineRelics = decodeDivineRelics([...this.save.divineRelics, relic]);
+    this.divineReveal = { relic, at: performance.now() };
+    this.message = `${DIVINE_RELICS[relic].name} obtained.`;
+  }
+  /** The Divine Relic's celebration dismissed: the portal back opens. */
+  dismissDivineReveal() {
+    this.divineReveal = null;
   }
   /** Whether the player may move the hero themselves: in the forest, or
    * with Dev mode on. Inside a run the hand moves the hero. */
@@ -880,6 +1001,7 @@ export class Game {
   }
   cancelRoute() {
     this.route = [];
+    this.portalBound = false;
   }
   private handMovesNote(): false {
     this.message = `The hand moves you inside a ${MODES[this.mode].words.run}.`;
@@ -896,6 +1018,11 @@ export class Game {
     }
     if (this.teachesClimb) {
       this.message = "Press the Stairs card to begin.";
+      return;
+    }
+    // The builders' room has nothing for the hand: the hero walks where it is tapped.
+    if (this.inDivineRoom) {
+      this.message = "Tap where to walk.";
       return;
     }
     this.route = [];
@@ -940,7 +1067,7 @@ export class Game {
   /** Sets the hand playing: at 1 step a second if the speed arrows slowed
    * it to 0, and never while the speed or first run's lesson waits. */
   private playHand() {
-    if (this.teachesSpeed || this.teachesClimb) {
+    if (this.teachesSpeed || this.teachesClimb || this.inDivineRoom) {
       this.auto = false;
       return;
     }
@@ -1415,7 +1542,9 @@ export class Game {
     this.activeCard = null;
     this.auto = false;
     this.enemyBlocks = !this.save.upgrades.cardEnemy && this.stuckReport().blockers.some((b) => b.tile.kind === "enemy" && b.why === "noCard");
-    this.message = `No card can move · end the ${MODES[this.mode].words.run}, or use an item or skill.`;
+    // The first climb can't end yet: the Divine Portal is the way on.
+    this.message = this.endLocked && this.divinePortal ? "No card can move · a Divine Portal shimmers nearby. Tap it."
+      : `No card can move · end the ${MODES[this.mode].words.run}, or use an item or skill.`;
   }
   /** What stops the hand while no card can act (`explainStuck`): the run's
    * end dialog shows it. */
@@ -2527,6 +2656,8 @@ export class Game {
       return;
     }
     if (torch) this.putOutTorch(x, y);
+    if (this.atPortal(x, y) && (this.portalBound || this.inDivineRoom)) return this.enterPortal();
+    if (t.kind === "reward" && this.inDivineRoom) return this.openDivineChest(x, y);
     if (t.kind === "reward") {
       this.cue("chestCreak");
       this.run.changes[`${x},${y}`] = { kind: "openedChest", tier: t.tier };

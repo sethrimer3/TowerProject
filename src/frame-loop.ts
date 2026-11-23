@@ -122,7 +122,7 @@ export class FrameLoop {
     const { game, renderer } = this.host;
     if (!game.save.settings.batterySaver) return 0;
     const now = performance.now();
-    const busy = batteryLightMoving(this.chosenWhite(), now) || !renderer.isIdle(now) || game.route.length > 0 || (game.auto && !game.paused) || !!game.fights.encounter || !!game.walkIn || !!game.forestArrival;
+    const busy = batteryLightMoving(this.chosenWhite(), now) || !renderer.isIdle(now) || game.route.length > 0 || (game.auto && !game.paused) || !!game.fights.encounter || !!game.walkIn || !!game.forestArrival || !!game.portalWarp;
     return busy ? BATTERY_BUSY_MS : BATTERY_IDLE_MS;
   }
 
@@ -173,6 +173,11 @@ export class FrameLoop {
     if (game.fights.encounter) this.playFight(time);
     if (game.forestArrival) {
       if (this.canAct() && game.forestArrivalFrame(time)) this.host.update();
+      return;
+    }
+    // Through a Divine Portal: the floor fades out, then the hero arrives.
+    if (game.portalWarp) {
+      if (this.canAct() && game.portalWarpFrame(time)) this.host.update();
       return;
     }
     if (game.walkIn) {

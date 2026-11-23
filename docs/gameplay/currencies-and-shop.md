@@ -131,3 +131,4 @@ Provisions raise the Gear page's provisions: the Traveler's elixir heals past Ma
 ×3 and ×5 Drop Chance are each a chance that a kill drops three or five times its Gold, Silver, Cells and Rubies, and three or five times its chance of each Equipment drop; both at once drop ×15.
 A Golden Floor chance from relics or gifts makes Golden Floors even before the Golden Floors skill, paying the Golden Floor Multiplier.
 The Relics page lists the gifts received, in its Gifts section.
+After its rarities, its gold **Divine** section holds the Divine Relics, unique gifts of the builders such as the [Chrono Anchor](first-steps.md#the-divine-portal); they give no bonus.

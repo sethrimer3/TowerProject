@@ -243,6 +243,7 @@ const SAMPLED: Partial<Record<Cue, Sample>> = {
   phoenixSpark: { file: "phoenixSpark", ...STINGER },
   timeLoop: { file: "timeLoop", ...STINGER },
   warp: { file: "warp", ...STINGER },
+  divineRelic: { file: "divineRelic", ...STINGER },
   runStuck: { file: "runStuck", ...STINGER },
   enterTower: { file: "enterTower", ...STINGER },
   enterDelve: { file: "enterDelve", ...STINGER },

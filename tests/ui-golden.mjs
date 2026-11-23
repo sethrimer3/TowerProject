@@ -94,6 +94,8 @@ try {
       s.seen.met = [...s.hand];
       s.tutorials.keys = s.tutorials.autoClimb = s.tutorials.training = s.tutorials.research = s.tutorials.archives = true;
       s.tutorials.trainerGift = s.tutorials.trainers = true;
+      // Past the first skills, the hero has looped through time: it holds the Chrono Anchor (divine.ts).
+      s.divineRelics = ["chronoAnchor"];
       return s;
     };
     const make = (edit) => {
@@ -780,6 +782,16 @@ try {
     await menuClick("#auto-settings");
     await shot("fresh.settings");
     await click("#settings-back");
+    // The first climb ends only once the Chrono Anchor is held (divine.ts, its
+    // own tests walk the Divine Portal): the walk hands it over and reloads.
+    await page.evaluate(() => {
+      const s = JSON.parse(localStorage.getItem("towerdelve.v1"));
+      s.divineRelics = ["chronoAnchor"];
+      sessionStorage.setItem("__uiFixture", JSON.stringify(s));
+    });
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await ready();
+    await page.evaluate(() => document.fonts.ready);
     await leaveRun();
     // Back in the forest the story's notes hold everything else until the last is tapped.
     await shot("fresh.forest");
