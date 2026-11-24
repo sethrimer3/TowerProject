@@ -8,7 +8,7 @@ The Gear tab, and its Provisions tab, show only once one is open (with the Dev s
 The first time one opens, a note says to press the Gear tab to buy provisions, and a hand points at the tab, on the forest's board and on the Inspiration and Breakthrough trees, until it is pressed.
 None of them adds anything as a run starts: inside a run, each shows as a button beside Ignore and Target with its uses left, and a press uses one at once (it is no turn of its own).
 A **Traveler's elixir** fills HP to max HP, the HP bar filling up to it; with HP at max (or above it), it does nothing and isn't spent.
-A **Vanguard Banner** raises ATK by 20% for the next 50 turns, and an **Aegis charm** raises DEF by 20% for the next 50 turns; while one is on, the hero glows red (the Vanguard Banner) or blue (the Aegis charm), its button is lit, and another of the same kind can't be used until it runs out.
+A **Vanguard Banner** raises ATK by 20% for the next 50 turns, and an **Aegis charm** raises DEF by 20% for the next 50 turns; while one is on, the hero glows red (the Vanguard Banner) or blue (the Aegis charm), its button is lit with the turns left on a tab across its top edge, and another of the same kind can't be used until it runs out.
 Once its skill is owned, each opens two Archives projects: **Vanguard Banner Multiplier** and **Aegis Charm Multiplier** (+10 points a level for 28 levels, up to +300%) and **Vanguard Banner Duration** and **Aegis Charm Duration** (+10 turns a level for 25 levels, up to 300 turns), 250 Gold and 1 hour 45 minutes for the first level, each level after doubling the Gold and growing the time; a level counts from the next one used, and one already on keeps what it started with.
 A boost adds 20% of the stat as it was when pressed, and takes that much back off when it runs out.
 Uses come back only with the next run.
@@ -18,6 +18,7 @@ Provisions bought before they became uses (when they gave starting stats) were r
 Once **Extra Key** (1 Breakthrough, after Movement Speed in the Breakthrough tree) is owned, Provisions also sell a **Gold Key**, which uses itself: each owned gives a run one gold key on the floor it starts on, and again on the first floor 100 or more floors past the last that gave them (floor 1, then 101, 201 …; a floor Skip climbs past still counts, so the next floor gives them).
 In the Delve, floors are its equivalent floors.
 The keys come as a floor begins.
+Inside a run its key icon stands after the other provisions, with the keys it gives each time at its bottom right and, on a tab across its top edge, the floors until it gives the next.
 Once the Inspiration skill **Bombs** (5 Inspiration, left of Critical Prediction) is owned, Provisions also sell **Bombs**: each one owned is a Bomb every run carries.
 Its button shows the Bombs left: press it, then tap an enemy, and the Bomb explodes on its tile, dealing that enemy your ATK, critical and Super Critical hits rolled as for a strike (its DEF doesn't reduce it).
 An enemy the Bomb fells is cleared and pays out as if you had beaten it; a tap on a tile with no enemy uses no Bomb, and pressing the button again puts the Bomb away.

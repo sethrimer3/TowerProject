@@ -6,7 +6,7 @@ import { amountUnit, enemyStat, keyCount, shortAmount, stepsIn, whole, wholeHp }
 import type { Game } from "../state.ts";
 import type { Renderer } from "../render/rendering.ts";
 import { levelForXp, xpForLevel } from "../progression/xp.ts";
-import { USED_PROVISIONS, provisionBoost } from "../economy/provisions.ts";
+import { PROVISION_KEY_FLOORS, USED_PROVISIONS, provisionBoost } from "../economy/provisions.ts";
 import { reviewDue } from "../review-prompt.ts";
 import { provisionsOpen, researchOpen } from "../progression/loadout.ts";
 import { arcanaOpen } from "../arcana/arcana.ts";
@@ -740,11 +740,29 @@ function renderCharges(game: Game) {
     text(`${id}-left`, left);
     button.setAttribute("aria-label", `${name}: ${left} left${boost ? `, active for ${boost.turns} more turn${boost.turns === 1 ? "" : "s"}` : ""}`);
     if (id !== "heal") {
+      turnsTab(id, boost?.turns ?? null);
       const { percent, turns } = provisionBoost(game.save.archives, id);
-      const title = `${name}: press for +${percent}% ${id === "edge" ? "ATK" : "DEF"} for ${turns} turns`;
+      const title = `${name}: tap for +${percent}% ${id === "edge" ? "ATK" : "DEF"} for ${turns} turns`;
       if (button.title !== title) button.title = title;
     }
   }
+  // The Gold Key provisions hand themselves out: the keys each time, and
+  // the floors until the next.
+  const key = el("yellowKey-stat"), owned = game.save.provisions.yellowKey, floors = game.keyFloorsLeft;
+  key.hidden = !owned || !!game.run.outside;
+  text("yellowKey-left", owned);
+  turnsTab("yellowKey", floors);
+  const every = `Gold Key: ${owned} gold key${owned === 1 ? "" : "s"} every ${PROVISION_KEY_FLOORS} floors`;
+  const label = floors === null ? every : `${every}, the next in ${floors} floor${floors === 1 ? "" : "s"}`;
+  if (key.title !== label) key.title = label;
+  key.setAttribute("aria-label", label);
+}
+
+/** A limited-use item's countdown on its top edge: `left` (turns or floors), or hidden with none. */
+function turnsTab(id: string, left: number | null) {
+  const tab = el(`${id}-turns`);
+  tab.hidden = left === null;
+  if (left !== null) text(`${id}-turns`, left);
 }
 
 /** Replays a brief red flash on `target`, as a refusal. */

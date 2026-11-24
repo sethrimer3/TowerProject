@@ -4037,6 +4037,32 @@ dialog.dismiss-anywhere { cursor: pointer; }
 /* A Vanguard Banner's or Aegis charm's boost going on: its button lit like the hero's glow. */
 #edge-stat.boosting { border-color: #ff6a5a; box-shadow: 0 0 6px #ff6a5a; }
 #guard-stat.boosting { border-color: #6ab4ff; box-shadow: 0 0 6px #6ab4ff; }
+/* A limited-use item's countdown (a boost's turns left, the Gold Key's
+ * floors to its next keys): a tab across its top edge, laid over the row's
+ * gap so nothing around it moves. */
+.run-consumables .turns-left {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  z-index: 1;
+  transform: translateX(-50%);
+  min-width: 11px;
+  padding: 0 2px;
+  border: 1px solid #8a7a42;
+  border-radius: 5px;
+  background: #0b1018;
+  color: #ffe27a;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: bold;
+  line-height: 10px;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.run-consumables .turns-left[hidden] { display: none; }
+#edge-stat .turns-left { border-color: #ff6a5a; color: #ffb0a6; }
+#guard-stat .turns-left { border-color: #6ab4ff; color: #b6dcff; }
 .focus-stat b {
   position: absolute;
   right: -3px;
@@ -5788,7 +5814,7 @@ html.trial-running #board.active { grid-template-rows: auto minmax(0, 1fr); }
 #trial-overlay .trial-actions button { padding: 4px 7px; min-height: 28px; font-size: 10px; }
 html.trial-manual #hand .hand-card { position: relative; cursor: default; }
 html.trial-manual #hand .hand-card::after { content: ""; position: absolute; inset: 4px; z-index: 8; pointer-events: none; background: linear-gradient(48deg, transparent 46%, #ed4539 47% 53%, transparent 54%), linear-gradient(-48deg, transparent 46%, #ed4539 47% 53%, transparent 54%); filter: drop-shadow(0 1px 1px #000); }
-html.trial-running :is(#focus-stat, #ignore-stat, #target-stat, #bomb-stat, #heal-stat, #edge-stat, #guard-stat, #spark-stat, #forest-sign, #review-prompt, .tier-arrow) { display: none !important; }
+html.trial-running :is(#focus-stat, #ignore-stat, #target-stat, #bomb-stat, #heal-stat, #edge-stat, #guard-stat, #yellowKey-stat, #spark-stat, #forest-sign, #review-prompt, .tier-arrow) { display: none !important; }
 .proving-grounds-dialog #trial-difficulty { color: #f3dc9c; font-size: .95rem; }
 .proving-grounds-dialog #trial-reward { font-size: .8rem; line-height: 1.5; }
 .proving-grounds-dialog .trial-points { color: #b9d6e4; }

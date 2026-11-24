@@ -8,7 +8,7 @@ import { BUY_QUANTITIES, quantityLabel, type BuyQuantity } from "../progression/
 export function buyQuantityHtml(open: readonly BuyQuantity[], chosen: BuyQuantity) {
   if (open.length < 2) return "";
   const options = open.map((q) => `<button type="button" role="option" aria-selected="${q === chosen}" data-quantity="${q}">${quantityLabel(q)}</button>`).join("");
-  return `<span class="buy-quantity-pick" data-buy-quantity><button type="button" class="buy-quantity" aria-haspopup="listbox" aria-expanded="false" aria-label="Buy quantity: ranks one press buys, ${quantityLabel(chosen)}" title="Ranks one press buys">${quantityLabel(chosen)}<span class="buy-quantity-caret" aria-hidden="true">▾</span></button><span class="buy-quantity-menu" role="listbox" aria-label="Buy quantity" hidden>${options}</span></span>`;
+  return `<span class="buy-quantity-pick" data-buy-quantity><button type="button" class="buy-quantity" aria-haspopup="listbox" aria-expanded="false" aria-label="Buy quantity: ranks one tap buys, ${quantityLabel(chosen)}" title="Ranks one tap buys">${quantityLabel(chosen)}<span class="buy-quantity-caret" aria-hidden="true">▾</span></button><span class="buy-quantity-menu" role="listbox" aria-label="Buy quantity" hidden>${options}</span></span>`;
 }
 
 /** Wires the dropdown in `root`, if any: its button opens or closes the

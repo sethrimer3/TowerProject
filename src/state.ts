@@ -250,6 +250,9 @@ export class Game {
    * (`ENTRANCE_ZOOM_MS`), what entering does (`then`). Never saved: the hero
    * stays on the steps until it is done. */
   walkIn: WalkIn | null = null;
+  /** While the walk in's `then` runs: the way in already sounded, as the
+   * hero vanished, so entering doesn't sound it again. */
+  private entrySounded = false;
   forestArrival: ForestArrival | null = null;
   mode: Mode = "tower";
   private shownBoard!: Board;
@@ -1017,11 +1020,11 @@ export class Game {
     // The speed lesson keeps the hand paused until the arrow is pressed,
     // and the first run's until its note is dismissed.
     if (this.teachesSpeed) {
-      this.message = "Press › to speed up.";
+      this.message = "Tap › to speed up.";
       return;
     }
     if (this.teachesClimb) {
-      this.message = "Press the Stairs card to begin.";
+      this.message = "Tap the Stairs card to begin.";
       return;
     }
     // The builders' room has nothing for the hand: the hero walks where it is tapped.
@@ -1118,7 +1121,7 @@ export class Game {
     if (this.save.settings.speed >= LESSON_SPEED) this.save.tutorials.speed = true;
     else {
       this.auto = false;
-      this.message = "Press › beside play to move faster.";
+      this.message = "Tap › beside play to move faster.";
     }
   }
   /** The forest's Enter button: the hero walks to the entrance, and the
@@ -1165,9 +1168,16 @@ export class Game {
     else if (w.stage === "arch") {
       w.stage = "gone";
       w.since = now;
+      // The way in sounds as the hero vanishes into it and the view closes in.
+      this.cue(this.mode === "tower" ? "enterTower" : "enterDelve");
     } else if (settings.reduceMotion || settings.transition === "instant" || now - w.since >= ENTRANCE_ZOOM_MS) {
       this.walkIn = null;
-      w.then();
+      this.entrySounded = true;
+      try {
+        w.then();
+      } finally {
+        this.entrySounded = false;
+      }
     } else return false;
     return true;
   }
@@ -1538,7 +1548,7 @@ export class Game {
     this.cardPlan = null;
     this.activeCard = null;
     this.auto = false;
-    this.message = lost ? `${CARDS[lost].name} has no path to a target · press another card.` : "Press a card in your hand to choose the next move.";
+    this.message = lost ? `${CARDS[lost].name} has no path to a target · tap another card.` : "Tap a card in your hand to choose the next move.";
   }
   /** No card can act: the hand pauses and End Run lights up. */
   private handWaits() {
@@ -1574,7 +1584,7 @@ export class Game {
     this.handStuck = false;
     // Before Auto-Climb the hand waits for a card to be pressed.
     if (!this.autoClimbs) {
-      this.message = "Press a card in your hand to choose the next move.";
+      this.message = "Tap a card in your hand to choose the next move.";
       return;
     }
     this.cardPlan = plan;
@@ -1969,6 +1979,14 @@ export class Game {
    * has left); none for the elixir, or with none going on. */
   boostOf(id: UsedProvision) {
     return id === "heal" ? undefined : this.run.boosts?.[PROVISION_BOOSTS[id]];
+  }
+  /** Inside a run, once the Gold Key provisions have handed it keys: the
+   * floors (equivalent floors, in the Delve) until they hand it the next. */
+  get keyFloorsLeft(): number | null {
+    const run = this.run, at = run.keyFloor;
+    if (run.outside || !this.save.provisions.yellowKey || at === undefined) return null;
+    const floor = this.rules.equivalentFloor(Math.max(run.height, run.maxHeight ?? 0));
+    return Math.max(1, at + PROVISION_KEY_FLOORS - floor);
   }
   /** Uses provision `id` at once, after any fight still playing out: the
    * Traveler's elixir fills HP to max HP, and past it by the gifts'
@@ -3256,7 +3274,7 @@ export class Game {
     syncShield(this.save, this.run, this.mode);
     const p = this.run.player;
     this.run.outside = false;
-    this.cue(this.mode === "tower" ? "enterTower" : "enterDelve");
+    if (!this.entrySounded) this.cue(this.mode === "tower" ? "enterTower" : "enterDelve");
     this.run.notes = newNotes(this.clock());
     if (this.mode === "tower") this.save.offline.climbAway = 0;
     this.save.tutorials.enter = true;

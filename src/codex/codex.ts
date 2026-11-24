@@ -385,14 +385,14 @@ const TRAINING_HOW: CodexEntry[] = [
   { id: "points", icon: { kind: "currency", id: "training" }, name: "Free training", brief: "Training points from levelling up and weekly mission rewards buy ranks instantly, for free. Spend them first!" },
   { id: "gold", icon: { kind: "currency", id: "gold" }, name: "Train with Gold", brief: "Once you have Trainers, hire one with Gems, then pay Gold to train a stat over time. Every rank finished is yours for good." },
   { id: "batch", icon: { kind: "mark", id: "clock" }, name: "Train more at once", brief: "Training several ranks together goes faster than one at a time." },
-  { id: "rush", icon: { kind: "currency", id: "gems" }, name: "Rush with Gems", brief: "Press the Gem button beside a countdown to finish training at once." },
+  { id: "rush", icon: { kind: "currency", id: "gems" }, name: "Rush with Gems", brief: "Tap the Gem button beside a countdown to finish training at once." },
   { id: "repeat", icon: { kind: "mark", id: "repeat" }, name: "Auto-continue", brief: "Tick the box with this icon to start the next rank as soon as one finishes, while you have the Gold." },
   { id: "stop", icon: { kind: "mark", id: "stop" }, name: "Stop any time", brief: "Tap a countdown to stop it: your Gold comes back, and the time spent is saved for later." },
 ];
 /** How the Archives are used, likewise. */
 const ARCHIVES_HOW: CodexEntry[] = [
   { id: "gold", icon: { kind: "currency", id: "gold" }, name: "Research with Gold", brief: "Each level of a project costs Gold and takes time. An archivist works on one project at a time." },
-  { id: "rush", icon: { kind: "currency", id: "gems" }, name: "Rush with Gems", brief: "Press Rush to finish research at once." },
+  { id: "rush", icon: { kind: "currency", id: "gems" }, name: "Rush with Gems", brief: "Tap Rush to finish research at once." },
   { id: "repeat", icon: { kind: "mark", id: "repeat" }, name: "Auto-continue", brief: "Tick the box with this icon to start the next level as soon as one completes, while you have the Gold." },
   { id: "switch", icon: { kind: "mark", id: "stop" }, name: "Switch projects", brief: "Choose another project for a busy archivist: your Gold comes back, and its progress is saved for later." },
   { id: "archivists", icon: { kind: "kit", id: "book" }, name: "More archivists", brief: "Hire more archivists with Gems to research several projects at once." },

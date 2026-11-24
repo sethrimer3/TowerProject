@@ -36,7 +36,7 @@ try {
     const researchTab = page.locator('nav [data-tab="research"]');
     // The forest: the note, the hand at the Research tab and its dot, the rest held.
     await page.locator('.board-tip[data-lesson="research"]').waitFor();
-    assert.match(await page.locator(".board-tip").innerText(), /Press the Research tab to open the Research menu/);
+    assert.match(await page.locator(".board-tip").innerText(), /Tap the Research tab to open the Research menu/);
     assert.equal(await researchTab.locator(".forest-pointer.research").count(), 1);
     assert.ok(await researchTab.evaluate((e) => e.classList.contains("notify")));
     assert.ok(await page.locator('nav [data-tab="upgrades"]').isDisabled(), "every other tab is held");

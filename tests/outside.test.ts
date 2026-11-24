@@ -18,14 +18,19 @@ test("the Tower's entrance walks the hero in: up into the arch, gone, then in on
   assert.ok(g.run.outside);
   // Nothing else moves the hero meanwhile.
   assert.equal(g.stepManually(0, -1), false);
+  const entered = () => g.cues.filter((c) => c.cue === "enterTower").length;
   assert.ok(g.walkInTurn(100));
   assert.equal(g.walkIn?.stage, "arch");
+  assert.equal(entered(), 0);
   assert.ok(g.walkInTurn(200));
   assert.equal(g.walkIn?.stage, "gone");
+  // The way in sounds as the hero vanishes and the view starts closing in.
+  assert.equal(entered(), 1);
   assert.equal(g.walkInTurn(200 + ENTRANCE_ZOOM_MS - 1), false);
   assert.ok(g.run.outside);
   assert.ok(g.walkInTurn(200 + ENTRANCE_ZOOM_MS));
   assert.equal(g.walkIn, null);
+  assert.equal(entered(), 1);
   assert.equal(g.run.outside, false);
   assert.equal(g.run.player.y, 0);
   // With motion reduced, it goes in as the hero goes.

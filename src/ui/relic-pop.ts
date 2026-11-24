@@ -48,7 +48,7 @@ export function showDivineRelic(id: DivineRelicId, { reduceMotion = false, obtai
   layer.setAttribute("aria-label", `${relic.name}: ${relic.text}`);
   const sparkles = Array.from({ length: 8 }, (_, i) => `<i style="--i:${i}"></i>`).join("");
   layer.innerHTML = `<div class="relic-pop-stage"><div class="relic-pop-rays" aria-hidden="true"></div><div class="relic-pop-sparkles" aria-hidden="true">${sparkles}</div>${divineRelicIcon(id, "relic-icon relic-pop-icon")}</div>` +
-    `<div class="card-reveal-text">${obtained ? `<small class="divine-label">DIVINE RELIC</small>` : ""}<b>${relic.name}</b><p>${relic.text}</p><p class="hint divine-dismiss">Click anywhere to dismiss.</p></div>`;
+    `<div class="card-reveal-text">${obtained ? `<small class="divine-label">DIVINE RELIC</small>` : ""}<b>${relic.name}</b><p>${relic.text}</p><p class="hint divine-dismiss">Tap anywhere to dismiss.</p></div>`;
   (document.querySelector("#app") ?? document.body).append(layer);
   layer.onclick = () => {
     layer.remove();

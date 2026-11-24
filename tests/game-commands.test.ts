@@ -190,7 +190,7 @@ test("ending a run goes straight back to the forest with the next run", () => {
   g.finish("Ascent ended");
   assert.ok(g.run.outside && g.run.seed !== ended && g.save.tower.run === g.run);
   assert.equal(g.fallen, false);
-  assert.match(g.message, /^Ascent ended.*Press Enter or the tower entrance to begin a climb\.$/);
+  assert.match(g.message, /^Ascent ended.*Tap Enter or the tower entrance to begin a climb\.$/);
 });
 
 test("erasing everything leaves a fresh save with a new run outside the Tower", () => {
@@ -325,7 +325,7 @@ test("before Auto-Climb the hand waits for a card to be pressed, and waits again
   g.autoTurn();
   assert.ok(!g.auto && !g.handStuck && g.activeCard === null, "it waits, not stuck");
   assert.deepEqual([g.run.player.x, g.run.player.y], [0, 0]);
-  assert.match(g.message, /^Press a card/);
+  assert.match(g.message, /^Tap a card/);
   (g.world as RoomWorld).cells.set("1,0", { kind: "key", color: "yellow" });
   assert.equal(g.focus(g.hand.indexOf("key")), "focused");
   assert.ok(g.auto);

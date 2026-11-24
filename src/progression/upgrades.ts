@@ -37,7 +37,7 @@ export const UPGRADES = [
   { id: "aetherShield", name: "Aether Shield", description: "Reveal Shield, Shield Thorns, Regrow Shield and Shield Regen in the Inspiration tree", base: 5, max: 1, currency: "breakthrough" },
   { id: "shieldLimitBreak", name: "Shield Limit Break", description: "Raise the max training level of Shield HP to 1,800", base: 5, max: 1, currency: "breakthrough" },
   { id: "life", name: "Life", description: "Reveal revive skills in the Inspiration tree", base: 2, max: 1, currency: "breakthrough" },
-  { id: "autoTrain", name: "Auto-Train", description: "Automatically buy stats during a run. Click stats and categories to toggle upgrading each floor.", base: 2, max: 1, currency: "breakthrough" },
+  { id: "autoTrain", name: "Auto-Train", description: "Automatically buy stats during a run. Tap stats and categories to toggle upgrading each floor.", base: 2, max: 1, currency: "breakthrough" },
   // The Arcana's research, opened in the Breakthrough tree under Extra Trainer.
   { id: "lifespringResearch", name: "Lifespring Research", description: "Open Lifespring Health, Lifespring Gold Bonus, Lifespring Damage Amplifier and Lifespring Cell Bonus research", base: 5, max: 1, currency: "breakthrough" },
   { id: "thunderboltResearch", name: "Thunderbolt Research", description: "Open Thunderbolt Amplifier and Thunderbolt Expansion research", base: 5, max: 1, currency: "breakthrough" },

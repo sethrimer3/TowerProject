@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-24", text: "Boosts show turns left and the Gold Key floors to its next keys; hints say Tap; entering sounds as the zoom begins." },
   { date: "2026-11-24", text: "A master Sound switch tops the Sounds section, muting everything at once and keeping your choices below it." },
   { date: "2026-11-24", text: "Settings has a Sounds section: turn notifications, UI, in-run events, ambience and music on or off apiece." },
   { date: "2026-11-24", text: "Tidier progression notes, with out-of-date skill prices and places taken out." },

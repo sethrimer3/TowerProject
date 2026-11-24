@@ -37,10 +37,10 @@ function tooltipHint(p: { locked: boolean; maxed: boolean; available: boolean; a
  * first provision is open, the way to the Gear tab (its hand too). */
 function introNote(game: AppContext["game"], tree: TreeId) {
   const intro = tree === "inspiration", buy = intro ? game.introSkill : null, bought = intro ? game.introBought : null;
-  const lesson = buy === "cardDoorKey" ? { title: "Unlock Door & Key.", text: `Press Door & Key, then press it again to unlock it for ${cost(buy, 0)} Inspiration.` }
-    : buy === "cardEnemy" ? { title: "Unlock Enemy.", text: `Press Enemy, then press it again to unlock it for ${cost(buy, 0)} Inspiration.` }
-    : bought === "cardDoorKey" ? { title: "Door and Key join your hand.", text: "During a climb, press them to collect keys and open doors. Each door costs 1 key; with no key, some HP can break down a Wooden Door. Other items in the tower become accessible later on, as you unlock their cards. Press the Tower button to return to the entrance." }
-    : bought === "cardEnemy" ? { title: "Enemy joins your hand.", text: "During a climb, press it to fight the closest enemy. Press the Tower button to return to the entrance." }
+  const lesson = buy === "cardDoorKey" ? { title: "Unlock Door & Key.", text: `Tap Door & Key, then tap it again to unlock it for ${cost(buy, 0)} Inspiration.` }
+    : buy === "cardEnemy" ? { title: "Unlock Enemy.", text: `Tap Enemy, then tap it again to unlock it for ${cost(buy, 0)} Inspiration.` }
+    : bought === "cardDoorKey" ? { title: "Door and Key join your hand.", text: "During a climb, tap them to collect keys and open doors. Each door costs 1 key; with no key, some HP can break down a Wooden Door. Other items in the tower become accessible later on, as you unlock their cards. Tap the Tower button to return to the entrance." }
+    : bought === "cardEnemy" ? { title: "Enemy joins your hand.", text: "During a climb, tap it to fight the closest enemy. Tap the Tower button to return to the entrance." }
     : game.provisionsLesson && !game.introBought && PRICED_TREES.includes(tree) ? PROVISIONS_NOTE
     : null;
   return lesson ? `<div class="tree-lesson" role="status"><b>${lesson.title}</b><p>${lesson.text}</p></div>` : "";

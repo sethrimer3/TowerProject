@@ -16,7 +16,7 @@ A Tower run in the room carries `divine: true` (`TowerRun.divine`, kept by `deco
 Only a tap takes the hero through it: `walkTo` lets a tap on the portal walk even without Dev mode (and anywhere in the room), marking the route `portalBound`, and `land` enters the portal only on such a route (or in the room); walked over by Dev mode's steps or anything else, the tile is plain floor.
 `enterPortal` cues `warp` and starts `Game.portalWarp`; the frame loop calls `portalWarpFrame`, which waits `PORTAL_FADE_MS` (none with Reduce motion or Instant transitions) before `completePortalWarp` drops the run's changes and moves the hero into the room, or back to floor 2's start with the floor as generated and the hand playing on.
 `portalWarp`, `portalArrived` (the fade back in) and `divineReveal` are never saved.
-Landing on the room's chest (`openDivineChest`) cues `chestCreak` and `divineRelic`, adds the Chrono Anchor to `save.divineRelics` and sets `Game.divineReveal`, which `main.ts` shows with `showDivineRelic` (`ui/relic-pop.ts`: rising into the middle in golden rays, its name, text and *Click anywhere to dismiss.*); dismissing it calls `Game.dismissDivineReveal`, which opens the portal back.
+Landing on the room's chest (`openDivineChest`) cues `chestCreak` and `divineRelic`, adds the Chrono Anchor to `save.divineRelics` and sets `Game.divineReveal`, which `main.ts` shows with `showDivineRelic` (`ui/relic-pop.ts`: rising into the middle in golden rays, its name, text and *Tap anywhere to dismiss.*); dismissing it calls `Game.dismissDivineReveal`, which opens the portal back.
 In the room the hand never plays (`playHand`, `toggleAuto`) and no lesson shows.
 
 **The End Climb lock.**

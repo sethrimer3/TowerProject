@@ -125,6 +125,7 @@ test("the Gold Key gives a gold key for each owned on the run's first floor, the
   goInside(g);
   assert.equal(g.run.player.keys.yellow, keys + 2, "on floor 1");
   assert.equal(g.run.keyFloor, 0);
+  assert.equal(g.keyFloorsLeft, 100, "the HUD counts the floors to the next keys");
   const held = () => g.run.player.keys.yellow;
   let before = held();
   while (g.run.height < 99) {
@@ -132,6 +133,7 @@ test("the Gold Key gives a gold key for each owned on the run's first floor, the
     g.advanceTowerRoom();
   }
   assert.equal(held(), before, "none on floors 2 to 100");
+  assert.equal(g.keyFloorsLeft, 1, "one floor to go on floor 100");
   g.advanceTowerRoom(true);
   assert.equal(g.run.height, 101, "Skip climbs past floor 101");
   assert.ok(held() >= before + 2, "floor 102 gives them");

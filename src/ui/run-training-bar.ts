@@ -73,7 +73,7 @@ export class RunTrainingBar {
   constructor(game: Game | (() => Game), private changed: () => void, private available: (id: TrainingId) => boolean = () => true, private showArcanum: (held: HeldArcanum) => void = () => {}) {
     this.gameSource=typeof game==="function"?game:()=>game;
     const bar = el("training-bar");
-    bar.innerHTML = `<button type="button" data-run-tab="hand" aria-pressed="true"></button><button type="button" data-run-tab="manual" aria-pressed="false" aria-label="Manual" title="Your Manual hand: its cards act only when you press them" hidden>${DECK_ICON}<span class="group-name">Manual</span></button>` + (Object.entries(TRAINING_GROUPS) as [Group, string][])
+    bar.innerHTML = `<button type="button" data-run-tab="hand" aria-pressed="true"></button><button type="button" data-run-tab="manual" aria-pressed="false" aria-label="Manual" title="Your Manual hand: its cards act only when you tap them" hidden>${DECK_ICON}<span class="group-name">Manual</span></button>` + (Object.entries(TRAINING_GROUPS) as [Group, string][])
       .map(([group, name]) => `<button type="button" data-run-group="${group}" aria-pressed="false" aria-label="${name}">${GROUP_ICONS[group]}<span class="group-name">${name}</span></button>`)
       .join("") + `<button type="button" data-run-tab="arcana" aria-pressed="false" aria-label="Arcana" title="Your Arcana: their cards switch them on and off for this run" hidden>${arcaniteIcon("arcanite-icon group-sprite")}<span class="group-name">Arcana</span></button><span class="run-buy-quantity"></span>`;
     bar.onclick = (e) => {
@@ -261,7 +261,7 @@ export class RunTrainingBar {
       badge.innerHTML = on ? AUTO_ON : AUTO_OFF;
     }
     b.setAttribute("aria-label", `${TRAINING_GROUPS[group]}, Auto-Train ${on ? "on" : "off"}`);
-    if (owned && group === this.open) b.title = `Auto-Train ${on ? "buys" : "skips"} ${TRAINING_GROUPS[group]} each floor: press again to turn it ${on ? "off" : "on"}`;
+    if (owned && group === this.open) b.title = `Auto-Train ${on ? "buys" : "skips"} ${TRAINING_GROUPS[group]} each floor: tap again to turn it ${on ? "off" : "on"}`;
   }
 
   /** The Buy Quantity dropdown, built again only when its choices change. */
@@ -387,8 +387,8 @@ export class RunTrainingBar {
 
   private lessonText() {
     return this.group
-      ? `<b>Training for this ${MODES[this.game.mode].words.run}</b><p>Press a card's price to buy a rank with ${silverIcon()} Silver. Press HAND to bring your cards back.</p>`
-      : `<b>Train on the Job</b><p>Spend the ${silverIcon()} Silver you find on upgrades that raise your stats for the rest of this ${MODES[this.game.mode].words.run}. Press a menu beside HAND to open it.</p>`;
+      ? `<b>Training for this ${MODES[this.game.mode].words.run}</b><p>Tap a card's price to buy a rank with ${silverIcon()} Silver. Tap HAND to bring your cards back.</p>`
+      : `<b>Train on the Job</b><p>Spend the ${silverIcon()} Silver you find on upgrades that raise your stats for the rest of this ${MODES[this.game.mode].words.run}. Tap a menu beside HAND to open it.</p>`;
   }
 
   /** The rows of `group` the hero can train in this run (the shot rows
@@ -454,7 +454,7 @@ export class RunTrainingBar {
   private autoSwitch(id: TrainingId) {
     if (!this.autoTrainOwned) return "";
     const on = this.game.training.runAutoOn(id), group = TRAINING.find((t) => t.id === id)!.group;
-    const note = on && !this.game.training.runAutoGroupOn(group) ? `<small class="auto-note">${TRAINING_GROUPS[group]} is off: press its button again to turn it on.</small>` : "";
+    const note = on && !this.game.training.runAutoGroupOn(group) ? `<small class="auto-note">${TRAINING_GROUPS[group]} is off: tap its button again to turn it on.</small>` : "";
     return `<div class="auto-train-row"><button type="button" class="arcana-switch" role="switch" data-auto-train="${id}" aria-checked="${on}" aria-label="Auto-train each floor"><i></i></button><span>Auto-train each floor</span></div>${note}`;
   }
   private hideTip() {

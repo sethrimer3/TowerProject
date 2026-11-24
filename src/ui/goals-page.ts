@@ -98,7 +98,7 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">With the Chest card in your hand, a treasure chest may now be a Supply Chest, holding upgrade materials, or an Equipment Chest, holding a piece of equipment.</p>`,
   noteTaking: `<p>Note Taking opens in the Archives: research it, and tap the floor number during a climb to read the climb's notes, kept as you play: its time, steps, kills, keys, doors, chests and loot.</p>` +
     `<p class="hint">The notes stay open while the climb plays on, and copy to paste elsewhere. The climb's summary opens them too.</p>`,
-  rerollMission: `<p>Reroll Daily Mission opens in the Archives: research it, and each daily mission not yet complete gets a looping arrow on the Missions screen. Press it to spend 5 Gems swapping the mission for a different one.</p>` +
+  rerollMission: `<p>Reroll Daily Mission opens in the Archives: research it, and each daily mission not yet complete gets a looping arrow on the Missions screen. Tap it to spend 5 Gems swapping the mission for a different one.</p>` +
     `<p class="hint">The new mission is never one already on your list. Its progress starts over.</p>`,
   bossPotion: `<p>Boss Potion Drop opens in the Archives: research it, and each boss you defeat drops a percent potion that you drink at once, wherever you stand.</p>` +
     `<p class="hint">It heals as a percent potion picked up would, Potion % and HEAL's tree included.</p>`,

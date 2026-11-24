@@ -37,7 +37,7 @@ export function revealReward(r: RewardShown, reduceMotion: boolean, onDone?: () 
   const rays = r.permanent ? `<div class="card-reveal-rays" aria-hidden="true"></div>` : "";
   const amount = r.amount ? `<b class="reward-reveal-amount">${r.amount}</b>` : "";
   const prize = r.grid ? `<div class="gift-reveal-grid">${r.grid}</div>` : `${r.icon}${amount}`;
-  layer.innerHTML = `<div class="card-reveal-stage${r.grid ? " gift-reveal-stage" : ""}">${rays}<button type="button" class="reward-reveal-prize${r.grid ? " gift-reveal" : ""}" id="reward-reveal-prize" aria-label="${r.name}: claim">${prize}</button></div><div class="card-reveal-text"><small>${r.kicker}</small><b>${r.name}</b>${r.text ? `<p>${r.text}</p>` : ""}<span>Press to claim</span></div>`;
+  layer.innerHTML = `<div class="card-reveal-stage${r.grid ? " gift-reveal-stage" : ""}">${rays}<button type="button" class="reward-reveal-prize${r.grid ? " gift-reveal" : ""}" id="reward-reveal-prize" aria-label="${r.name}: claim">${prize}</button></div><div class="card-reveal-text"><small>${r.kicker}</small><b>${r.name}</b>${r.text ? `<p>${r.text}</p>` : ""}<span>Tap to claim</span></div>`;
   if (onSkip) layer.insertAdjacentHTML("beforeend", `<button type="button" class="reward-reveal-skip" id="reward-reveal-skip">Skip</button>`);
   (document.querySelector("#app") ?? document.body).append(layer);
   // The whole screen claims it, so a press anywhere goes on.

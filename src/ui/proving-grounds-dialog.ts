@@ -23,7 +23,7 @@ import {shortAmount,whole,wholeHp} from "../whole.ts";
 import { seesAll } from "../access.ts";
 
 const MODES=[
-  ["manual","Without cards","Click a tile to walk to it. Cards stay disabled."],
+  ["manual","Without cards","Tap a tile to walk to it. Cards stay disabled."],
   ["cards","Only with cards","Your hand controls movement. Player movement is disabled."],
   ["hybrid","With both","Cards play automatically; your tile commands take priority until you arrive."],
 ] as const;
@@ -182,9 +182,9 @@ export class ProvingGroundsDialog {
     this.base.auto=false;this.base.cancelRoute();this.navigation.clear();
     this.session=new TrialSession(this.base,this.base.save.provingGrounds!);
     const s=this.session.state;
-    this.message=s.room==="staging"?"Click the staircase to enter the trial.":s.keymaster?(s.elemental.incorporeal?"The Keymaster is incorporeal and invincible until his next reformation.":"Strike the Keymaster for golden keys. Open the four doors to release red spirits."):s.bossVariant?(s.bossVariant.variant==="magic-tower"?"Engage the Magic Tower one round per turn. Collect popped coins and train stats to outpace its regeneration.":"Inflict as much damage as possible on the Obelisk before turns run out. Damage persists across runs."):s.elemental.incorporeal?"The elemental is invincible until its next lasers.":"Click a tile to move. Click the corporeal elemental to strike.";
+    this.message=s.room==="staging"?"Tap the staircase to enter the trial.":s.keymaster?(s.elemental.incorporeal?"The Keymaster is incorporeal and invincible until his next reformation.":"Strike the Keymaster for golden keys. Open the four doors to release red spirits."):s.bossVariant?(s.bossVariant.variant==="magic-tower"?"Engage the Magic Tower one round per turn. Collect popped coins and train stats to outpace its regeneration.":"Inflict as much damage as possible on the Obelisk before turns run out. Damage persists across runs."):s.elemental.incorporeal?"The elemental is invincible until its next lasers.":"Tap a tile to move. Tap the corporeal elemental to strike.";
     this.renderer=new TrialRenderer(this.canvas);this.cameraPathKey="";this.cameraPath=[];this.canvas.tabIndex=0;
-    this.canvas.setAttribute("aria-label","Proving Grounds. Click a floor tile to walk to it in manual or combined mode. Click your tile or press Space to wait.");
+    this.canvas.setAttribute("aria-label","Proving Grounds. Tap a floor tile to walk to it in manual or combined mode. Tap your tile or press Space to wait.");
     document.documentElement.classList.add("trial-running");document.documentElement.classList.toggle("trial-manual",s.mode==="manual");
     el("board").querySelector("#trial-boss-meter")?.remove();
     const ticks=Array.from({length:9},(_,i)=>`<i class="trial-boss-tick" style="left:${(i+1)*10}%"></i>`).join("");
@@ -290,7 +290,7 @@ export class ProvingGroundsDialog {
     el("hand").classList.toggle("can-focus",!manual && s.status==="active");
     el("hand").querySelectorAll<HTMLElement>(".hand-card").forEach(card=> {
       const id=card.dataset.card as keyof typeof CARDS,slot=Number(card.dataset.handSlot);
-      card.setAttribute("aria-disabled",String(manual));card.title=`${CARDS[id].name}${manual?" — disabled in manual trials":" — click to switch target"}`;
+      card.setAttribute("aria-disabled",String(manual));card.title=`${CARDS[id].name}${manual?" — disabled in manual trials":" — tap to switch target"}`;
       if(manual)card.classList.remove("active","focused");
       else card.classList.toggle("focused",bv?.focusedCard===slot);
     });

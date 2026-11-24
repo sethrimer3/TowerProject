@@ -21,7 +21,7 @@ import { TRAINER_GEMS } from "../progression/training-jobs.ts";
 // Each hand sits inside what it points at.
 
 /** The provisions lesson's note, on the board and the Upgrades page alike. */
-export const PROVISIONS_NOTE = { title: "Provisions unlocked.", text: "Press the Gear tab to buy provisions with Gold: limited-use items every climb carries, pressed beside the board when you need them." };
+export const PROVISIONS_NOTE = { title: "Provisions unlocked.", text: "Tap the Gear tab to buy provisions with Gold: limited-use items every climb carries, tapped beside the board when you need them." };
 
 /** The `story` lesson's notes, tapped through one after the other. */
 export const STORY = [
@@ -64,20 +64,20 @@ function traceStory(note: HTMLElement, page: number, reduceMotion: boolean) {
 }
 
 const NOTES: Record<Exclude<BoardLesson, "story">, { greeting?: string; title: string; text?: string }> = {
-  climb: { greeting: "Welcome, adventurer!", title: "Press the Stairs card to climb.", text: "Each card in your hand sends the hero toward what it names. Climb the Tower to gain Inspiration, XP and resources." },
-  keys: { title: "Press Key and Door to collect keys and open doors.", text: "Key heads for the closest key, and Door for a door your keys open, or a Wooden Door your HP can break down." },
+  climb: { greeting: "Welcome, adventurer!", title: "Tap the Stairs card to climb.", text: "Each card in your hand sends the hero toward what it names. Climb the Tower to gain Inspiration, XP and resources." },
+  keys: { title: "Tap Key and Door to collect keys and open doors.", text: "Key heads for the closest key, and Door for a door your keys open, or a Wooden Door your HP can break down." },
   autoClimbHint: { title: "You can end the climb now to unlock Auto-Climb.", text: "End the climb from the menu, then spend its Inspiration on Auto-Climb on the Inspiration tree: the hand then plays by itself." },
-  autoClimb: { title: "Auto-Climb moves the hero for you.", text: "The hero heads for the target of the first card in your hand with an open path to it. Press a card to go for its target first." },
-  stuck: { title: "No card can take you further.", text: "The Inspiration this climb earned unlocks new abilities to climb higher. Press End Climb, then spend it on the Inspiration tree." },
-  enemy: { title: "An enemy blocks the way.", text: "Unlock the Enemy card on the Inspiration tree to fight it. Press End Climb to go and spend your Inspiration." },
+  autoClimb: { title: "Auto-Climb moves the hero for you.", text: "The hero heads for the target of the first card in your hand with an open path to it. Tap a card to go for its target first." },
+  stuck: { title: "No card can take you further.", text: "The Inspiration this climb earned unlocks new abilities to climb higher. Tap End Climb, then spend it on the Inspiration tree." },
+  enemy: { title: "An enemy blocks the way.", text: "Unlock the Enemy card on the Inspiration tree to fight it. Tap End Climb to go and spend your Inspiration." },
   upgrades: { title: "Spend your Inspiration.", text: "Open Upgrades: the Inspiration tree's skills give you new abilities." },
-  enter: { title: "Click Enter to start climbing the tower." },
-  research: { title: "Research unlocked.", text: "Press the Research tab to open the Research menu." },
-  trainingPoints: { title: "Training points to spend.", text: "After levelling up, you can spend points to increase your stats. Press the Research tab to train." },
-  trainers: { title: "Trainers unlocked.", text: "Press the Research tab to hire your first trainer." },
-  hire: { title: "Hire your first trainer.", text: `Press the Research tab to hire a trainer for ${TRAINER_GEMS[0]} Gems.` },
+  enter: { title: "Tap Enter to start climbing the tower." },
+  research: { title: "Research unlocked.", text: "Tap the Research tab to open the Research menu." },
+  trainingPoints: { title: "Training points to spend.", text: "After levelling up, you can spend points to increase your stats. Tap the Research tab to train." },
+  trainers: { title: "Trainers unlocked.", text: "Tap the Research tab to hire your first trainer." },
+  hire: { title: "Hire your first trainer.", text: `Tap the Research tab to hire a trainer for ${TRAINER_GEMS[0]} Gems.` },
   delve: { title: "A tournament is open: follow the path down to the Delve and enter its cave." },
-  goals: { title: "Tower Goals are ready to claim.", text: "Every ten floors climbed pays a Goal reward. Press Goals to claim yours." },
+  goals: { title: "Tower Goals are ready to claim.", text: "Every ten floors climbed pays a Goal reward. Tap Goals to claim yours." },
   provisions: PROVISIONS_NOTE,
   arcana: { title: "Spend Arcanite to obtain and upgrade Arcana - mighty spells that unlock new powers." },
 };

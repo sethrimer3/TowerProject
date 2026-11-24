@@ -76,7 +76,7 @@ export class ResearchPage {
    * pressing it dismisses it and ends the lesson. */
   private lessonHtml() {
     if (!this.ctx.game.archivesLesson || !this.archivesOpen) return "";
-    return `<button type="button" class="tree-lesson research-lesson" id="archives-lesson"><b>Press the Archives tab.</b>`
+    return `<button type="button" class="tree-lesson research-lesson" id="archives-lesson"><b>Tap the Archives tab.</b>`
       + `<p>Pay the archivist Gold to research permanent upgrades. Gems rush research and hire additional archivists to do more research at once.</p><small>Tap to dismiss</small></button>`;
   }
 
@@ -404,7 +404,7 @@ export class ResearchPage {
       return `<div class="tree-lesson trainers-lesson" data-lesson-hold><p>Here's ${gems} ${gemIcon()} and ${gold} ${goldIcon()} to get you started.</p>`
         + `<button type="button" id="trainer-gift-claim" class="trainer-gift-claim" aria-label="Claim ${gems} Gems and ${gold} Gold">Claim ${gems} ${gemIcon()} + ${gold} ${goldIcon()}</button></div>`;
     if (lesson === "hire" && training.mustHire)
-      return `<div class="tree-lesson trainers-lesson" role="status"><b>Hire your first trainer.</b><p>Press the + button to hire a trainer for ${nextTrainerGems(this.ctx.game.save)} ${gemIcon()}.</p></div>`;
+      return `<div class="tree-lesson trainers-lesson" role="status"><b>Hire your first trainer.</b><p>Tap the + button to hire a trainer for ${nextTrainerGems(this.ctx.game.save)} ${gemIcon()}.</p></div>`;
     if (lesson !== "praise") return "";
     return `<button type="button" class="tree-lesson trainers-lesson trainers-praise" id="trainers-praise"><b>Well done! You hired a trainer for your hero.</b>`
       + `<p>The more they train, the stronger they get, and the higher they can climb the tower.</p>`

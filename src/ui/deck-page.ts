@@ -203,7 +203,7 @@ export class DeckPage {
     if (!this.showsKinds) return "";
     const option = (kind: HandKind, name: string, title: string) =>
       `<button type="button" role="radio" data-hand-kind="${kind}" aria-checked="${this.kind === kind}" title="${title}">${name}</button>`;
-    return `<div class="hand-kinds${this.kind === "manual" ? " manual" : ""}" role="radiogroup" aria-label="Which hand to show">${option("auto", "Auto", "The Auto hand: its cards play by themselves, in order")}${option("manual", "Manual", "The Manual hand: its cards act only when you press them in a climb")}<span class="hand-kinds-thumb" aria-hidden="true"></span></div>`;
+    return `<div class="hand-kinds${this.kind === "manual" ? " manual" : ""}" role="radiogroup" aria-label="Which hand to show">${option("auto", "Auto", "The Auto hand: its cards play by themselves, in order")}${option("manual", "Manual", "The Manual hand: its cards act only when you tap them in a climb")}<span class="hand-kinds-thumb" aria-hidden="true"></span></div>`;
   }
 
   render() {
@@ -222,7 +222,7 @@ export class DeckPage {
     const tip = lesson === "order"
       ? `<div class="deck-tip" role="status"><b>Order your hand</b><p>Inside a climb your hand tries its cards from left to right, and the first that can act moves you. Drag STAIRS to another slot to change the order.</p></div>`
       : lesson === "remove"
-        ? `<div class="deck-tip" role="status"><b>Choose your cards</b><p>You can take cards out of your hand, and your climbs will stop heading for their targets. Press the X on ${CARDS[this.removeTarget!].name.toUpperCase()} to return it to your deck.</p></div>`
+        ? `<div class="deck-tip" role="status"><b>Choose your cards</b><p>You can take cards out of your hand, and your climbs will stop heading for their targets. Tap the X on ${CARDS[this.removeTarget!].name.toUpperCase()} to return it to your deck.</p></div>`
         : "";
     // A lesson waiting on the player needs the hand in view.
     const collapsed = this.handCollapsed && !this.waitsOnPlayer;
@@ -288,7 +288,7 @@ export class DeckPage {
     const entries = owned.map((id) => {
       const copies = badges.owned[id]!.copies, on = cardWith(badges, id), name = BADGES[id].name;
       const x = on ? `<button type="button" class="badge-detach" data-detach="${id}" title="Take ${name} off ${CARDS[on].name}" aria-label="Take ${name} off ${CARDS[on].name}">${X_SVG}</button>` : "";
-      return `<div class="badge-entry${on ? " attached" : ""}" role="listitem"><button type="button" class="badge-pick" data-badge="${id}" title="${name}${on ? ` · on ${CARDS[on].name}` : ""}: press for details, or drag it onto a card" aria-label="${name}, level ${badgeLevel(copies)}${on ? `, on ${CARDS[on].name}` : ""}">${tokenHtml(id, badgeLevel(copies))}</button>${x}<span class="badge-name" aria-hidden="true">${name}</span><small class="badge-count">${progressText(copies)}</small></div>`;
+      return `<div class="badge-entry${on ? " attached" : ""}" role="listitem"><button type="button" class="badge-pick" data-badge="${id}" title="${name}${on ? ` · on ${CARDS[on].name}` : ""}: tap for details, or drag it onto a card" aria-label="${name}, level ${badgeLevel(copies)}${on ? `, on ${CARDS[on].name}` : ""}">${tokenHtml(id, badgeLevel(copies))}</button>${x}<span class="badge-name" aria-hidden="true">${name}</span><small class="badge-count">${progressText(copies)}</small></div>`;
     }).join("");
     return `<section class="deck-badges" aria-labelledby="badges-label">
         <div class="badge-draws">${this.drawButton(1)}${this.drawButton(10)}</div>
@@ -316,7 +316,7 @@ export class DeckPage {
     }).join("");
     return `<section class="deck-reserve open" aria-labelledby="deck-label">
         <h3 id="deck-label" class="deck-label">Deck</h3>
-        ${note ? `<button type="button" class="deck-tip deck-note" id="deck-add-note"><b>Add cards from your deck</b><p>Tap a card for its details and powers. Swipe up to move it into your hand; swipe down on a hand card to return it. Cards move between these two places.</p><small>Press to dismiss</small></button>` : ""}
+        ${note ? `<button type="button" class="deck-tip deck-note" id="deck-add-note"><b>Add cards from your deck</b><p>Tap a card for its details and powers. Swipe up to move it into your hand; swipe down on a hand card to return it. Cards move between these two places.</p><small>Tap to dismiss</small></button>` : ""}
         <div class="deck-grid" role="list" aria-label="Your deck">${cards}</div>
       </section>`;
   }
@@ -363,7 +363,7 @@ export class DeckPage {
     const halves = (linked[i - 1] ? `<span class="deck-link from-prev" aria-hidden="true"></span>` : "") + (on ? `<span class="deck-link to-next" aria-hidden="true"></span>` : "");
     if (!next) return halves;
     const names = `${CARDS[hand[i]!].name} and ${CARDS[next].name}`;
-    return `${halves}<button type="button" class="deck-link-toggle${on ? " on" : ""}" data-link="${i}" aria-pressed="${on}" aria-label="${on ? "Unlink" : "Link"} ${names}" title="${on ? `${names} share one priority: press to unlink them` : `Link ${names}: they share one priority, the closest target of either taken first`}"></button>`;
+    return `${halves}<button type="button" class="deck-link-toggle${on ? " on" : ""}" data-link="${i}" aria-pressed="${on}" aria-label="${on ? "Unlink" : "Link"} ${names}" title="${on ? `${names} share one priority: tap to unlink them` : `Link ${names}: they share one priority, the closest target of either taken first`}"></button>`;
   }
 
   /** Hand slot `i` holding card `id`: the card (fixed in place while a
