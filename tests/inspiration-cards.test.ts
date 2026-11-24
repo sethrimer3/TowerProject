@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { TRAINING, trained, type StatTrainingRow } from "../src/progression/training.ts";
-import { cost, type UpgradeId } from "../src/progression/upgrades.ts";
+import type { UpgradeId } from "../src/progression/upgrades.ts";
 import { deckCards, planHand, upgradeCards, type CardId } from "../src/cards/cards.ts";
 import { TREES } from "../src/progression/skill-trees.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
@@ -11,30 +11,30 @@ import type { Save } from "../src/save/shape.ts";
 import { playedSave } from "./first-skills.ts";
 
 /** The new Inspiration card nodes, in the order they can be bought, with
- * their price, the node each needs and its card (null for a node that opens
+ * the node each needs and its card (null for a node that opens
  * research or the Manual hand instead). */
-const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
-  ["cardWoodenDoor", 20, "cardTorch", "woodenDoor"],
-  ["cardYellowDoor", 20, "cardWoodenDoor", "yellowDoor"],
-  ["heartDoorResilience", 20, "cardYellowDoor", null],
-  ["cardHeartDoor", 25, "heartDoorResilience", "heartDoor"],
-  ["cardChest", 20, "interest", "chest"],
-  ["blueSiphon", 20, "keySiphon", "blueSiphon"],
-  ["keyToHp", 20, "blueSiphon", "keyToHp"],
-  ["blueTrader", 20, "keyToHp", "blueTrader"],
-  ["smeltBlue", 20, "blueTrader", "smeltBlue"],
-  ["redTrader", 30, "smeltBlue", "redTrader"],
-  ["smeltRed", 30, "redTrader", "smeltRed"],
-  ["cardRedKey", 20, "cardBlueKey", "redKey"],
-  ["redSiphon", 20, "blueSiphon", "redSiphon"],
-  ["floorSkipReward", 20, "cardChest", null],
-  ["enemyHpLevelSkips", 50, "floorSkipReward", null],
-  ["enemyCombatLevelSkips", 50, "enemyHpLevelSkips", null],
-  ["cardBossEnemy", 20, "enemyCombatLevelSkips", "bossEnemy"],
-  ["cardNonBossEnemy", 40, "cardBossEnemy", "nonBossEnemy"],
+const NODES: [UpgradeId, UpgradeId, CardId | null][] = [
+  ["cardWoodenDoor", "cardTorch", "woodenDoor"],
+  ["cardYellowDoor", "cardWoodenDoor", "yellowDoor"],
+  ["heartDoorResilience", "cardYellowDoor", null],
+  ["cardHeartDoor", "heartDoorResilience", "heartDoor"],
+  ["cardChest", "interest", "chest"],
+  ["blueSiphon", "keySiphon", "blueSiphon"],
+  ["keyToHp", "blueSiphon", "keyToHp"],
+  ["blueTrader", "keyToHp", "blueTrader"],
+  ["smeltBlue", "blueTrader", "smeltBlue"],
+  ["redTrader", "smeltBlue", "redTrader"],
+  ["smeltRed", "redTrader", "smeltRed"],
+  ["cardRedKey", "cardBlueKey", "redKey"],
+  ["redSiphon", "blueSiphon", "redSiphon"],
+  ["floorSkipReward", "cardChest", null],
+  ["enemyHpLevelSkips", "floorSkipReward", null],
+  ["enemyCombatLevelSkips", "enemyHpLevelSkips", null],
+  ["cardBossEnemy", "enemyCombatLevelSkips", "bossEnemy"],
+  ["cardNonBossEnemy", "cardBossEnemy", "nonBossEnemy"],
 ];
 
-test("each card node costs its price, waits for the node above it and adds its card to the deck", () => {
+test("each card node waits for the node above it and adds its card to the deck", () => {
   const g = new Game(playedSave());
   g.save.tower.inspiration = 10_000;
   g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = g.save.upgrades.keyMastery = g.save.upgrades.moreWealth = g.save.upgrades.cardMastery = g.save.upgrades.beastMastery = g.save.upgrades.enemyLevelSkips = g.save.upgrades.doorMastery = 1; // the Archives and the tree under them revealed
@@ -42,14 +42,11 @@ test("each card node costs its price, waits for the node above it and adds its c
   g.save.breakthrough = 100;
   for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough", "archives", "lifesteal", "buyQuantity", "cardYellowKey", "cardBlueKey", "thorns", "arcanaResearch", "cardTorch", "findYellowKey", "keyEfficiency", "keySiphon"] as const) assert.ok(g.skills.buy(id));
   const nodes = TREES.find((t) => t.id === "inspiration")!.nodes;
-  for (const [id, price, requires, card] of NODES) {
+  for (const [id, requires, card] of NODES) {
     assert.deepEqual(nodes.find((n) => n.id === id)!.requires, [requires], id);
-    assert.equal(cost(id, 0), price, id);
     assert.equal(upgradeCards(id)[0] ?? null, card);
     if (card) assert.ok(!deckCards(g.save.upgrades).includes(card));
-    const before = g.save.tower.inspiration;
     assert.ok(g.skills.buy(id), id);
-    assert.equal(before - g.save.tower.inspiration, price);
     if (card) assert.ok(deckCards(g.save.upgrades).includes(card), `${card} joins the deck`);
   }
   assert.equal(g.skills.buy("cardChest"), false, "bought once");

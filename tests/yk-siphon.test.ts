@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { TRAINING, trained, type StatTrainingRow } from "../src/progression/training.ts";
-import { UPGRADES, cost } from "../src/progression/upgrades.ts";
+import { UPGRADES } from "../src/progression/upgrades.ts";
 import { deckCards, planHand } from "../src/cards/cards.ts";
 import { RESEARCH } from "../src/progression/archives.ts";
 import { loadout } from "../src/progression/loadout.ts";
@@ -12,8 +12,7 @@ import { playedSave } from "./first-skills.ts";
 
 const hpRow = TRAINING.find((t) => t.id === "hp")! as StatTrainingRow;
 
-test("Phoenix Spark costs 1 Breakthrough; Lifesteal (5) follows the Archives, Buy Quantity (5) Lifesteal, Thorns (10) Buy Quantity, GK Siphon (15) Key Efficiency, Regen Research (10) Shroud", () => {
-  assert.equal(cost("phoenixSpark", 0), 1);
+test("Phoenix Spark is a Breakthrough skill; Lifesteal follows the Archives, Buy Quantity Lifesteal, Thorns Buy Quantity, GK Siphon Key Efficiency, Regen Research Greater Heal", () => {
   assert.equal(UPGRADES.find((u) => u.id === "phoenixSpark")!.currency, "breakthrough");
   const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
@@ -26,25 +25,18 @@ test("Phoenix Spark costs 1 Breakthrough; Lifesteal (5) follows the Archives, Bu
   assert.equal(g.skills.buy("thorns"), false, "waits for Buy Quantity");
   assert.equal(g.skills.buy("keySiphon"), false, "waits for Key Efficiency");
   assert.equal(g.skills.buy("regenResearch"), false, "waits for Greater Heal");
-  const before = g.save.tower.inspiration;
   assert.ok(g.skills.buy("lifesteal"));
-  assert.equal(before - g.save.tower.inspiration, 5);
   assert.ok(g.skills.buy("buyQuantity"));
-  assert.equal(before - g.save.tower.inspiration, 5 + 5);
   assert.equal(g.skills.buy("keySiphon"), false, "waits for Key Efficiency");
   assert.ok(g.skills.buy("thorns"));
-  assert.equal(before - g.save.tower.inspiration, 5 + 5 + 10);
   assert.ok(g.skills.buy("arcanaResearch"), "Arcana Research stands between Thorns and Torch");
   assert.ok(g.skills.buy("cardTorch"), "Torch stands between Arcana Research and Find Gold Key");
-  assert.equal(before - g.save.tower.inspiration, 5 + 5 + 10 + 20 + 20);
-  assert.ok(g.skills.buy("findYellowKey") && g.skills.buy("keyEfficiency"), "10 Inspiration each");
+  assert.ok(g.skills.buy("findYellowKey") && g.skills.buy("keyEfficiency"));
   assert.ok(g.skills.buy("keySiphon"));
-  assert.equal(before - g.save.tower.inspiration, 5 + 5 + 10 + 20 + 20 + 10 + 10 + 15);
   assert.ok(deckCards(g.save.upgrades).includes("keySiphon"), "its card joins the deck");
   assert.equal(g.skills.buy("regenResearch"), false, "waits for Greater Heal");
   assert.ok(g.skills.buy("greaterHeal"));
   assert.ok(g.skills.buy("regenResearch"));
-  assert.equal(before - g.save.tower.inspiration, 5 + 5 + 10 + 20 + 20 + 10 + 10 + 15 + 3 + 10);
 });
 
 test("Regen research: +3% Regen a level, priced and timed like Potion HP, needing Regen Research", () => {

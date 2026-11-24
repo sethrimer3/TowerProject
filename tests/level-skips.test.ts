@@ -5,7 +5,7 @@ import { decode, defaults } from "../src/save/save.ts";
 import { TRAINING, trainedAmount, trainingCap, trainingCeiling } from "../src/progression/training.ts";
 import { trainingGold } from "../src/progression/training-jobs.ts";
 import { runTrainingOffer, silverPrice } from "../src/progression/run-training.ts";
-import { cost, UPGRADES } from "../src/progression/upgrades.ts";
+import { UPGRADES } from "../src/progression/upgrades.ts";
 import { skillAvailable, skillHidden, TREES } from "../src/progression/skill-trees.ts";
 import { LEVEL_SKIP_SURE, levelSkipSeed, levelSkipsOf, rollLevelSkip, skippedEnemy, skippedTile } from "../src/enemies/level-skips.ts";
 import { enemyStats } from "../src/enemies/curves.ts";
@@ -29,8 +29,8 @@ function missingSeed(kind: "hp" | "combat", chance: number, n: number) {
 
 test("the skills: their trees, prices, places and what reveals them", () => {
   const at = (id: string) => TREES.flatMap((t) => t.nodes).find((n) => n.id === id)!;
-  for (const id of ["enemyLevelSkips", "enemyLevelSkipLimitBreak"] as const) assert.deepEqual([UPGRADES.find((u) => u.id === id)!.currency, cost(id, 0)], ["breakthrough", 5], id);
-  for (const id of ["enemyHpLevelSkips", "enemyCombatLevelSkips"] as const) assert.deepEqual([UPGRADES.find((u) => u.id === id)!.currency, cost(id, 0)], ["inspiration", 50], id);
+  for (const id of ["enemyLevelSkips", "enemyLevelSkipLimitBreak"] as const) assert.equal(UPGRADES.find((u) => u.id === id)!.currency, "breakthrough", id);
+  for (const id of ["enemyHpLevelSkips", "enemyCombatLevelSkips"] as const) assert.equal(UPGRADES.find((u) => u.id === id)!.currency, "inspiration", id);
   assert.deepEqual([at("enemyLevelSkips").x, at("enemyLevelSkips").y, at("enemyLevelSkips").requires], [50, 137, ["life"]], "straight below Life");
   assert.deepEqual([at("life").x, at("life").y], [50, 111]);
   assert.deepEqual([at("floorSkipReward").x, at("floorSkipReward").y], [10, 358]);

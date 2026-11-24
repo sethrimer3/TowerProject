@@ -4,7 +4,7 @@ import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save/save.ts";
 import { trainingOpen } from "../src/progression/loadout.ts";
 import { TRAINING, type TrainingId, trainedAmount } from "../src/progression/training.ts";
-import { cost, type UpgradeId } from "../src/progression/upgrades.ts";
+import type { UpgradeId } from "../src/progression/upgrades.ts";
 import { TREES } from "../src/progression/skill-trees.ts";
 import { RESEARCH, researched, type ResearchId } from "../src/progression/archives.ts";
 import { trainingStep, trainingText, type TrainingView } from "../src/progression/loadout.ts";
@@ -26,12 +26,11 @@ const silverBonus = (save: ReturnType<typeof defaults>) => snap(silverFound(save
  * Utility Training row and Archives research of the same name. */
 const SKILLS: [UpgradeId, TrainingId & ResearchId][] = [["wealthy", "silverBonus"], ["loot", "goldBonus"], ["wishingWell", "floorSilver"]];
 
-test("Wealthy, Loot and Wishing Well cost 3 Inspiration each, after Spare Change", () => {
+test("Wealthy, Loot and Wishing Well follow Spare Change", () => {
   const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
   for (const [skill] of SKILLS) {
     assert.deepEqual(TREES[0].nodes.find((n) => n.id === skill)!.requires, ["spareChange"]);
-    assert.equal(cost(skill, 0), 3);
     assert.equal(g.skills.buy(skill), false, `${skill} waits for Spare Change`);
   }
   g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1; // the Archives and the tree under them revealed

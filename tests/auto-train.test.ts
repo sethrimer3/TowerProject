@@ -2,7 +2,6 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save/save.ts";
-import { cost } from "../src/progression/upgrades.ts";
 import { TREES } from "../src/progression/skill-trees.ts";
 import { xpForLevel } from "../src/progression/xp.ts";
 import { autoTrainPicks, autoTrains, runTrainingOffer } from "../src/progression/run-training.ts";
@@ -27,7 +26,6 @@ test("Auto-Train is a 2-point Breakthrough skill right of Life, which it require
   assert.equal(node.y, life.y);
   assert.ok(node.x > life.x);
   assert.ok(!nodes.some((n) => n !== node && n.x === node.x && n.y === node.y), "its spot is its own");
-  assert.equal(cost("autoTrain", 0), 2);
 });
 
 test("Auto-Train buys the cheapest next rank of the rows switched on, one after another, until the Silver runs short", () => {

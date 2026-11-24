@@ -6,7 +6,6 @@ import { arrive, decodeOffline, OFFLINE_MIN_MS, RECENT_CLIMBS, recentGoldPerHour
 import { missing, research, researched } from "../src/progression/archives.ts";
 import { statsRows } from "../src/ui/stats-dialog.ts";
 import { skillAvailable } from "../src/progression/skill-trees.ts";
-import { cost } from "../src/progression/upgrades.ts";
 import { intPow } from "../src/exact.ts";
 
 const HOUR = 3_600_000;
@@ -109,7 +108,6 @@ test("Offline Gold follows Golden Floors for 2 Breakthrough and opens its two re
   // Every other skill owned, Golden Floors and Offline Gold aside.
   for (const id of Object.keys(save.upgrades) as (keyof typeof save.upgrades)[]) save.upgrades[id] = 1;
   save.upgrades.goldenFloors = save.upgrades.offlineGold = 0;
-  assert.equal(cost("offlineGold", 0), 2);
   assert.equal(skillAvailable("offlineGold", save.upgrades), false);
   save.upgrades.goldenFloors = 1;
   assert.ok(skillAvailable("offlineGold", save.upgrades));

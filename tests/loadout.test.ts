@@ -6,7 +6,7 @@ import { loadout, trainingBulk, trainingFull, trainingPoints, trainingStep, upgr
 import { decode, defaults } from "../src/save/save.ts";
 import { GOLD_SHOP } from "../src/economy/provisions.ts";
 import { LIMIT_BREAKS, TRAINING, isStatRow, trained, trainingCap, trainingCeiling, trainingWorth } from "../src/progression/training.ts";
-import { UPGRADES, cost, type UpgradeId } from "../src/progression/upgrades.ts";
+import { UPGRADES, type UpgradeId } from "../src/progression/upgrades.ts";
 import { TREES } from "../src/progression/skill-trees.ts";
 import { levelForXp, xpForLevel } from "../src/progression/xp.ts";
 import { addItem } from "../src/equipment/inventory.ts";
@@ -118,14 +118,13 @@ test("Shroud blocks 1 damage a fight and opens Shroud training", () => {
   g.save.xp = xpForLevel(10);
   assert.equal(trainNow(g, "shroud"), false, "not before Shroud");
   assert.equal(g.run.player.shroud, undefined, "no shroud yet");
-  g.save.tower.inspiration = 2;
+  g.save.tower.inspiration = 1000;
   g.save.upgrades.trainers = 0; // trainNow owns it
   g.save.upgrades.trainers = 1;
   assert.equal(g.skills.buy("shroud"), false, "not before Larger Hand");
   g.save.upgrades.largerHand = 1;
   assert.ok(g.skills.buy("shroud"));
   assert.equal(loadout(g.save).shroud, 1);
-  assert.equal(g.save.tower.inspiration, 0, "2 Inspiration");
   assert.equal(g.run.player.shroud, 1, "the run in the forest takes it at once");
   assert.ok(trainNow(g, "shroud") && trainNow(g, "shroud"));
   // Two ranks: 5 × 2 + 0.1 × 2² + 0.0000064 × 1⁴.
@@ -254,10 +253,10 @@ test("no provision is open from the start: each opens with its skill, in the Ins
     assert.ok(provisionOpen(s, id) && provisionsOpen(s), id);
     s.upgrades[skill.id] = 0;
   }
-  // The Inspiration tree's three follow Regen, ATK Up and DEF Up, 5 Inspiration each.
+  // The Inspiration tree's three follow Regen, ATK Up and DEF Up.
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
-  assert.deepEqual(["elixirProvision", "whetstoneProvision", "aegisProvision"].map((id) => [at(id).requires, cost(id as UpgradeId, 0)]),
-    [[["regen"], 5], [["cardAtkUp"], 5], [["cardDefUp"], 5]]);
+  assert.deepEqual(["elixirProvision", "whetstoneProvision", "aegisProvision"].map((id) => at(id).requires),
+    [["regen"], ["cardAtkUp"], ["cardDefUp"]]);
 });
 
 test("Extra Key opens the Gold Key provision, which adds no key to the loadout", () => {

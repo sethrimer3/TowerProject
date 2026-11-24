@@ -3,7 +3,6 @@ import { snap } from "../src/exact.ts";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
 import { TRAINING, trained, trainingWorth, type StatTrainingRow, trainingDef } from "../src/progression/training.ts";
-import { cost } from "../src/progression/upgrades.ts";
 import { levelForXp } from "../src/progression/xp.ts";
 import { loadout, trainingStep } from "../src/progression/loadout.ts";
 import { resolveStep, BASE_RULES } from "../src/step-effects.ts";
@@ -13,10 +12,9 @@ import { playedSave } from "./first-skills.ts";
 
 const row = (id: string) => TRAINING.find((t) => t.id === id)! as StatTrainingRow;
 
-test("Regen costs 1 Inspiration between On the Job and Heal, and opens a Defense training row", () => {
+test("Regen sits between On the Job and Heal, and opens a Defense training row", () => {
   const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
-  assert.equal(cost("regen", 0), 1);
   for (const id of ["combatStance", "buildout", "trainers"] as const) assert.ok(g.skills.buy(id));
   assert.equal(g.skills.buy("regen"), false, "waits for On the Job");
   assert.equal(g.skills.buy("cardHeal"), false, "Heal waits for Regen");

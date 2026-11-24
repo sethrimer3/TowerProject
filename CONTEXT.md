@@ -636,7 +636,7 @@ A second hand the Manual Hand skill opens, set up on the Deck page beside the Au
 _Avoid_: second hand, reserve
 
 **Movement speed**:
-How many steps a second the hand (and Automove in the forest) takes. The player sets it inside a run with the arrows beside play/pause, from 0 (paused) to 3; the Movement Speed +1 skill adds one, and Movement Speed research, which the Movement Speed skill opens, makes faster speeds available, up to 15, the most anything (boons and equipment too) takes it. A new hero starts at 2; the forest walks at least 3.
+How many steps a second the hand (and Automove in the forest) takes. The player sets it inside a run with the arrows beside play/pause, from 0 (paused) to 3; the Movement Speed +1 skill adds one, and Movement Speed research, which the Movement Speed skill opens, makes faster speeds available, up to 10; Shrine boons and equipment may add more, but nothing takes it past 15. A new hero starts at 2; the forest walks at least 3.
 _Avoid_: Automove speed
 
 **Dash**:

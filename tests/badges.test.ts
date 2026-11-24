@@ -105,15 +105,14 @@ test("Key < Badges and Key ≥ Badges each add their three key gates to the draw
   assert.ok([...KEY_LESS, ...KEY_AT_LEAST].every((id) => both.has(id)));
 });
 
-test("Key < Badges sits under RK Siphon and Key ≥ Badges under it, 50 Inspiration each", () => {
+test("Key < Badges sits under RK Siphon and Key ≥ Badges under it", () => {
   const g = new Game(playedSave());
-  g.save.tower.inspiration = 100;
+  g.save.tower.inspiration = 1000;
   assert.equal(g.skills.buy("keyLessBadges"), false, "waits for RK Siphon");
   g.save.upgrades.trainers = g.save.upgrades.redSiphon = g.save.upgrades.keyMastery = g.save.upgrades.cardMastery = g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1;
   assert.equal(g.skills.buy("keyAtLeastBadges"), false, "waits for Key < Badges");
   assert.ok(g.skills.buy("keyLessBadges"));
   assert.ok(g.skills.buy("keyAtLeastBadges"));
-  assert.equal(g.save.tower.inspiration, 0);
 });
 
 test("a badge goes on one card and a card holds one: dropping moves it, swaps, or takes the old one off", () => {

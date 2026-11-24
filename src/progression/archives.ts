@@ -1027,9 +1027,7 @@ export const RESEARCH = {
     description: "Increase max game speed.",
     categories: ["qualityOfLife"],
     requires: [{ upgrade: "moveSpeed" }],
-    // 3 steps a second, 1 more with Movement Speed +1, then 11 levels up to
-    // the 15 every device shows evenly (`MAX_MOVE_RATE`).
-    levels: countLevels("moveSpeed", 11),
+    levels: countLevels("moveSpeed", 6),
   },
   dash: {
     name: "Dash",

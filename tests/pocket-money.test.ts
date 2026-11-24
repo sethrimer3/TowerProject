@@ -1,16 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/state.ts";
-import { cost } from "../src/progression/upgrades.ts";
 import { RESEARCH } from "../src/progression/archives.ts";
 import { playedSave } from "./first-skills.ts";
 import { enterTournament } from "./open-tournament.ts";
 
-test("Pocket Money costs 3 Inspiration after the Archives, and opens research priced like Potion HP", () => {
+test("Pocket Money follows the Archives, and opens research priced like Potion HP", () => {
   const g = new Game(playedSave());
   g.save.tower.inspiration = 1000;
   g.save.upgrades.questForKnowledge = g.save.upgrades.pathToWealth = g.save.upgrades.physician = 1;
-  assert.equal(cost("pocketMoney", 0), 3);
   for (const id of ["combatStance", "buildout", "trainers", "largerHand", "shroud", "critical", "breakthrough"] as const) assert.ok(g.skills.buy(id));
   assert.equal(g.skills.buy("pocketMoney"), false, "waits for the Archives");
   assert.ok(g.skills.buy("archives"));

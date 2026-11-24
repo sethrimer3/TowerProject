@@ -79,9 +79,9 @@ The Settings button in the stats opens the Settings page at any time, with a Bac
 
 ## Movement Speed and Dash
 
-**Movement Speed** (1 Breakthrough, under Quest for Knowledge at the top of the Breakthrough tree) opens the Archives' **Movement Speed** research (eleven levels, priced and timed like Phoenix Spark Count's: 500 Gold and 8 hours, up to 28,000 Gold and 88 hours, 115,500 Gold and 22 days in all), each level letting the run's speed arrows go one step a second faster, up to 14, or 15 with the Movement Speed +1 skill.
+**Movement Speed** (1 Breakthrough, under Quest for Knowledge at the top of the Breakthrough tree) opens the Archives' **Movement Speed** research (six levels, priced and timed like Phoenix Spark Count's first six: 500 Gold and 8 hours, up to 8,000 Gold and 48 hours), each level letting the run's speed arrows go one step a second faster, up to 9, or 10 with the Movement Speed +1 skill.
 **Movement Speed +1** (1 Inspiration, right of Auto-Climb) lets them go one step a second faster from the start: 4 rather than 3.
-Nothing takes the hero past 15 steps a second, Shrine boons and equipment included, a speed every phone shows evenly.
+Shrine boons and equipment can raise the speed further, but nothing takes the hero past 15 steps a second, a speed every phone shows evenly.
 **Dash** (1 Breakthrough, after Movement Speed, right of Physician) opens the Archives' **Dash** research: each of its 25 levels lets the hand's first step toward a new target dash across one more empty tile (or chest already opened) in the same step (one turn), stopping on the tile before anything else (an item, a door, a monster, the stairs, a torch or a Gem), except that a dash with a tile left ends on the item its card is heading for, taking it (scaled by an Effective or Dampen badge as usual; with a Skip badge it stops before the item, which Skip rolls for on its own step); faint echoes of the hero appear on each tile it dashed off, and on the empty tile it landed on, one after another, and fade in the same order within half a second.
 Level n costs 250 × n × 2^(n−1) Gold and takes 1.75 × n × 1.2^(n−1) hours (250 Gold and 1.75 hours first; about 105 billion Gold and 145 days at level 25).
 A dashed turn regains HP by Regen once, on its first step, not on the tiles it dashes across.

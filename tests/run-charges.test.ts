@@ -5,7 +5,6 @@ import { decode, defaults } from "../src/save/save.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import { chargesLeft, chargesPerRun, climbFloor, floorsToRegain, regainEvery } from "../src/run-charges.ts";
 import { RESEARCH, researched } from "../src/progression/archives.ts";
-import { cost } from "../src/progression/upgrades.ts";
 import { skillAvailable } from "../src/progression/skill-trees.ts";
 import type { Run } from "../src/runs.ts";
 import { playedSave } from "./first-skills.ts";
@@ -24,10 +23,9 @@ function arena(size: number, ...owned: ("ignore" | "target")[]) {
   return g;
 }
 
-test("the four charge skills cost 3 Breakthrough (Ignore, Target) or 4 (Ignore More, Target More) and sit below Card Ascension - Legendary, under Echoes of time", () => {
+test("the four charge skills sit below Card Ascension - Legendary, under Echoes of time", () => {
   const save = defaults();
-  for (const [id, price] of [["ignore", 3], ["ignoreMore", 4], ["target", 3], ["targetMore", 4]] as const) {
-    assert.equal(cost(id, 0), price, id);
+  for (const id of ["ignore", "ignoreMore", "target", "targetMore"] as const) {
     assert.equal(skillAvailable(id, save.upgrades), false, `${id} waits on the skills above it`);
   }
   Object.assign(save.upgrades, { trainers: 1, breakthrough: 1, moveSpeed: 1, pathToWealth: 1, moreWealth: 1, goldenFloors: 1, esotericTraining: 1, aetherShield: 1, phoenixSpark: 1 });

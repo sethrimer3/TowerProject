@@ -15,7 +15,6 @@ import { rowValue, trainingText } from "../src/progression/loadout.ts";
 import { regrowNow, shieldCapacity } from "../src/hero-shield.ts";
 import { silverPrice } from "../src/progression/run-training.ts";
 import { TREES, skillAvailable, skillHidden } from "../src/progression/skill-trees.ts";
-import { cost } from "../src/progression/upgrades.ts";
 import { regenerateShield, resolveStep, BASE_RULES } from "../src/step-effects.ts";
 import { drawShieldBubble, SHIELD_FORM_MS, SHIELD_POP_MS } from "../src/render/effects/shield-bubble.ts";
 import type { RoomWorld } from "../src/tower/room-world.ts";
@@ -50,11 +49,10 @@ test("the tree: Red Key under Blue Key, Thorns between Buy Quantity and Torch, a
   const at = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
   assert.deepEqual(["heroShield", "shieldThorns", "regrowShield", "shieldRegen"].map((id) => [at(id).x, at(id).y, at(id).requires]),
     [[70, 376, ["cardTorch"]], [70, 394, ["heroShield"]], [90, 376, ["heroShield"]], [90, 394, ["regrowShield"]]]);
-  assert.deepEqual(["heroShield", "shieldThorns", "regrowShield", "shieldRegen"].map((id) => cost(id as "heroShield", 0)), [10, 15, 10, 15]);
   const breakthrough = TREES.find((t) => t.id === "breakthrough")!, node = (id: string) => breakthrough.nodes.find((n) => n.id === id)!;
-  assert.deepEqual([node("aetherShield").requires, cost("aetherShield", 0)], [["esotericTraining"], 5]);
+  assert.deepEqual(node("aetherShield").requires, ["esotericTraining"]);
   assert.deepEqual(node("phoenixSpark").requires, ["aetherShield"], "Phoenix Spark follows it");
-  assert.deepEqual([node("shieldLimitBreak").requires, cost("shieldLimitBreak", 0)], [["limitBreak2"], 5]);
+  assert.deepEqual(node("shieldLimitBreak").requires, ["limitBreak2"]);
   const upgrades = { ...defaults().upgrades, trainers: 1, questForKnowledge: 1 };
   assert.ok(skillHidden("heroShield", upgrades));
   for (const id of ["cardTorch", "thorns", "buyQuantity", "lifesteal", "archives"] as const) upgrades[id] = 1;

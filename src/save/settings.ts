@@ -40,7 +40,7 @@ export const SETTINGS = {
   /** Steps a second, for the hand and Automove, set by the arrows beside the
    * run's play button (no row on the page): 0 (paused) up to 3, one more with
    * the Movement Speed +1 skill and one more per Movement Speed research
-   * level, up to 15 (`MAX_MOVE_RATE`); a new hero starts at 2, and the
+   * level, and boons may add more, up to 15 (`MAX_MOVE_RATE`); a new hero starts at 2, and the
    * forest walks at least 3 (`Game.stepsPerSecond`, `Game.changeSpeed`). */
   speed: { kind: "choice", default: 2, choices: Array.from({ length: 16 }, (_, n) => [n, `${n} steps / sec`] as const) },
   reduceMotion: { kind: "toggle", default: false, page: { id: "motion", label: "Reduce motion" } },

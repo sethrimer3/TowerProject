@@ -13,7 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
-  { date: "2026-11-24", text: "Speeds up to 15 steps a second, steadier on every screen; a Movement Speed +1 skill; dearer GK Siphon and door cards." },
+  { date: "2026-11-24", text: "Steadier game speed on every screen, capped at 15 steps a second; a Movement Speed +1 skill; dearer GK Siphon and doors." },
   { date: "2026-11-23", text: "Calm evenings: a warm sunset glow over the forest and lake, with its own evening ambience." },
   { date: "2026-11-23", text: "More sounds: footsteps, stairs, bosses, revives, Thunderbolt, familiars, the Shop, Shrines, missions and storm thunder." },
   { date: "2026-11-23", text: "A Divine Portal on the first climb's floor 2 leads to floor 999999 and the Chrono Anchor; the Codex gains a Story." },

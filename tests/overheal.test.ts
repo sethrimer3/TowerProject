@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { decode } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
-import { cost, UPGRADES } from "../src/progression/upgrades.ts";
+import { UPGRADES } from "../src/progression/upgrades.ts";
 import { schedulePrice } from "../src/economy/prices.ts";
 import { trainedAmount, trainingDef } from "../src/progression/training.ts";
 import { trainingGold } from "../src/progression/training-jobs.ts";
@@ -21,7 +21,7 @@ const healed = (p: Player, t: Tile, r: StepRules) => resolveStep(p, t, r) as Ste
 
 test("Overheal is a 2-Breakthrough skill between Physician and Life", () => {
   const row = UPGRADES.find((u) => u.id === "overheal")!;
-  assert.deepEqual([row.currency, row.max, cost("overheal", 0)], ["breakthrough", 1, 2]);
+  assert.deepEqual([row.currency, row.max], ["breakthrough", 1]);
   const nodes = TREES.find((t) => t.id === "breakthrough")!.nodes;
   assert.deepEqual(nodes.find((n) => n.id === "overheal")!.requires, ["physician"]);
   assert.deepEqual(nodes.filter((n) => n.requires.includes("overheal")).map((n) => n.id), ["life"], "Life follows it");

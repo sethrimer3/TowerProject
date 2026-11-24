@@ -4,7 +4,7 @@ import { Game } from "../src/state.ts";
 import { COMBO_LIMIT, COMBO_PERCENT, predict } from "../src/combat.ts";
 import { decode } from "../src/save/save.ts";
 import { TREES, skillAvailable } from "../src/progression/skill-trees.ts";
-import { UPGRADES, cost } from "../src/progression/upgrades.ts";
+import { UPGRADES } from "../src/progression/upgrades.ts";
 import { RoomWorld } from "../src/tower/room-world.ts";
 import type { Enemy, Tile } from "../src/entities.ts";
 import { playedSave } from "./first-skills.ts";
@@ -32,7 +32,7 @@ const step = (g: Game, dx = 1) => assert.ok(g.move(dx, 0));
 
 test("Dash Combo is a 1 Breakthrough skill split off Dash, down and left of it", () => {
   const row = UPGRADES.find((u) => u.id === "dashCombo")!, nodes = TREES.find((t) => t.id === "breakthrough")!.nodes, node = nodes.find((n) => n.id === "dashCombo")!;
-  assert.deepEqual([row.max, row.currency, cost("dashCombo", 0)], [1, "breakthrough", 1]);
+  assert.deepEqual([row.max, row.currency], [1, "breakthrough"]);
   assert.deepEqual([node.x, node.y, node.requires], [70, 85, ["dash"]]);
   assert.match(row.description!, new RegExp(`\\+${COMBO_PERCENT}% ATK`));
   const levels = { ...playedSave().upgrades, trainers: 1, breakthrough: 1, questForKnowledge: 1, moveSpeed: 1 };

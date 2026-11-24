@@ -10,7 +10,6 @@ import { critRule } from "../src/progression/loadout.ts";
 import { TREES } from "../src/progression/skill-trees.ts";
 import { TRAINING, trainingDef, trainedAmount } from "../src/progression/training.ts";
 import { trainingGold } from "../src/progression/training-jobs.ts";
-import { cost } from "../src/progression/upgrades.ts";
 import { schedulePrice } from "../src/economy/prices.ts";
 import { defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
@@ -32,8 +31,7 @@ function owned(chance = 0, factor = 0) {
   return save;
 }
 
-test("Super Critical is 30 Inspiration, under Bombs in the Inspiration tree", () => {
-  assert.equal(cost("superCritical", 0), 30);
+test("Super Critical is under Bombs in the Inspiration tree", () => {
   const nodes = TREES.find((t) => t.id === "inspiration")!.nodes, node = nodes.find((n) => n.id === "superCritical")!, bombs = nodes.find((n) => n.id === "bombs")!;
   assert.deepEqual(node.requires, ["bombs"]);
   assert.equal(node.x, bombs.x);

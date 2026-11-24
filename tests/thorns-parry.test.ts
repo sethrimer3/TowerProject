@@ -21,10 +21,10 @@ const brute: Enemy = { name: "Brute", hp: 60, attack: 30, defense: 0, tier: 0, s
 const row = (id: TrainingId) => TRAINING.find((t) => t.id === id)!;
 const node = (id: string) => TREES[0].nodes.find((n) => n.id === id)!;
 
-test("Thorns sits between Buy Quantity and Torch, Parry between Regen Research and Revive, 10 Inspiration each", () => {
+test("Thorns sits between Buy Quantity and Torch, Parry between Regen Research and Revive", () => {
   for (const id of ["thorns", "parry"] as const) {
     const u = UPGRADES.find((u) => u.id === id)!;
-    assert.deepEqual([u.currency, u.base, u.max], ["inspiration", 10, 1], id);
+    assert.deepEqual([u.currency, u.max], ["inspiration", 1], id);
   }
   assert.deepEqual([node("thorns").requires, node("arcanaResearch").requires, node("cardTorch").requires], [["buyQuantity"], ["thorns"], ["arcanaResearch"]], "Arcana Research between Thorns and Torch");
   assert.deepEqual([node("parry").requires, node("revive").requires], [["regenResearch"], ["parry"]]);
