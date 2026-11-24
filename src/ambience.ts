@@ -1,5 +1,5 @@
 import { bed, BEDS, type Bed } from "./sound-files.ts";
-import { runningAudio, soundOn } from "./sound.ts";
+import { runningAudio, soundOn, type SoundKind } from "./sound.ts";
 import type { Weather } from "./outside.ts";
 import { stream } from "./random.ts";
 
@@ -8,6 +8,9 @@ const effects = stream("effects");
 /** How loud each bed plays at its full level (the loops are all
  * loudness-matched, so these set the balance between them). */
 export const BED_GAIN: Readonly<Record<Bed, number>> = { windForest: 0.12, windChimes: 0.07, blacksmith: 0.22, dockWater: 0.2, meditative: 0.1, divineRelic: 0.3, evening: 0.14 };
+/** Which setting each bed answers to: the lake's music to Music, the rest
+ * to Ambience. */
+export const BED_KIND: Readonly<Record<Bed, SoundKind>> = { windForest: "ambience", windChimes: "ambience", blacksmith: "ambience", dockWater: "ambience", meditative: "music", divineRelic: "ambience", evening: "ambience" };
 /** Seconds a bed takes to rise or die away. */
 export const BED_FADE = 1.5;
 
@@ -89,7 +92,8 @@ type Playing = { source: AudioBufferSourceNode; gain: GainNode; level: number };
  * board where the hero stands, the voyage with the fisherman); each bed
  * plays at the loudest level any of them asks, fading between levels, so a
  * bed two of them want carries on unbroken from one to the other. All of
- * it is silent while sound is off or the page is hidden. */
+ * it is silent while the page is hidden, and each bed while its kind of
+ * sound (`BED_KIND`) is off. */
 class Ambience {
   private wishes = new Map<string, Levels>();
   private playing = new Map<Bed, Playing>();
@@ -107,10 +111,10 @@ class Ambience {
   private mix() {
     const a = runningAudio();
     if (!a) return;
-    const on = soundOn() && !(typeof document !== "undefined" && document.hidden);
-    const wanted = on ? mixLevels(this.wishes.values()) : {};
+    const shown = !(typeof document !== "undefined" && document.hidden);
+    const wanted = shown ? mixLevels(this.wishes.values()) : {};
     for (const name of Object.keys(BEDS) as Bed[]) {
-      const level = wanted[name] ?? 0, now = this.playing.get(name);
+      const level = soundOn(BED_KIND[name]) ? wanted[name] ?? 0 : 0, now = this.playing.get(name);
       if (now && Math.abs(now.level - level) < 0.005) continue;
       if (level <= 0) {
         if (now) this.fadeOut(a, name, now);

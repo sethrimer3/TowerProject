@@ -2,7 +2,8 @@ import { stream } from "./random.ts";
 import { oneShot, preloadOneShots, type OneShot } from "./sound-files.ts";
 import type { UiLook } from "./theme-collection.ts";
 
-/** The game's sounds, heard under every UI theme while Sound effects is on.
+/** The game's sounds, heard under every UI theme while their kind's setting
+ * is on (`SoundKind`).
  * Most cues play a recording from `sound-files.ts` (`SAMPLED`); a few are
  * made here with Web Audio (a wooden knock is a burst of filtered noise on
  * a low thump; a bell is a handful of inharmonic sine partials), and the
@@ -31,8 +32,31 @@ export type Cue =
    * thunder is the weather's own, `render/weather.ts`). */
   | Exclude<OneShot, "buttonThud" | "explosionSmall" | "thunder">;
 
+/** The kinds of sound, each turned on or off by its own setting on the
+ * Settings page's Sounds section (`SOUND_SETTINGS`): notifications (what
+ * finished while the player looked away), the UI's presses and pages, the
+ * run's own events, the ambience's beds and the music. */
+export type SoundKind = "notifications" | "ui" | "events" | "ambience" | "music";
+export const SOUND_KINDS: readonly SoundKind[] = ["notifications", "ui", "events", "ambience", "music"];
+
+/** Which kind each cue is, so its setting silences it. */
+export const CUE_KIND: Readonly<Record<Cue, SoundKind>> = {
+  trained: "notifications", gemBankFull: "notifications", dailyMission: "notifications", eventMission: "notifications",
+  knock: "ui", stone: "ui", confirm: "ui", error: "ui", coin: "ui", chime: "ui", unlock: "ui",
+  cardLevelUp: "ui", badgeDraw: "ui", equipmentTab: "ui", tournamentRewards: "ui", tutorialStart: "ui",
+  shopPurchase: "ui", eggHatch: "ui", cardAscension: "ui", openGift: "ui", newTower: "ui",
+  blast: "events", heroLevelUp: "events", gem: "events", gemGolden: "events", gemStellar: "events",
+  attackShard: "events", defenseShard: "events", potion: "events", key: "events", chestCreak: "events",
+  door1: "events", door2: "events", door3: "events", elixir: "events", provision: "events",
+  phoenixSpark: "events", timeLoop: "events", warp: "events", divineRelic: "events", runStuck: "events",
+  angelRevive: "events", bossAppears: "events", delveGate: "events", runSummary: "events", shrineBoon: "events",
+  stoneSteps: "events", step: "events", run: "events", enterTower: "events", enterDelve: "events",
+  arrowHit: "events", punch: "events", bodyFall: "events", slimeImpact: "events", lightningZap: "events",
+  wolfCharge: "events", dragonFire: "events",
+};
+
 const rand = stream("effects");
-let enabled: () => boolean = () => true;
+let enabled: (kind: SoundKind) => boolean = () => true;
 let look: () => UiLook | undefined = () => undefined;
 let ctx: AudioContext | null = null;
 /** Whether the player has pressed anything yet: until then nothing builds
@@ -46,13 +70,13 @@ let lastEvent = -Infinity;
 /** The presses' sounds, which a general sound doesn't give way to. */
 const PRESSES: ReadonlySet<Cue> = new Set(["knock", "stone", "confirm"]);
 
-/** Which setting turns sound off; checked at every cue, and by the
- * ambience (`ambience.ts`) every frame. */
-export function soundEnabledBy(isOn: () => boolean) {
+/** Which settings turn each kind of sound off; checked at every cue, and by
+ * the ambience (`ambience.ts`) every frame. */
+export function soundEnabledBy(isOn: (kind: SoundKind) => boolean) {
   enabled = isOn;
 }
-/** Whether sound is on now. */
-export const soundOn = () => enabled();
+/** Whether `kind` of sound is on now; with no kind, whether any is. */
+export const soundOn = (kind?: SoundKind) => (kind ? enabled(kind) : SOUND_KINDS.some(enabled));
 /** Which UI theme is worn, so a theme's own recordings (`STYLE_SOUNDS`)
  * play in place of the defaults. */
 export function soundStyleBy(worn: () => UiLook | undefined) {
@@ -63,7 +87,7 @@ export function soundStyleBy(worn: () => UiLook | undefined) {
  * start sound only then. */
 export function unlockAudio() {
   pressed = true;
-  if (enabled()) audio();
+  if (soundOn()) audio();
 }
 /** The audio context, if a press has already started it and it is
  * running; null otherwise (never builds one). */
@@ -311,10 +335,10 @@ function playSample(ac: AudioContext, s: Sample): boolean {
   return true;
 }
 
-/** Plays a cue now, unless sound is off, the browser has none, or the same
- * cue just played. */
+/** Plays a cue now, unless its kind of sound is off, the browser has none,
+ * or the same cue just played. */
 export function play(cue: Cue) {
-  if (!enabled()) return;
+  if (!enabled(CUE_KIND[cue])) return;
   const now = performance.now();
   if (now - (lastAt.get(cue) ?? -Infinity) < 60) return;
   lastAt.set(cue, now);
@@ -330,7 +354,7 @@ export function play(cue: Cue) {
  * just before or begins in between: a general sound giving way to a more
  * particular one, as Gems spent give way to the badges they drew. */
 export function playUnlessOther(cue: Cue, wait = 150, before = 500) {
-  if (!enabled()) return;
+  if (!enabled(CUE_KIND[cue])) return;
   const asked = performance.now();
   if (asked - lastEvent < before) return;
   setTimeout(() => {

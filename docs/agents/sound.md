@@ -16,8 +16,11 @@ To add a recording: convert it to Ogg Vorbis (`ffmpeg -i in -ac 1 -af volume=…
 
 ## Cues
 
-`src/sound.ts`'s `play(cue)` plays a cue now, unless sound is off (`soundEnabledBy`: the **Sound effects** setting, `settings.sound`), the browser has no audio, the player hasn't pressed anything yet, or the same cue played in the last 60 ms.
-The audio graph (voices → dry out and a generated stone-hall echo → a gentle compressor) is built on the first press (`unlockAudio`, bound by `bindFeedback` to `pointerdown` and `keydown`), which preloads every one-shot; `runningAudio` hands the running context to the ambience and the thunder, never building one.
+Each cue and bed is one kind of sound (`SoundKind`: `notifications`, `ui`, `events`, `ambience`, `music`; `CUE_KIND` in `sound.ts`, `BED_KIND` in `ambience.ts`), each turned on or off by its own setting in the Settings page's Sounds section (`SOUND_SETTINGS` in `save/settings.ts`: Notifications, UI, In-run events, Ambience, Music; a save from before them, whose one `sound` setting was off, opens with all five off).
+`main.ts` hands `bindFeedback` which are on, which hands it to `soundEnabledBy`; `soundOn(kind)` asks for one, `soundOn()` for any.
+A new cue goes in `CUE_KIND` (the compiler insists), and a new bed in `BED_KIND`.
+`src/sound.ts`'s `play(cue)` plays a cue now, unless its kind is off, the browser has no audio, the player hasn't pressed anything yet, or the same cue played in the last 60 ms.
+The audio graph (voices → dry out and a generated stone-hall echo → a gentle compressor) is built on the first press (`unlockAudio`, bound by `bindFeedback` to `pointerdown` and `keydown`), which preloads every one-shot (only while some kind of sound is on; a later press builds it once one is); `runningAudio` hands the running context to the ambience and the thunder, never building one.
 Most cues play a recording (`SAMPLED`: its one-shot, gain, hall send and pitch wander); `knock`, `error`, `stone`, `coin`, `chime`, `unlock` and `trained` are made in code, and `knock` plays its recording once loaded.
 A one-shot with several variants plays one at random, never the one it played last (`nextVariant`).
 At most `MAX_VOICES` recordings ring at once.
@@ -39,11 +42,11 @@ Where each cue plays from:
 
 `src/ambience.ts` plays the beds under everything (`ambience`, one for the page).
 Each part of the game says what it wants with `set(who, levels)` (a level from 0 to 1 per bed): the board as `board` every frame (nothing under Battery saver, and nothing from `Renderer.hush` while the board isn't showing), and the voyage with the fisherman (`ui/trial-voyage.ts`) as `voyage` while it shows.
-Each bed plays at the loudest level any of them wants (`mixLevels`), at `BED_GAIN` times it, fading over `BED_FADE` seconds, so a bed both want (the lake's music, boarding the boat) carries on unbroken; all of it fades out while sound is off or the page is hidden.
+Each bed plays at the loudest level any of them wants (`mixLevels`), at `BED_GAIN` times it, fading over `BED_FADE` seconds, so a bed both want (the lake's music, boarding the boat) carries on unbroken; all of it fades out while the page is hidden, and each bed while its kind (Ambience, or Music for the lake's `meditative`) is off.
 `surroundingLevels` says what the board wants where the hero stands (`Renderer.surroundings`): outside (the clearing and the lake), the forest wind while **Weather sounds** is on (on an evening, its `evening` bed in place of the wind), and its wind chimes on a cloudy or stormy day; in the clearing, the Blacksmith's forge once it stands, louder nearer it and silent past `BLACKSMITH_REACH` tiles; at the lake, the meditative music and the dock's water, louder nearer the fisherman (`DOCK_FLOOR` at its quietest, full beside him, over `DOCK_REACH` tiles); in the builders' room on floor 999999 (`place: "divine"`, docs/agents/divine.md), only the `divineRelic` bed, louder nearer its chest (`RELIC_FLOOR` at its quietest, over `RELIC_REACH` tiles); inside, nothing.
-`render/weather.ts` plays a storm's thunder on the same context: the `thunder` one-shot once loaded, else a rumble made in code; it is silent while sound is off.
+`render/weather.ts` plays a storm's thunder on the same context: the `thunder` one-shot once loaded, else a rumble made in code; it is silent while Ambience or Weather sounds is off.
 
 ## Tests
 
-`tests/sounds.test.ts` checks every listed recording (and any theme's) has its Ogg file and every file is listed and Ogg, the loop blend, `BoardSounds` (blows, shots, Thunderbolts, falls, Bombs, sparks, revivals, the Slime and the Dragon, footsteps, the game's cues fresh and stale), `nextVariant`, `pickupCue`, `surroundingLevels` (the evening too), `mixLevels`, and the stairs' and a completed daily mission's cues on a `Game`.
+`tests/sounds.test.ts` checks every listed recording (and any theme's) has its Ogg file and every file is listed and Ogg, the loop blend, `BoardSounds` (blows, shots, Thunderbolts, falls, Bombs, sparks, revivals, the Slime and the Dragon, footsteps, the game's cues fresh and stale), `nextVariant`, `pickupCue`, `surroundingLevels` (the evening too), `mixLevels`, each kind answering to its own setting, and the stairs' and a completed daily mission's cues on a `Game`.
 `tests/outdoor-art.test.ts` pins the thunder's timing and rumble calls.

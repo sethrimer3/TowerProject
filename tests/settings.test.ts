@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { decode, defaults } from "../src/save/save.ts";
-import { SETTINGS, settingValue, type Setting, type SettingKey } from "../src/save/settings.ts";
+import { SETTINGS, SOUND_SETTINGS, settingValue, type Setting, type SettingKey } from "../src/save/settings.ts";
 
 const rows = Object.entries(SETTINGS) as [SettingKey, Setting][];
 const decoded = (settings: unknown) => decode(JSON.stringify({ version: 3, settings })).settings;
@@ -74,4 +74,15 @@ test("legacy borders are opt-in and survive saving without changing other visual
   s.settings.spriteAnimations = true;
   s.settings.squareDoors = true;
   assert.deepEqual(decode(JSON.stringify(s)).settings, s.settings);
+});
+
+test("a save from before the Sounds section keeps every kind of sound off if Sound effects was", () => {
+  const s = defaults();
+  const raw = JSON.parse(JSON.stringify(s));
+  raw.settings.sound = false;
+  const back = decode(JSON.stringify(raw));
+  for (const key of Object.values(SOUND_SETTINGS)) assert.equal(back.settings[key], false);
+  const kept = decode(JSON.stringify({ ...raw, settings: { ...raw.settings, sound: true, soundMusic: false } }));
+  assert.equal(kept.settings.soundMusic, false);
+  assert.equal(kept.settings.soundUi, true);
 });

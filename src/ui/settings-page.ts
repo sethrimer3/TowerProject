@@ -24,9 +24,12 @@ import { firstLevelOf } from "../cards/rarity.ts";
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
 const PAGE = [
-  "experimentalAtlas", "legacyBorders", "legacyEnemies", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "pixelPerfect", "autoLandscape", "hand", "batterySaver", "batteryWhite", "reduceMotion", "sound", "weatherSound",
-  "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems", "gemBankChime",
+  "experimentalAtlas", "legacyBorders", "legacyEnemies", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "pixelPerfect", "autoLandscape", "hand", "batterySaver", "batteryWhite", "reduceMotion",
+  "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems",
 ] as const satisfies readonly SettingKey[];
+/** The Sounds section's settings, in order: a toggle per kind of sound, the
+ * weather's under Ambience, the Gem bank's chime under Notifications. */
+const SOUNDS = ["soundNotifications", "gemBankChime", "soundUi", "soundEvents", "soundAmbience", "weatherSound", "soundMusic"] as const satisfies readonly SettingKey[];
 /** The dev section's settings, shown under Dev Mode while it is on. */
 const DEV = ["devMode", "freePurchases", "accessAll"] as const satisfies readonly SettingKey[];
 /** The settings on the Toggles menu, in order: the values the board shows
@@ -41,7 +44,7 @@ const ARCANA_TOGGLES = [
   "ricochetAnimation", "thunderboltAnimation", "lifespringDamage", "phantasmDamage", "phantasmAlpha", "necroDamage", "voidwellDamage",
 ] as const satisfies readonly SettingKey[];
 const FAMILIAR_TOGGLES = ["dragonDamage"] as const satisfies readonly SettingKey[];
-type PageKey = (typeof PAGE)[number] | (typeof TOGGLES)[number] | (typeof ARCANA_TOGGLES)[number] | (typeof FAMILIAR_TOGGLES)[number] | (typeof DEV)[number] | "devTools";
+type PageKey = (typeof PAGE)[number] | (typeof SOUNDS)[number] | (typeof TOGGLES)[number] | (typeof ARCANA_TOGGLES)[number] | (typeof FAMILIAR_TOGGLES)[number] | (typeof DEV)[number] | "devTools";
 
 const phantasmUnlocked = (save: Save) => !!save.arcana.owned.phantasm || !!save.tower.run?.shrine?.arcana?.includes("phantasm");
 /** Settings that stay off the page until the upgrade (or the setting)
@@ -63,13 +66,14 @@ const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   showPath: (save) => !!save.upgrades.autoClimb,
   cinematicIdle: (save) => save.settings.cinematic,
   batteryWhite: (save) => save.settings.batterySaver,
+  weatherSound: (save) => save.settings.soundAmbience,
   cinematicGems: (save) => save.settings.cinematic,
-  // Once the GEM card's Gem Bank holds a level.
-  gemBankChime: (save) => levelIn(save, "gem").level >= firstLevelOf("epic"),
+  // Once the GEM card's Gem Bank holds a level, while Notifications is on.
+  gemBankChime: (save) => levelIn(save, "gem").level >= firstLevelOf("epic") && save.settings.soundNotifications,
 };
 /** Those shown only while another setting is on: Access to Everything
  * leaves them to it, opening only those an unlock holds back. */
-const UNDER_SETTING: ReadonlySet<PageKey> = new Set(["cinematicIdle", "cinematicGems", "batteryWhite"]);
+const UNDER_SETTING: ReadonlySet<PageKey> = new Set(["cinematicIdle", "cinematicGems", "batteryWhite", "weatherSound"]);
 const shownOf = (keys: readonly PageKey[], save: Save) =>
   keys.filter((key) => (seesAll(save) && !UNDER_SETTING.has(key)) || (SHOWN[key]?.(save) ?? true));
 
@@ -84,10 +88,13 @@ const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s:
   // (and its white's slider shows only while it is on).
   batterySaver: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); ctx.renderPage(); },
   batteryWhite: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); },
-  // The board silences the weather itself once sound is off, and the
-  // ambience everything once Sound effects is.
+  // The board silences the weather itself once its sound is off, and the
+  // ambience each bed once its kind is. Weather sounds shows only under
+  // Ambience, the Gem bank's chime only under Notifications.
   weatherSound: (ctx) => ctx.update(),
-  sound: (ctx) => ctx.update(),
+  soundAmbience: (ctx) => { ctx.save(); ctx.update(); ctx.renderPage(); },
+  soundMusic: (ctx) => ctx.update(),
+  soundNotifications: (ctx) => { ctx.save(); ctx.renderPage(); },
   infoDisplay: (ctx, overlay, s) => {
     if (s.infoDisplay === "status" || s.infoDisplay === "none") overlay.hideInspect();
     ctx.save();
@@ -209,6 +216,7 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
     `<button class="setting menu-open" id="arcana-lab-open">Arcana Effects Lab<b>${controlIcon("forward")}</b></button>` +
     `<button class="setting menu-open" id="toggles-open">Toggles<b>${controlIcon("forward")}</b></button>` +
     shownOf(PAGE, game.save).map((key) => control(key, game) + (key === "experimentalAtlas" ? `<p class="hint">Loads artwork from sprite atlases. Changing this reloads the game.</p>` : "") + (key === "squareDoors" ? `<p class="hint">Pixel art is the default. Other UI and Game themes use their own art.</p>` : "")).join("") +
+    `<h3 class="settings-visual-title">Sounds</h3>` + shownOf(SOUNDS, game.save).map((key) => control(key, game)).join("") +
     `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p>` +
     control("devTools", game) +
     (game.save.settings.devTools ? `<div class="dev-section">${DEV.map((key) => control(key, game)).join("")}${profileButtons}</div>` : "") +
@@ -277,7 +285,7 @@ function bindSettings(ctx: AppContext, overlay: BoardOverlay) {
     menu = "toggles";
     ctx.renderPage();
   };
-  bindControls(ctx, overlay, [...shownOf(PAGE, game.save), "devTools"]);
+  bindControls(ctx, overlay, [...shownOf(PAGE, game.save), ...shownOf(SOUNDS, game.save), "devTools"]);
   if (game.save.settings.devTools) {
     bindControls(ctx, overlay, DEV);
     bindProfileButtons(ctx);

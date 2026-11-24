@@ -1,5 +1,5 @@
 import { batteryLight } from "../battery-light.ts";
-import { soundEnabledBy, soundStyleBy, play, unlockAudio } from "../sound.ts";
+import { soundEnabledBy, soundStyleBy, play, unlockAudio, type SoundKind } from "../sound.ts";
 import { applyLayout } from "./layout.ts";
 import { flourishesEnabledBy, sparks } from "./flourish.ts";
 import type { Save } from "../save/shape.ts";
@@ -116,12 +116,13 @@ export function applyUiTheme(save: Pick<Save, "themes" | "settings">) {
 }
 
 /** What the page's presses sound and look like. Every UI theme hears the
- * game's sounds while `sound` is on (Sound effects), a theme's own
+ * game's sounds of each kind while `sound` says it is on (the Sounds
+ * section's settings), a theme's own
  * recordings where it has any (`look`, sound-files.ts's `STYLE_SOUNDS`): a
  * button knocks, a tab on the tab row is stone, and a dialog's confirming
  * button confirms. Sparks fly from a press only under the Medieval UI
  * theme (`medieval`), and not with Reduce motion on. */
-export function bindFeedback({ sound, look, medieval, reduceMotion }: { sound: () => boolean; look: () => UiLook; medieval: () => boolean; reduceMotion: () => boolean }) {
+export function bindFeedback({ sound, look, medieval, reduceMotion }: { sound: (kind: SoundKind) => boolean; look: () => UiLook; medieval: () => boolean; reduceMotion: () => boolean }) {
   soundEnabledBy(sound);
   soundStyleBy(look);
   flourishesEnabledBy(() => medieval() && !reduceMotion());

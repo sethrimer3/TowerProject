@@ -4,11 +4,13 @@ import { existsSync, readdirSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BEDS, blendLoop, ONE_SHOTS, shotPaths, STYLE_SOUNDS } from "../src/sound-files.ts";
-import { BLACKSMITH_REACH, DOCK_FLOOR, mixLevels, surroundingLevels, type Surroundings } from "../src/ambience.ts";
+import { BED_KIND, BLACKSMITH_REACH, DOCK_FLOOR, mixLevels, surroundingLevels, type Surroundings } from "../src/ambience.ts";
 import { Game, pickupCue } from "../src/state.ts";
 import { MISSIONS } from "../src/missions/catalog.ts";
 import { playedSave } from "./first-skills.ts";
-import { nextVariant } from "../src/sound.ts";
+import { CUE_KIND, nextVariant, SOUND_KINDS, soundEnabledBy, soundOn, type SoundKind } from "../src/sound.ts";
+import { SOUND_SETTINGS } from "../src/save/settings.ts";
+import { defaults } from "../src/save/save.ts";
 import { BoardSounds, type BoardCue, type Heard } from "../src/render/board-sounds.ts";
 import type { ShownFight } from "../src/shown.ts";
 import type { Volley } from "../src/volley.ts";
@@ -214,4 +216,26 @@ test("climbing the stairs sounds the steps, and completing a daily mission its s
   assert.ok(!g.cues.some((c) => c.cue === "dailyMission"));
   g.missions.record(mission.type, 1);
   assert.deepEqual(g.cues.map((c) => c.cue), ["dailyMission"]);
+});
+
+test("each kind of sound answers to its own setting, the lake's music to Music", () => {
+  const off = new Set<SoundKind>(["ui", "music"]);
+  soundEnabledBy((kind) => !off.has(kind));
+  try {
+    assert.equal(soundOn("ui"), false);
+    assert.equal(soundOn("events"), true);
+    assert.equal(soundOn(), true);
+    off.clear();
+    for (const kind of SOUND_KINDS) off.add(kind);
+    assert.equal(soundOn(), false);
+  } finally {
+    soundEnabledBy(() => true);
+  }
+  assert.equal(CUE_KIND.knock, "ui");
+  assert.equal(CUE_KIND.punch, "events");
+  assert.equal(CUE_KIND.gemBankFull, "notifications");
+  assert.equal(CUE_KIND.dailyMission, "notifications");
+  assert.equal(BED_KIND.meditative, "music");
+  assert.equal(BED_KIND.windForest, "ambience");
+  for (const kind of SOUND_KINDS) assert.equal(defaults().settings[SOUND_SETTINGS[kind]], true);
 });

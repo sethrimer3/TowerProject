@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-24", text: "Settings has a Sounds section: turn notifications, UI, in-run events, ambience and music on or off apiece." },
   { date: "2026-11-24", text: "Tidier progression notes, with out-of-date skill prices and places taken out." },
   { date: "2026-11-24", text: "Steadier game speed on every screen, capped at 15 steps a second; a Movement Speed +1 skill; dearer GK Siphon and doors." },
   { date: "2026-11-23", text: "Calm evenings: a warm sunset glow over the forest and lake, with its own evening ambience." },

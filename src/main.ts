@@ -60,6 +60,7 @@ import { RunTrainingBar } from "./ui/run-training-bar.ts";
 import { showHeldArcanum } from "./ui/arcana-panel.ts";
 import { holdTabs, renderBoardLesson } from "./ui/board-lesson.ts";
 import { renderSettingsPage } from "./ui/settings-page.ts";
+import { SOUND_SETTINGS } from "./save/settings.ts";
 import { ShopPage } from "./ui/shop-page.ts";
 import { play, playUnlessOther } from "./sound.ts";
 import { ANYWHERE_CUES } from "./shown.ts";
@@ -105,7 +106,7 @@ stampProfile(game.save, game.clock());
 const offlineGrant = game.arriveOffline();
 applyUiTheme(game.save);
 bindFeedback({
-  sound: () => game.save.settings.sound,
+  sound: (kind) => game.save.settings[SOUND_SETTINGS[kind]],
   look: () => (game.save.settings.batterySaver ? "battery" : uiLook(game.save)),
   medieval: () => uiLook(game.save) === "medieval",
   reduceMotion: () => game.save.settings.reduceMotion,

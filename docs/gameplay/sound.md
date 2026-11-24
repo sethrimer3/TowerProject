@@ -1,8 +1,17 @@
 # Sound
 
 The game is silent until the first press or key, which is when browsers let a page make sound.
-**Sound effects** on the Settings page (on by default) turns every sound on or off; every UI theme sounds the same.
-**Weather sounds** (on by default) turns the forest's wind, chimes and thunder on or off on its own.
+Every UI theme sounds the same.
+
+## Settings
+
+The Settings page's **Sounds** section turns each kind of sound on or off on its own; all are on by default.
+- **Notifications**: what finished while you looked away: a Training rank, a daily mission, an Event mission's tier, and the Gem bank filling (its own chime setting shows beneath while this is on).
+- **UI**: presses, tabs, and the pages' own sounds: the Shop, cards levelling up and ascending, badges drawn, hatching, prizes and gifts claimed, skill-tree ranks, Training's coins, a new tower.
+- **In-run events**: everything the run itself sounds: pickups, doors, Gems, fights, arcana and familiars, the stairs, footsteps, Shrine boons, Warps, the infinity loop and the run's summary.
+- **Ambience**: the forest's wind and evening, the Blacksmith, the dock's water and the Divine Relic's hum.
+  **Weather sounds**, beneath it while it is on, turns the wind, the chimes and the thunder on or off on their own.
+- **Music**: the meditative music by the lake and at sea.
 
 ## Effects
 

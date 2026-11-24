@@ -25,7 +25,7 @@ export class OutdoorWeather {
    * low noise. */
   rumble(seed: number) {
     const a = runningAudio();
-    if (!a || !soundOn()) return;
+    if (!a || !soundOn("ambience")) return;
     const recorded = oneShot(a, "thunder")?.[0];
     if (recorded) {
       this.silence();
