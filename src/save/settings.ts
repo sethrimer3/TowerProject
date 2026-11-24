@@ -38,10 +38,11 @@ export const SETTINGS = {
     page: { id: "transition", label: "Movement transition" },
   },
   /** Steps a second, for the hand and Automove, set by the arrows beside the
-   * run's play button (no row on the page): 0 (paused) up to 3, and one more
-   * per Movement Speed research level; a new hero starts at 2, and the
+   * run's play button (no row on the page): 0 (paused) up to 3, one more with
+   * the Movement Speed +1 skill and one more per Movement Speed research
+   * level, up to 15 (`MAX_MOVE_RATE`); a new hero starts at 2, and the
    * forest walks at least 3 (`Game.stepsPerSecond`, `Game.changeSpeed`). */
-  speed: { kind: "choice", default: 2, choices: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => [n, `${n} steps / sec`] as const) },
+  speed: { kind: "choice", default: 2, choices: Array.from({ length: 16 }, (_, n) => [n, `${n} steps / sec`] as const) },
   reduceMotion: { kind: "toggle", default: false, page: { id: "motion", label: "Reduce motion" } },
   /** Dungeon brightness, 20 (very dark) to 100 (default look). */
   brightness: { kind: "range", default: 100, min: 20, max: 100, step: 5, page: { id: "brightness", label: "Brightness", aria: "Dungeon brightness" } },

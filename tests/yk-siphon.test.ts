@@ -12,7 +12,7 @@ import { playedSave } from "./first-skills.ts";
 
 const hpRow = TRAINING.find((t) => t.id === "hp")! as StatTrainingRow;
 
-test("Phoenix Spark costs 1 Breakthrough; Lifesteal (5) follows the Archives, Buy Quantity (5) Lifesteal, Thorns (10) Buy Quantity, GK Siphon (5) Key Efficiency, Regen Research (10) Shroud", () => {
+test("Phoenix Spark costs 1 Breakthrough; Lifesteal (5) follows the Archives, Buy Quantity (5) Lifesteal, Thorns (10) Buy Quantity, GK Siphon (15) Key Efficiency, Regen Research (10) Shroud", () => {
   assert.equal(cost("phoenixSpark", 0), 1);
   assert.equal(UPGRADES.find((u) => u.id === "phoenixSpark")!.currency, "breakthrough");
   const g = new Game(playedSave());
@@ -39,12 +39,12 @@ test("Phoenix Spark costs 1 Breakthrough; Lifesteal (5) follows the Archives, Bu
   assert.equal(before - g.save.tower.inspiration, 5 + 5 + 10 + 20 + 20);
   assert.ok(g.skills.buy("findYellowKey") && g.skills.buy("keyEfficiency"), "10 Inspiration each");
   assert.ok(g.skills.buy("keySiphon"));
-  assert.equal(before - g.save.tower.inspiration, 5 + 5 + 10 + 20 + 20 + 10 + 10 + 5);
+  assert.equal(before - g.save.tower.inspiration, 5 + 5 + 10 + 20 + 20 + 10 + 10 + 15);
   assert.ok(deckCards(g.save.upgrades).includes("keySiphon"), "its card joins the deck");
   assert.equal(g.skills.buy("regenResearch"), false, "waits for Greater Heal");
   assert.ok(g.skills.buy("greaterHeal"));
   assert.ok(g.skills.buy("regenResearch"));
-  assert.equal(before - g.save.tower.inspiration, 5 + 5 + 10 + 20 + 20 + 10 + 10 + 5 + 3 + 10);
+  assert.equal(before - g.save.tower.inspiration, 5 + 5 + 10 + 20 + 20 + 10 + 10 + 15 + 3 + 10);
 });
 
 test("Regen research: +3% Regen a level, priced and timed like Potion HP, needing Regen Research", () => {

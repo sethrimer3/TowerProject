@@ -50,11 +50,16 @@ const ROUTE_STEP_MS = 130;
 /** The walk in through the forest's entrance takes a turn per this many ms. */
 const WALK_IN_TURN_MS = 260;
 /** Battery saver: a frame at most every this many ms while anything on the
- * board moves or a step is due (about 15 a second)... */
+ * board moves (about 15 a second), or sooner when Automove's next turn is
+ * due first, so every turn it takes is drawn... */
 const BATTERY_BUSY_MS = 66;
 /** ...and every this many ms while all is still. A press or a change to the
  * game asks for the next frame at once. */
 const BATTERY_IDLE_MS = 400;
+/** A frame up to this many ms short of a turn's due time takes it, since a
+ * display frame's time may fall just before the timer that asked for it
+ * ran out; the turns after it stay on their schedule. */
+const TURN_SLACK_MS = 1;
 const AUTOSAVE_MS = 10000;
 const ARCHIVES_TICK_MS = 1000;
 
@@ -122,8 +127,21 @@ export class FrameLoop {
     const { game, renderer } = this.host;
     if (!game.save.settings.batterySaver) return 0;
     const now = performance.now();
-    const busy = batteryLightMoving(this.chosenWhite(), now) || !renderer.isIdle(now) || game.route.length > 0 || (game.auto && !game.paused) || !!game.fights.encounter || !!game.walkIn || !!game.forestArrival || !!game.portalWarp;
+    const turn = this.untilTurn(now);
+    // The display frame after the timer takes the turn, at most a frame
+    // late, which the next turn's schedule makes up.
+    if (turn !== undefined) return Math.min(BATTERY_BUSY_MS, turn);
+    const busy = batteryLightMoving(this.chosenWhite(), now) || !renderer.isIdle(now) || game.route.length > 0 || !!game.fights.encounter || !!game.walkIn || !!game.forestArrival || !!game.portalWarp;
     return busy ? BATTERY_BUSY_MS : BATTERY_IDLE_MS;
+  }
+
+  /** Ms until Automove's next turn is due (0 once it is), while it plays and
+   * the game is live; undefined otherwise (a fight, a dialog or a pause
+   * waits as the rest of the board does). */
+  private untilTurn(now: number) {
+    const game = this.host.game;
+    if (!game.auto || handHeld() || !this.canAct() || !(game.moveRate > 0)) return undefined;
+    return Math.max(0, this.lastAuto + 1000 / game.moveRate - TURN_SLACK_MS - now);
   }
 
   /** Restarts Automove's step timer, e.g. when the page becomes visible
@@ -132,17 +150,25 @@ export class FrameLoop {
     this.lastAuto = performance.now();
   }
 
-  /** Each frame's parts run apart, and the next frame is asked for first,
-   * so an error in one part (reported to the console) never stops the
-   * others, or the loop itself: research and training still complete, and
-   * the game still saves. */
+  /** Each frame's parts run apart, and the next frame is asked for whatever
+   * they throw, so an error in one part (reported to the console) never
+   * stops the others, or the loop itself: research and training still
+   * complete, and the game still saves. The next frame is asked for last,
+   * so Battery saver times its wait from the turn this frame took. */
   private frame = (time: number) => {
     try {
-      this.next();
-    } catch (e) {
-      console.error(e);
-      requestAnimationFrame(this.frame);
+      this.parts(time);
+    } finally {
+      try {
+        this.next();
+      } catch (e) {
+        console.error(e);
+        requestAnimationFrame(this.frame);
+      }
     }
+  };
+
+  private parts(time: number) {
     const { host } = this, tab = host.tab();
     guard(() => this.pageWhite(performance.now()));
     if (!document.hidden) {
@@ -164,7 +190,7 @@ export class FrameLoop {
       this.lastSave = time;
       guard(() => host.save());
     }
-  };
+  }
 
   private boardFrame(time: number) {
     if(this.host.boardFrame?.(time))return;
@@ -194,8 +220,13 @@ export class FrameLoop {
       game.routeStep();
       this.host.update();
     }
-    if (game.auto && !handHeld() && this.due(time, this.lastAuto, 1000 / game.moveRate)) {
-      this.lastAuto = time;
+    const interval = 1000 / game.moveRate;
+    if (game.auto && !handHeld() && this.canAct() && time - this.lastAuto >= interval - TURN_SLACK_MS) {
+      // Each turn falls due an interval after the last fell due, not after
+      // the frame that took it, so turns keep their rate on average whatever
+      // the display's frame rate; after a hold (a pause, a fight, a dialog)
+      // the timer starts again rather than taking catch-up turns.
+      this.lastAuto = time - this.lastAuto < 2 * interval ? this.lastAuto + interval : time;
       game.autoTurn();
       this.host.update();
     }

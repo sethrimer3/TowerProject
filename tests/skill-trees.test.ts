@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { defaults, decode } from "../src/save/save.ts";
-import { Game } from "../src/state.ts";
+import { Game, MAX_MOVE_RATE } from "../src/state.ts";
 import { TREES, columnGap, mapNodes, skillAvailable, skillHidden, treeHeight } from "../src/progression/skill-trees.ts";
 import { LIMIT_BREAKS, TRAINING } from "../src/progression/training.ts";
 import { UPGRADES, cost, type UpgradeId } from "../src/progression/upgrades.ts";
@@ -173,9 +173,30 @@ test("Movement Speed research lets the run's arrows go one step a second faster 
   g.save.archives.levels.moveSpeed = 6;
   assert.equal(g.stepsPerSecond, 9);
   assert.equal(decode(JSON.stringify(g.save)).settings.speed, 9);
-  // Priced and timed like Undo Count's first six levels.
-  assert.deepEqual(RESEARCH.moveSpeed.levels, RESEARCH.sparkCount.levels.slice(0, 6).map((l) => ({ ...l, effect: { ...l.effect, target: "moveSpeed" } })));
+  // Eleven levels, priced and timed like Phoenix Spark Count's: 500 × (1 + n(n−1)/2) Gold, 8 × n hours.
+  assert.equal(RESEARCH.moveSpeed.levels.length, 11);
+  assert.deepEqual(RESEARCH.moveSpeed.levels.slice(0, 8), RESEARCH.sparkCount.levels.map((l) => ({ ...l, effect: { ...l.effect, target: "moveSpeed" } })));
+  assert.deepEqual(RESEARCH.moveSpeed.levels[10], { gold: 28000, hours: 88, effect: { target: "moveSpeed", op: "add", value: 1 } });
   assert.deepEqual(RESEARCH.moveSpeed.requires, [{ upgrade: "moveSpeed" }]);
+});
+test("Movement Speed +1 follows Auto-Climb for 1 Inspiration and raises the max speed by 1, to at most 15 in all", () => {
+  const g = new Game(defaults());
+  const node = TREES[0]!.nodes.find((n) => n.id === "speedUp")!;
+  assert.deepEqual([node.x, node.y, node.requires], [70, 48, ["autoClimb"]]);
+  assert.equal(cost("speedUp", 0), 1);
+  g.save.settings.speed = 15;
+  g.save.upgrades.speedUp = 1;
+  assert.equal(g.maxSpeed, 4);
+  assert.equal(g.stepsPerSecond, 4);
+  g.save.archives.levels.moveSpeed = 11;
+  assert.equal(g.maxSpeed, 15);
+  assert.equal(g.moveRate, 15);
+  assert.equal(decode(JSON.stringify(g.save)).settings.speed, 15);
+  g.save.archives.levels.moveSpeed = 20;
+  assert.equal(g.maxSpeed, MAX_MOVE_RATE, "nothing takes the arrows past 15");
+});
+test("GK Siphon costs 15 Inspiration, Gold Door 20 and Heart Door 25", () => {
+  assert.deepEqual([cost("keySiphon", 0), cost("cardYellowDoor", 0), cost("cardHeartDoor", 0)], [15, 20, 25]);
 });
 test("Inspiration tree: Heal follows Regen, Critical leads to Breakthrough, and the Archives (5) follow it", () => {
   const node = (id: UpgradeId) => TREES[0].nodes.find((n) => n.id === id)!;
@@ -211,7 +232,7 @@ test("the Archives and everything under them stay hidden, unbuyable, until Quest
 });
 
 test("a new game's Inspiration tree shows its first skills down to Trainers, and Trainers reveals the paths after it", () => {
-  const upgrades = { ...defaults().upgrades }, first = ["cardDoorKey", "cardEnemy", "autoClimb", "combatStance", "buildout", "trainers"];
+  const upgrades = { ...defaults().upgrades }, first = ["cardDoorKey", "cardEnemy", "autoClimb", "speedUp", "combatStance", "buildout", "trainers"];
   assert.deepEqual(TREES[0].nodes.filter((n) => !skillHidden(n.id, upgrades)).map((n) => n.id), first);
   assert.deepEqual(TREES[0].nodes.filter((n) => n.reveal === "trainers").map((n) => n.id), ["largerHand", "onTheJob", "cardAtkUp"], "the skills straight after Trainers");
   for (const id of first) upgrades[id as UpgradeId] = 1;
@@ -369,7 +390,8 @@ test("the Inspiration tree opens with Door & Key, Enemy and Auto-Climb down the 
   assert.deepEqual(TREES[0].nodes.slice(0, 3).map((n) => [n.id, n.x, n.y, n.requires]),
     [["cardDoorKey", 50, 12, []], ["cardEnemy", 50, 30, ["cardDoorKey"]], ["autoClimb", 50, 48, ["cardEnemy"]]]);
   assert.deepEqual([at("combatStance").y, at("combatStance").requires], [66, ["autoClimb"]]);
-  assert.ok(TREES[0].nodes.slice(3).every((n) => n.y >= 66), "everything else three rows down");
+  assert.deepEqual([at("speedUp").x, at("speedUp").y, at("speedUp").requires], [70, 48, ["autoClimb"]], "Movement Speed +1 right of Auto-Climb");
+  assert.ok(TREES[0].nodes.slice(3).every((n) => n.id === "speedUp" || n.y >= 66), "everything else three rows down");
   assert.deepEqual(["cardDoorKey", "cardEnemy", "autoClimb"].map((id) => cost(id as UpgradeId, 0)), [1, 1, 1]);
   assert.deepEqual(["cardDoorKey", "cardEnemy", "autoClimb"].map((id) => UPGRADES.find((u) => u.id === id)!.name), ["Door & Key", "Enemy", "Auto-Climb"]);
 });

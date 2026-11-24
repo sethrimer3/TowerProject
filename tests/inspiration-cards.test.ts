@@ -15,9 +15,9 @@ import { playedSave } from "./first-skills.ts";
  * research or the Manual hand instead). */
 const NODES: [UpgradeId, number, UpgradeId, CardId | null][] = [
   ["cardWoodenDoor", 20, "cardTorch", "woodenDoor"],
-  ["cardYellowDoor", 5, "cardWoodenDoor", "yellowDoor"],
+  ["cardYellowDoor", 20, "cardWoodenDoor", "yellowDoor"],
   ["heartDoorResilience", 20, "cardYellowDoor", null],
-  ["cardHeartDoor", 10, "heartDoorResilience", "heartDoor"],
+  ["cardHeartDoor", 25, "heartDoorResilience", "heartDoor"],
   ["cardChest", 20, "interest", "chest"],
   ["blueSiphon", 20, "keySiphon", "blueSiphon"],
   ["keyToHp", 20, "blueSiphon", "keyToHp"],

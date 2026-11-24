@@ -18,6 +18,7 @@ export const TREES: SkillTree[] = [
     { id: "cardDoorKey", icon: "⚿", x: 50, y: 12, requires: [] },
     { id: "cardEnemy", icon: "☠", x: 50, y: 30, requires: ["cardDoorKey"] },
     { id: "autoClimb", icon: "»", x: 50, y: 48, requires: ["cardEnemy"] },
+    { id: "speedUp", icon: "»", x: 70, y: 48, requires: ["autoClimb"] },
     // The hand's skills, down to Breakthrough: Buildout, Trainers, Larger
     // Hand, Shroud, Critical (with Critical Prediction, then Bombs with Super
     // Critical and Armor Break under it, to its left and Faster Trainers to its right). ATK

@@ -276,6 +276,14 @@ export const UPGRADES = [
     currency: "inspiration",
   },
   {
+    id: "speedUp",
+    name: "Movement Speed +1",
+    description: "Increase max game speed by 1 step a second",
+    base: 1,
+    max: 1,
+    currency: "inspiration",
+  },
+  {
     id: "combatStance",
     name: "Combat Stance",
     description: "Reorder the cards in your hand before a climb",
@@ -505,7 +513,7 @@ export const UPGRADES = [
     name: "GK Siphon",
     description: "Add the GK SIPHON card to your deck",
     card: "keySiphon",
-    base: 5,
+    base: 15,
     max: 1,
     currency: "inspiration",
   },
@@ -600,10 +608,10 @@ export const UPGRADES = [
   // The cards below Buy Quantity: the doors, the enemies by strength, then
   // chests, Heart Door Resilience, the key trades, Floor Skip Reward, torches
   // and Steel Doors.
-  { id: "cardYellowDoor", name: "Gold Door", description: "Add the GOLD DOOR card to your deck", card: "yellowDoor", base: 5, max: 1, currency: "inspiration" },
+  { id: "cardYellowDoor", name: "Gold Door", description: "Add the GOLD DOOR card to your deck", card: "yellowDoor", base: 20, max: 1, currency: "inspiration" },
   { id: "keyLessBadges", name: "Key < Badges", description: "Add the GK <, BK < and RK < badges to the badge draw", base: 50, max: 1, currency: "inspiration" },
   { id: "keyAtLeastBadges", name: "Key ≥ Badges", description: "Add the GK ≥, BK ≥ and RK ≥ badges to the badge draw", base: 50, max: 1, currency: "inspiration" },
-  { id: "cardHeartDoor", name: "Heart Door", description: "Add the HEART DOOR card to your deck", card: "heartDoor", base: 10, max: 1, currency: "inspiration" },
+  { id: "cardHeartDoor", name: "Heart Door", description: "Add the HEART DOOR card to your deck", card: "heartDoor", base: 25, max: 1, currency: "inspiration" },
   { id: "cardBossEnemy", name: "Boss Enemy", description: "Add the BOSS ENEMY card to your deck", card: "bossEnemy", base: 20, max: 1, currency: "inspiration" },
   { id: "cardNonBossEnemy", name: "Non-Boss Enemy", description: "Add the NON-BOSS ENEMY card to your deck", card: "nonBossEnemy", base: 40, max: 1, currency: "inspiration" },
   { id: "cardChest", name: "Chest", description: "Add the CHEST card to your deck", card: "chest", base: 20, max: 1, currency: "inspiration" },

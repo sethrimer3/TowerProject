@@ -176,6 +176,10 @@ const MAX_GAINS = 12;
 /** The forest's Automove walks at least this many steps a second, however
  * slow the run's arrows were last set. */
 const FOREST_SPEED = 3;
+/** The most steps a second the hero ever takes, whatever research, skills,
+ * boons and equipment add: a whole number of display frames a step at 30,
+ * 60 and 120 Hz (every 2, 4 and 8 frames), so every device shows it evenly. */
+export const MAX_MOVE_RATE = 15;
 /** The speed the speed lesson teaches: one press of › from a new hero's 2. */
 const LESSON_SPEED = 3;
 /** The steps a run takes on the Tower's first floor before the speed
@@ -1698,10 +1702,11 @@ export class Game {
   get powerBonus(): PowerBonus {
     return powerBonus(this.run.outside ? undefined : this.run.handLevels);
   }
-  /** The fastest speed the run's arrows reach: 3 steps a second, and one
-   * more a Movement Speed research level. */
+  /** The fastest speed the run's arrows reach: 3 steps a second, one more
+   * with the Movement Speed +1 skill and one more a Movement Speed research
+   * level, with the boons' Max Play Speed, never past `MAX_MOVE_RATE`. */
   get maxSpeed() {
-    return researched(this.save.archives, "moveSpeed") + (this.boons?.playSpeed ?? 0);
+    return Math.min(MAX_MOVE_RATE, researched(this.save.archives, "moveSpeed") + this.save.upgrades.speedUp + (this.boons?.playSpeed ?? 0));
   }
   /** What the Tower run's boons change now, or null (none picked, or the
    * Delve). */
@@ -1782,9 +1787,9 @@ export class Game {
     return this.run.outside ? Math.max(speed, FOREST_SPEED) : speed;
   }
   /** Steps a second the hero actually takes: `stepsPerSecond`, raised by
-   * the movement speed the equipment worn gives. */
+   * the movement speed the equipment worn gives, never past `MAX_MOVE_RATE`. */
   get moveRate() {
-    return raised(this.stepsPerSecond, this.worn.moveSpeed);
+    return Math.min(MAX_MOVE_RATE, raised(this.stepsPerSecond, this.worn.moveSpeed));
   }
   /** What the equipment this mode's hero wears does now. */
   get worn() {
