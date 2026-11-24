@@ -4419,6 +4419,11 @@
       "file": "relic-divine-chrono-anchor.png",
       "width": 24,
       "height": 24
+    },
+    "scarab": {
+      "file": "scarab.png",
+      "width": 24,
+      "height": 24
     }
   }
 }

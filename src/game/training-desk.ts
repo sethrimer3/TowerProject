@@ -5,8 +5,9 @@ import { TRAINING_RESET_GEMS } from "../economy/gems.ts";
 import { batchSpeedup, bulkBuy, openQuantities, type BuyQuantity } from "../progression/buy-quantity.ts";
 import { researched } from "../progression/archives.ts";
 import { trainingBulk, trainingDiscount, trainingFull, trainingMaxed, trainingRowsFull, trainingSpeed, trainingOpen } from "../progression/loadout.ts";
-import { BOOST_FOREVER, permanentBoost, trainingRate } from "../shop/entitlements.ts";
-import { TRAINER_GIFT, batchWork, claimBoost, doneAt, finishGems, jobInvested, nextTrainerGems, ranksInTraining, trainerBatch, trainingGold, trainingJob, trainingSeconds, workLeft, trainingSlots, type TrainingJob } from "../progression/training-jobs.ts";
+import { BOOST_FOREVER, permanentBoost } from "../shop/entitlements.ts";
+import { TRAINER_GIFT, batchWork, claimBoost, finishGems, jobInvested, nextTrainerGems, ranksInTraining, trainerBatch, trainingGold, trainingJob, trainingSeconds, trainingSlots, type TrainingJob } from "../progression/training-jobs.ts";
+import { samePace, trainingDoneAt, trainingLeft, trainingPace, type TrainingPace } from "../boosts/boosts.ts";
 import { affordsGems, type DeskHost } from "./desk.ts";
 import { CURRENCIES } from "../shop/currency.ts";
 import { changeLoadout } from "./hero-sync.ts";
@@ -133,7 +134,7 @@ export class TrainingDesk {
       job.used = ms;
     }
     const now = this.host.clock(), left = Math.max(0, (ms - job.used) / job.speed - done);
-    Object.assign(job, { ranks: keep, gold: snap(job.gold - back), ms, completesAt: doneAt(left, save.trainingBoostUntil, now, trainingRate(save)) });
+    Object.assign(job, { ranks: keep, gold: snap(job.gold - back), ms, completesAt: trainingDoneAt(left, now, this.pace) });
   }
 
   /** What a press of `id`'s trainer button buys at Buy Quantity `q`: the
@@ -189,7 +190,7 @@ export class TrainingDesk {
     tally(save, "trainingGold", gold);
     save.trainingCredit[id] -= fromCredit;
     save.trainingBank -= fromBank;
-    save.trainingJobs.push({ id, startedAt: now, completesAt: doneAt(work, save.trainingBoostUntil, now, trainingRate(save)), gold, ms, ranks, speed, used });
+    save.trainingJobs.push({ id, startedAt: now, completesAt: trainingDoneAt(work, now, this.pace), gold, ms, ranks, speed, used });
   }
 
   /** Whether `id`'s trainer starts its next rank as soon as one is done. */
@@ -241,7 +242,7 @@ export class TrainingDesk {
    * training still needs: what its timer shows. */
   left(id: TrainingId) {
     const job = trainingJob(this.save.trainingJobs, id);
-    return job ? workLeft(job.completesAt, this.save.trainingBoostUntil, this.host.clock(), trainingRate(this.save)) : 0;
+    return job ? trainingLeft(job.completesAt, this.host.clock(), this.pace) : 0;
   }
 
   /** The training time (ms, at the normal rate) the next rank of `id`
@@ -327,16 +328,17 @@ export class TrainingDesk {
     return true;
   }
 
-  /** How fast training goes now: the boost's end and the Shop's
-   * permanent rate, to hand back to `repace` once either may change. */
-  get pace() {
-    return { until: this.save.trainingBoostUntil, rate: trainingRate(this.save) };
+  /** How fast training goes now: the boost's end, the Shop's permanent
+   * rate and a Golden Scarab's Training Speed boost, to hand back to
+   * `repace` once any may change. */
+  get pace(): TrainingPace {
+    return trainingPace(this.save);
   }
 
   /** After a Shop purchase that went at `before`: Ad-Disable's ×2 boost
    * runs for good from now, and each rank in training is due when its
    * training left is done at the new pace (the Gold bundles' ×2 and ×3). */
-  repace(before: { until: number; rate: number }) {
+  repace(before: TrainingPace) {
     if (permanentBoost(this.save)) this.save.trainingBoostUntil = BOOST_FOREVER;
     this.retime(before, this.host.clock());
   }
@@ -351,10 +353,10 @@ export class TrainingDesk {
 
   /** Moves each rank in training's due time from the pace `before` to the
    * one now, keeping the training it has left. */
-  private retime(before: { until: number; rate: number }, now: number) {
-    const { until, rate } = this.pace;
-    if (until === before.until && rate === before.rate) return;
-    for (const job of this.save.trainingJobs) job.completesAt = doneAt(workLeft(job.completesAt, before.until, now, before.rate), until, now, rate);
+  private retime(before: TrainingPace, now: number) {
+    const after = this.pace;
+    if (samePace(before, after)) return;
+    for (const job of this.save.trainingJobs) job.completesAt = trainingDoneAt(trainingLeft(job.completesAt, now, before), now, after);
   }
 
   /** Counts the ranks whose training the clock has reached, saying so in the

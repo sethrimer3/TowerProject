@@ -259,6 +259,8 @@ function elements(src: CodexSource): CodexCategory {
     e(true, "chest", { kind: "item", id: "chest_treasure" }, "Treasure Chests", "Hold Gold, and sometimes supplies or equipment."),
     e(true, "torch", { kind: "kit", id: "torch" }, "Torches", torches),
     e(true, "gem", { kind: "currency", id: "gems" }, "Gems", "Sometimes they appear on the floor. Tap to collect them quickly, before the hero moves on."),
+    // Known once the first has been claimed (its boost picked).
+    e(s.scarab.rng !== undefined, "scarab", { kind: "kit", id: "scarab" }, "Golden Scarabs", "Every so often one appears on the floor. Tap it for a boost to your progress for a while: more Gold or XP, faster research or training, and more."),
     e(heart, "heartDoor", door("heart"), "Heart Doors", "Need no key, but drain your HP to 1."),
   ];
   return { id: "elements", name: "Tower Elements", icon: { kind: "kit", id: "stairs" }, open: true, links: [],

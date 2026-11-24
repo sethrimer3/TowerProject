@@ -255,38 +255,6 @@ h1 span {
   pointer-events: none;
 }
 .wings-ready[hidden] { display: none; }
-/* The Level-up Boost, while it lasts: the Gold icon, ×3 and its countdown,
-   centred over the portrait on a dark plate so it reads over the hero. */
-.level-boost {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1;
-  display: grid;
-  grid-template-columns: auto auto;
-  align-items: center;
-  justify-items: center;
-  column-gap: 2px;
-  padding: 2px 4px;
-  background: #0b0f16d9;
-  border: 1px solid #ffd23f;
-  border-radius: 3px;
-  box-shadow: 0 0 4px #ffd23f88;
-  color: #ffe08a;
-  line-height: 1;
-  white-space: nowrap;
-  pointer-events: none;
-}
-.level-boost[hidden] { display: none; }
-.level-boost img, .level-boost svg, .level-boost .ui-sprite { width: 10px; height: 10px; }
-.level-boost b { font-size: 9px; }
-.portrait-top .level-boost small {
-  grid-column: 1 / -1;
-  font-size: 8px;
-  letter-spacing: .5px;
-  color: #fff;
-}
 .wings-ready img {
   width: 14px;
   height: auto;
@@ -1384,6 +1352,35 @@ html.reduce-motion #stuck-end-run.lesson-flash { animation: none; }
   animation: free-training-fade 2s linear both;
 }
 .free-training-box[hidden] { display: none; }
+/* The boost table over the board's top-left corner: the temporary boosts
+   running (the Level-up Boost, the Gold ad's, the Golden Scarabs'), a row
+   each, its icon and time left, in a bordered column (ui/boost-table.ts). */
+.boost-table {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 3px 4px;
+  background: #0b0f16d9;
+  border: 1px solid #d9b45a;
+  border-radius: 3px;
+  box-shadow: 0 0 4px #ffd23f55;
+  color: #ffe08a;
+  font-size: 10px;
+  line-height: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.boost-table[hidden] { display: none; }
+.boost-row { display: flex; align-items: center; gap: 3px; }
+.boost-icon, .boost-icon img { width: 12px; height: 12px; }
+.boost-time { min-width: 28px; font-variant-numeric: tabular-nums; color: #fff; }
+/* A claimed Golden Scarab's drop: its boost's icon, value and time added. */
+.reward-fly .boost-icon, .reward-fly .boost-icon img { width: 14px; height: 14px; }
+.reward-fly small { font-size: 10px; color: #fff; }
 @keyframes free-training-fade {
   75% { opacity: 1; }
   100% { opacity: 0; }

@@ -60,6 +60,7 @@ import { drawStellarStars } from "./stellar-stars.ts";
 import { drawHeroLight, drawStairsLights } from "./effects/position-lights.ts";
 import type { Boosted } from "../runs.ts";
 import { drawGem, drawGemSparkle, GEM_SPARKLE_MS } from "./effects/gem-art.ts";
+import { drawScarab, drawScarabSparkle } from "./effects/scarab-art.ts";
 import { DashEchoes } from "./effects/dash-echoes.ts";
 import { drawVolley, ShotsInFlight } from "./volley-art.ts";
 import { volleyOver } from "../volley.ts";
@@ -315,6 +316,10 @@ export class Renderer {
     const sparkle = this.game.gemFinder.sparkle;
     for (const gem of this.game.gemFinder.gems) drawGem(f, gem.x, gem.y, gem.kind);
     if (sparkle) drawGemSparkle(f, sparkle.x, sparkle.y, f.now - sparkle.at, sparkle.kind);
+    // A Golden Scarab likewise, and the sparkle it vanishes in when claimed.
+    const scarab = this.game.scarabFinder.scarab, claimed = this.game.scarabFinder.sparkle;
+    if (scarab) drawScarab(f, scarab.x, scarab.y);
+    if (claimed) drawScarabSparkle(f, claimed.x, claimed.y, f.now - claimed.at);
     // A Stellar Floor's stars pass over all that stands on it, under what rises off it.
     if (!this.game.run.outside && this.game.environments.stellarFloor) drawStellarStars(f, (x, y) => this.game.stellarAt(x, y));
     // Familiars pass over the floor, the hero and all that stands on it, under what rises off it.
@@ -941,14 +946,14 @@ export class Renderer {
   /** Every timed effect has played out: the arrival glow, a dash's echoes,
    * a blocked step, the feedback text, the level-up, skulls, Phoenix Sparks, revivals, an area
    * reward's burst, Warp Loot's, a Greater Boss's poof, Avenging Angel's smites, a Bomb's explosion, a Gem's
-   * sparkle, the turn's shots in flight, a boost's glow pulsing, and the shield popping or reforming. */
+   * or Golden Scarab's sparkle, the turn's shots in flight, a boost's glow pulsing, and the shield popping or reforming. */
   private effectsOver(now: number) {
-    const g = this.game, sparkle = g.gemFinder.sparkle;
+    const g = this.game, sparkle = g.gemFinder.sparkle, scarab = g.scarabFinder.sparkle;
     return (!POSITION_HALOS_ENABLED || now - this.arrived > ARRIVAL_GLOW_MS) && this.echoes.over(now) && g.blocked.until <= now && g.effect.until <= now &&
       now - g.levelUpAt >= LEVEL_UP_MS + POINTS_MS && g.fights.revivedAt.every((at) => now - at >= REVIVE_MS) && g.fights.struckDown.every((at) => now - at >= DEFEAT_MS) && g.fights.sparkedAt.every((at) => now - at >= SPARK_MS) &&
       g.areaBursts.every((b) => now - b.at >= AREA_BURST_MS) && (!g.warpLooted || now - g.warpLooted.at >= WARP_LOOT_MS) &&
       (!g.summoned || now - g.summoned.at >= POOF_MS) && g.smitten.every((s) => now - s.at >= SMITE_MS) && (!g.vanished || now - g.vanished.at >= POOF_MS) && (!g.bombed || now - g.bombed.at >= EXPLOSION_MS) &&
-      (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS) && (!g.volley || volleyOver(g.volley, now)) && this.inFlight.over(now) &&
+      (!sparkle || now - sparkle.at >= GEM_SPARKLE_MS) && (!scarab || now - scarab.at >= GEM_SPARKLE_MS) && (!g.volley || volleyOver(g.volley, now)) && this.inFlight.over(now) &&
       (!POSITION_HALOS_ENABLED || g.save.settings.reduceMotion || !this.boosts.length) &&
       this.familiars.over(now, g.familiarView, g.save.settings.reduceMotion) &&
       now - g.fights.shieldBrokeAt >= SHIELD_POP_MS && now - g.shieldFormedAt >= SHIELD_FORM_MS;

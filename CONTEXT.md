@@ -454,8 +454,16 @@ _Avoid_: summon, added enemy
 Gold ×3 for 10 minutes of real time from each level the hero reaches inside a run, a further level starting the time over; it ends with the run.
 _Avoid_: level bonus, XP boost
 
+**Golden Scarab**:
+A find that turns up on a floor every 15 minutes of real time (less with Golden Scarab Cooldown research), out of the hero's way; claimed by walking onto it or tapping it, it starts a boost.
+_Avoid_: beetle, bug
+
+**Boost**:
+A temporary speed-up of progress, never of the hero's strength, counting down in real time: a Golden Scarab's (Gold, XP, Card XP, Research Speed, Training Speed, Game Speed, End Rush, Equipment Drops, Gem Bank Refill, Rubies, Cells), shown with the Level-up Boost and the Gold ad's in the boost table. More of a boost running adds its time.
+_Avoid_: buff, power-up
+
 **Gold multiplier**:
-A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (one slot), the Ad Reward while it runs, the Level-up Boost while it lasts, each coin pack, the Event Collection, the Gold Bonus relics, the equipment's Gold found and the run's Gold boons. The player sees them together as *All Gold Bonuses*; Gold Bonus training is none of them, since it raises only a kill's, a chest's, an item's and a floor's Gold.
+A factor on every Gold banked: the tower's, the Gold ad's boost or Ad-Disable (one slot), the Ad Reward while it runs, the Level-up Boost while it lasts, a Golden Scarab's Gold boost while it runs, each coin pack, the Event Collection, the Gold Bonus relics, the equipment's Gold found and the run's Gold boons. The player sees them together as *All Gold Bonuses*; Gold Bonus training is none of them, since it raises only a kill's, a chest's, an item's and a floor's Gold.
 _Avoid_: Gold bonus (the Training row)
 
 **Silver**:

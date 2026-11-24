@@ -32,7 +32,7 @@ import { heldAmount } from "./currencies-dialog.ts";
 import { caveLabel, LEAGUE_INFO } from "../tournament/leagues.ts";
 import { shortCountdown } from "../tournament/schedule.ts";
 import { GOLD_BOOST_FACTOR, GOLD_BOOST_MS } from "../economy/gold-boost.ts";
-import { LEVEL_BOOST_FACTOR, levelBoostLeft, levelBoostTime } from "../economy/level-boost.ts";
+import { renderBoostTable } from "./boost-table.ts";
 import { adsOff } from "../shop/entitlements.ts";
 import { renderRunMenu } from "./run-menu.ts";
 import { factorText, goldMultipliers, goldMultiplierTotal } from "../economy/gold-multipliers.ts";
@@ -875,7 +875,7 @@ function renderRunEarned(game: Game) {
  * ad's, with the boost time stored. Goals shows only in the forest. */
 export function renderAdButton(game: Game) {
   const inside = !game.run.outside, button = el("gem-ad") as HTMLButtonElement;
-  renderLevelBoost(game);
+  renderBoosts(game);
   el("section-pick").hidden = inside;
   button.classList.toggle("waiting", !game.gemFinder.adReady);
   button.disabled = !game.gemFinder.adReady;
@@ -912,24 +912,16 @@ function renderGemBank(game: Game) {
   bankWasFull = full;
 }
 
-/** Whether the Level-up Boost showed when last drawn, so the Gold bonus
- * under the floor is worked out again the second it ends. */
-let levelBoostShown = false;
-/** Inside a run while its Level-up Boost lasts: centred over the hero's
- * portrait, the Gold icon, its ×3 and the time left, counting down each
- * second (main's tick). */
-function renderLevelBoost(game: Game) {
-  const left = game.run.outside ? 0 : levelBoostLeft(game.run, game.clock()), box = el("level-boost");
-  box.hidden = left <= 0;
-  if (left > 0) {
-    const time = levelBoostTime(left);
-    text("level-boost-time", time);
-    const label = `Level-up Boost: Gold ×${LEVEL_BOOST_FACTOR}, ${time} left`;
-    box.title = label;
-    box.setAttribute("aria-label", label);
-  }
-  if (levelBoostShown !== left > 0) renderGoldBonus(game);
-  levelBoostShown = left > 0;
+/** The boosts on Gold running when last drawn, so the Gold bonus under
+ * the floor is worked out again the second one starts or ends. */
+let goldBoostsShown = "";
+/** The boost table over the board's corner (`boost-table.ts`): the run's
+ * Level-up Boost, the Gold ad's and the Golden Scarabs' boosts, counting
+ * down each second (main's tick). */
+function renderBoosts(game: Game) {
+  const gold = renderBoostTable(game);
+  if (gold !== goldBoostsShown) renderGoldBonus(game);
+  goldBoostsShown = gold;
 }
 
 /** Boost time left, short enough for the narrow button: 18m, 1h40m. */
@@ -939,9 +931,9 @@ export function boostTime(ms: number) {
 }
 
 /** The Gold ad, inside a run: ×1.5 Gold for 20 minutes a claim, stored up
- * to two hours, glowing with the time left while the boost lasts and
- * reading Inactive with none stored; closed once the store is within ten
- * minutes of full (`canClaimGoldBoost`). Gone
+ * to two hours, glowing while the boost lasts (its time left is the boost
+ * table's); closed once the store is within ten minutes of full
+ * (`canClaimGoldBoost`). Gone
  * once Ad-Disable is owned (its ×1.5 Gold is for good), the Gems' button
  * stretching into its place. */
 function renderGoldAd(game: Game, inside: boolean) {
@@ -949,7 +941,7 @@ function renderGoldAd(game: Game, inside: boolean) {
   button.hidden = !inside || adsOff(game.save);
   button.classList.toggle("active", left > 0);
   button.disabled = !game.gemFinder.goldAdReady;
-  text("gold-ad-time", left > 0 ? boostTime(left) : "Inactive");
+  text("gold-ad-time", `+${GOLD_BOOST_MS / 60_000}m`);
   const label = left > 0
     ? `Gold ×${GOLD_BOOST_FACTOR}: ${boostTime(left)} left${button.disabled ? " (nearly full)" : `; claim ${GOLD_BOOST_MS / 60_000} more minutes`}`
     : `Claim Gold ×${GOLD_BOOST_FACTOR} for ${GOLD_BOOST_MS / 60_000} minutes`;

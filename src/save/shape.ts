@@ -120,6 +120,12 @@ export type Save = {
   /** Where the Gems found on floors and the ad button's stand: never part
    * of a run. */
   gemDrop: GemDrop;
+  /** Where the Golden Scarabs stand, a timed find like the floor Gem, and
+   * the saved stream their boosts are picked from (`boosts/scarabs.ts`). */
+  scarab: import("../boosts/scarabs.ts").ScarabDrop;
+  /** The boosts running, each's end (`boosts/boosts.ts`): kept with the
+   * profile, so they run on between runs and while the game is closed. */
+  boosts: import("../boosts/boosts.ts").BoostsSave;
   /** When the Gold ad's boost (Gold found ×1.5) runs out, as a wall-clock
    * timestamp (ms): `economy/gold-boost.ts`. */
   goldBoostUntil: number;

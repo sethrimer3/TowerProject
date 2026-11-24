@@ -1,7 +1,8 @@
 import type { Board } from "../board.ts";
 import type { Mode, Tile } from "../entities.ts";
-import { finite, time, whole, wholeIn } from "../save/decode.ts";
+import { finite, time, wholeIn } from "../save/decode.ts";
 import { snap } from "../exact.ts";
+import { collectedDrop, decodeTimedFields, isNewFloor as isNewTimedFloor, missDrop, reachTimedFloor, spotOf, spotOn, type FloorAt, type TimedDrop } from "./timed-drop.ts";
 
 /** Gems: the premium currency, kept between runs like Gold. A Gem turns up
  * on a run's floors now and then, the ad button pays some, and they buy
@@ -33,22 +34,13 @@ const MOST_EXTRA = 32;
 /** A Gem lying on a floor: the run (by mode and seed) and the floor it lies
  * on, its tile, and its kind (plain when absent). */
 export type GemSpot = { mode: Mode; seed: number; floor: number; x: number; y: number; kind?: Exclude<GemKind, "plain"> };
-/** Where the Gems found in runs stand. None of it belongs to a run. */
-export type GemDrop = {
-  /** When a Gem may next appear on a new floor (wall clock, ms): the last
-   * one collected, plus the cooldown. */
-  readyAt: number;
-  /** New floors still to reach, once ready, before the next Gem appears: 0
-   * on the next one; after one is missed, `GEM_MISSED_FLOORS`. */
-  wait: number;
-  /** The cooldown's Gem lying on a floor, if any; one at a time. */
-  out: GemSpot | null;
+/** Where the Gems found in runs stand. None of it belongs to a run. The
+ * cooldown's Gem is a timed find (`timed-drop.ts`): `out` lies on a floor,
+ * one at a time, and after one is missed `wait` is `GEM_MISSED_FLOORS`. */
+export type GemDrop = TimedDrop<GemSpot> & {
   /** The GEM card's Gems lying out besides it (Gem Chance's, a boss's
    * drop): gone, never owed again, once the hero leaves their floor. */
   extra: GemSpot[];
-  /** The furthest floor each mode's run has reached, so only a new one
-   * counts (not a floor gone back to). */
-  reached: Record<Mode, { seed: number; floor: number } | null>;
   /** When the ad button's next reward is banked (wall clock, ms): it shows
    * once one is. */
   adReadyAt: number;
@@ -65,30 +57,23 @@ export type GemDrop = {
 
 export const defaultGemDrop = (): GemDrop => ({ readyAt: 0, wait: 0, out: null, extra: [], reached: { tower: null, delve: null }, adReadyAt: 0, adBanked: 0, fraction: 0 });
 
-const modeOf = (m: unknown): m is Mode => m === "tower" || m === "delve";
-function reachedOf(r: any) {
-  return r && whole(r.seed) && whole(r.floor) ? { seed: r.seed as number, floor: r.floor as number } : null;
-}
 /** A saved GemDrop, field by field; anything malformed starts afresh. */
 export function decodeGemDrop(raw: any): GemDrop {
   const d = defaultGemDrop();
   if (!raw || typeof raw !== "object") return d;
-  d.readyAt = time(raw.readyAt);
+  decodeTimedFields(raw, d, GEM_MISSED_FLOORS);
   d.adReadyAt = time(raw.adReadyAt);
   if (wholeIn(raw.adBanked, 0, 1000)) d.adBanked = raw.adBanked;
   if (raw.adBonusSlot === true) d.adBonusSlot = true;
   if (finite(raw.fraction, 1) && raw.fraction < 1) d.fraction = snap(raw.fraction);
-  if (wholeIn(raw.wait, 0, GEM_MISSED_FLOORS)) d.wait = raw.wait;
   d.out = gemOut(raw.out);
   if (Array.isArray(raw.extra)) d.extra = raw.extra.map(gemOut).filter((g: GemSpot | null): g is GemSpot => !!g).slice(0, MOST_EXTRA);
-  d.reached = { tower: reachedOf(raw.reached?.tower), delve: reachedOf(raw.reached?.delve) };
   return d;
 }
 /** A Gem lying out: on a mode's run and floor, at a tile, of a kind. */
 function gemOut(o: any): GemSpot | null {
-  const spot = reachedOf(o);
-  if (!spot || !modeOf(o.mode) || !Number.isInteger(o.x) || !Number.isInteger(o.y)) return null;
-  return { mode: o.mode, ...spot, x: o.x, y: o.y, ...(o.kind === "golden" || o.kind === "stellar" ? { kind: o.kind } : {}) };
+  const spot = spotOf(o);
+  return spot && { ...spot, ...(o.kind === "golden" || o.kind === "stellar" ? { kind: o.kind } : {}) };
 }
 
 /** The Gems a Gem lying out pays. */
@@ -150,20 +135,14 @@ export function claimAdBank(drop: GemDrop, now: number, cap: number, cooldown: n
 }
 
 /** A floor of a mode's run: where a Gem belongs. */
-export type GemFloor = { mode: Mode; seed: number; floor: number };
+export type GemFloor = FloorAt;
 
 /** The Gem lying on floor `at`, if any. */
-export function gemOn(drop: GemDrop, at: GemFloor): GemSpot | null {
-  const o = drop.out;
-  return o && o.mode === at.mode && o.seed === at.seed && o.floor === at.floor ? o : null;
-}
+export const gemOn = (drop: GemDrop, at: GemFloor): GemSpot | null => spotOn(drop, at);
 
 /** The Gem lying out was missed: it is gone, and another is owed
  * `GEM_MISSED_FLOORS` new floors on. */
-export function missGem(drop: GemDrop) {
-  drop.out = null;
-  drop.wait = GEM_MISSED_FLOORS;
-}
+export const missGem = (drop: GemDrop) => missDrop(drop, GEM_MISSED_FLOORS);
 
 /** The extra Gems lying on floor `at`. */
 export const extraOn = (drop: GemDrop, at: GemFloor) => drop.extra.filter((o) => o.mode === at.mode && o.seed === at.seed && o.floor === at.floor);
@@ -173,27 +152,17 @@ export const extraOn = (drop: GemDrop, at: GemFloor) => drop.extra.filter((o) =>
  * good), and on a new floor, once the cooldown is over, returns whether a
  * Gem appears here. */
 export function reachFloor(drop: GemDrop, at: GemFloor, now: number): boolean {
-  if (drop.out?.mode === at.mode && !gemOn(drop, at)) missGem(drop);
   drop.extra = drop.extra.filter((o) => o.mode !== at.mode || (o.seed === at.seed && o.floor === at.floor));
-  if (!isNewFloor(drop, at)) return false;
-  drop.reached[at.mode] = { seed: at.seed, floor: at.floor };
-  if (drop.out || now < drop.readyAt) return false;
-  if (drop.wait > 0) drop.wait--;
-  return drop.wait === 0;
+  return reachTimedFloor(drop, at, now, GEM_MISSED_FLOORS);
 }
 
 /** Whether `at` is higher than the mode's run has reached before. */
-export function isNewFloor(drop: GemDrop, at: GemFloor) {
-  const r = drop.reached[at.mode];
-  return !r || r.seed !== at.seed || at.floor > r.floor;
-}
+export const isNewFloor = (drop: GemDrop, at: GemFloor) => isNewTimedFloor(drop, at);
 
 /** The Gem was collected: none lies out, and the next waits out the cooldown. */
 export function collectedGem(drop: GemDrop, now: number, often = 1) {
-  drop.out = null;
-  drop.wait = 0;
   // Gems appearing `often` times as often wait that much less.
-  drop.readyAt = now + Math.round(GEM_COOLDOWN_MS / often);
+  collectedDrop(drop, now, Math.round(GEM_COOLDOWN_MS / often));
 }
 
 /** Tiles a hero can walk through to reach the Gem's tile. */
@@ -312,15 +281,15 @@ function traffic(sources: Source[], ends: Source[], v: number) {
 /** A plain floor tile for a Gem, out of the way where it can be, from those
  * the hero at `from` can walk to without passing a door, monster or stairs:
  * in `rows` (the view, in the Delve, preferring rows above the hero), never
- * the hero's own tile. Null when there is none.
+ * the hero's own tile nor one in `taken`. Null when there is none.
  *
  * Out of the way means on as few shortest paths as possible between the
  * hero and the floor's targets, and between one target and the next, so
  * the hand's cards seldom walk the hero over it; then tucked against the
  * most walls (a corner or nook). `rng` picks among the tiles left. */
-export function gemSpot(board: Board, from: Spot, rows: GemRows, rng: () => number): Spot | null {
-  const area = new ReachArea(board, from, rows), tiles = area.tiles;
-  const plain = tiles.map((t, i) => i).filter((i) => i > 0 && area.kind(i) === "floor");
+export function gemSpot(board: Board, from: Spot, rows: GemRows, rng: () => number, taken: readonly Spot[] = []): Spot | null {
+  const area = new ReachArea(board, from, rows), tiles = area.tiles, used = new Set(taken.map((s) => `${s.x},${s.y}`));
+  const plain = tiles.map((t, i) => i).filter((i) => i > 0 && area.kind(i) === "floor" && !used.has(`${tiles[i].x},${tiles[i].y}`));
   const ahead = plain.filter((i) => tiles[i].y > from.y), pool = ahead.length ? ahead : plain;
   if (!pool.length) return null;
   const sources = [0, ...area.targets].map((s) => ({ s, d: area.distances(s) }));

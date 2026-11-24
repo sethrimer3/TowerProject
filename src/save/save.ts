@@ -15,6 +15,8 @@ import { decodeEquipment, defaultEquipment } from "../equipment/inventory.ts";
 import { decodeSettings, defaultSettings } from "./settings.ts";
 import { BASE_HAND, CARD_IDS, HAND_SLOT_GEMS, IN_PLACE, MAX_HAND_SLOTS, MAX_MANUAL_SLOTS, deckCards, handSlots, keptLinks, manualSlots, type CardId, type CardLink } from "../cards/cards.ts";
 import { decodeGemDrop, defaultGemDrop } from "../economy/gems.ts";
+import { decodeScarabDrop, defaultScarabDrop } from "../boosts/scarabs.ts";
+import { decodeBoosts } from "../boosts/boosts.ts";
 import { decodeAds, defaultAds } from "../ads/series.ts";
 import { decodeArchives, defaultArchives, researched } from "../progression/archives.ts";
 import { adsOff, BOOST_FOREVER, decodeEntitlements, permanentBoost, premiumArchivists } from "../shop/entitlements.ts";
@@ -70,6 +72,8 @@ export function defaults(): Save {
     champion: defaultChampion(),
     cells: 0,
     gemDrop: defaultGemDrop(),
+    scarab: defaultScarabDrop(),
+    boosts: {},
     goldBoostUntil: 0,
     ads: defaultAds(),
     gold: 0,
@@ -388,6 +392,8 @@ function decodeProgress(s: any, d: Save) {
   d.champion = decodeChampion(s.champion);
   d.cells = fraction(s.cells, d.cells);
   d.gemDrop = decodeGemDrop(s.gemDrop);
+  d.scarab = decodeScarabDrop(s.scarab);
+  d.boosts = decodeBoosts(s.boosts);
   d.goldBoostUntil = count(s.goldBoostUntil, 0, Number.MAX_SAFE_INTEGER);
   d.ads = decodeAds(s.ads);
   for (const g of GOLD_SHOP) d.provisions[g.id] = count(s.provisions?.[g.id], d.provisions[g.id], 999);

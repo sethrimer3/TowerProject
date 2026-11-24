@@ -21,6 +21,7 @@ import { powerFactor, type PowerBonus } from "../cards/powers.ts";
 import { adTerms, gemCardBonus } from "../cards/gem-card.ts";
 import { wholeChange } from "../whole.ts";
 import { AD_JACKPOT_GEMS, championAd, championValue } from "../shop/champion.ts";
+import { boostFactor } from "../boosts/boosts.ts";
 
 /** What the Gem finder reads from the game: the board the hero stands on,
  * what the run's hand's card trees give (GEM's), the cards it holds, and
@@ -214,9 +215,13 @@ export class GemFinder {
     return gems;
   }
 
-  /** The ad button's terms now, by the GEM card in either hand and Champion Status. */
+  /** The ad button's terms now, by the GEM card in either hand and Champion
+   * Status, a Golden Scarab's Gem Bank Refill boost dividing its cooldown
+   * while it runs. */
   get adTerms() {
-    return adTerms(gemCardBonus(this.host.save), championAd(this.host.save), this.host.save.gemDrop.adBonusSlot);
+    const terms = adTerms(gemCardBonus(this.host.save), championAd(this.host.save), this.host.save.gemDrop.adBonusSlot);
+    const boost = boostFactor(this.host.save, "gemBank", this.host.clock());
+    return boost === 1 ? terms : { ...terms, cooldown: Math.round(terms.cooldown / boost) };
   }
 
   /** The ad button's bank now (`adBank`), the Gems a claim pays, and

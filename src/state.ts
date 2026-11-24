@@ -30,7 +30,7 @@ import { freeLevelRow, freeTrainingLines, rollFreeTraining, type FreeGroup } fro
 import { doorBlockedMessage, doorName, doorRule, drainsHp, KEY_ORDER, keyWord, pickupGold, type DoorDiscounts } from "./doors.ts";
 import type { SettingKey } from "./save/settings.ts";
 import { routeTo, type Step } from "./pathfinding.ts";
-import { TOWER_START_X, TOWER_SECTION } from "./config.ts";
+import { MAX_MOVE_RATE, TOWER_START_X, TOWER_SECTION } from "./config.ts";
 import { xpForKill, levelForXp } from "./progression/xp.ts";
 import { TRAINING_PER_LEVEL, isStatRow, trainedAmount, type TrainingId, type StatTrainingRow } from "./progression/training.ts";
 import { PROVISION_BOOSTS, PROVISION_KEY_FLOORS, provisionBoost, type UsedProvision } from "./economy/provisions.ts";
@@ -93,6 +93,9 @@ import { ResearchDesk } from "./game/research-desk.ts";
 import { DeckEditor } from "./game/deck-editor.ts";
 import { GearDesk } from "./game/gear-desk.ts";
 import { GemFinder } from "./game/gem-finder.ts";
+import { ScarabFinder } from "./game/scarab-finder.ts";
+import { boostFactor, boostPlus } from "./boosts/boosts.ts";
+import type { BoostId } from "./boosts/catalog.ts";
 import { BadgeDesk } from "./game/badge-desk.ts";
 import { CardDesk } from "./game/card-desk.ts";
 import { AdDesk } from "./game/ad-desk.ts";
@@ -176,10 +179,7 @@ const MAX_GAINS = 12;
 /** The forest's Automove walks at least this many steps a second, however
  * slow the run's arrows were last set. */
 const FOREST_SPEED = 3;
-/** The most steps a second the hero ever takes, whatever research, skills,
- * boons and equipment add: a whole number of display frames a step at 30,
- * 60 and 120 Hz (every 2, 4 and 8 frames), so every device shows it evenly. */
-export const MAX_MOVE_RATE = 15;
+export { MAX_MOVE_RATE };
 /** The speed the speed lesson teaches: one press of › from a new hero's 2. */
 const LESSON_SPEED = 3;
 /** The steps a run takes on the Tower's first floor before the speed
@@ -419,6 +419,8 @@ export class Game {
   readonly gear = new GearDesk(this);
   /** The Gem on the board, collecting it, and the ad's Gems. */
   readonly gemFinder = new GemFinder(this);
+  /** The Golden Scarab on the board and claiming it, which starts a boost. */
+  readonly scarabFinder = new ScarabFinder(this);
   /** The Equipment screen's commands: leveling, merging, dismantling,
    * equipping and Gem pulls. */
   readonly equipment = new EquipmentDesk(this);
@@ -1492,7 +1494,8 @@ export class Game {
    * `dashTiles`, End Rush's research on STAIRS (toward the stairs, or the
    * Delve's climb), and its Dash badge's value. They add up. */
   dashFor(id: CardId) {
-    const end = id === "stairs" ? (this.save.upgrades.endRush ? researched(this.save.archives, "endRushTiles") : 0) + this.worn.endRushTiles + championValue(this.save, "endRush") : 0;
+    // A Golden Scarab's End Rush boost adds its tiles while it runs.
+    const end = id === "stairs" ? (this.save.upgrades.endRush ? researched(this.save.archives, "endRushTiles") : 0) + this.worn.endRushTiles + championValue(this.save, "endRush") + boostPlus(this.save, "endRush", this.clock()) : 0;
     const badge = badgeOn(this.run.badges, id, "dash");
     return this.dashTiles + end + (badge ? badgeValue("dash", badge.level) : 0);
   }
@@ -1504,7 +1507,7 @@ export class Game {
   /** Whether (x, y) is empty floor a dash may cross: nothing on it, no torch
    * and no Gem (with `anyKind`, only those last two). */
   private emptyAt(x: number, y: number, anyKind = false) {
-    return (anyKind || this.world.tile(x, y).kind === "floor") && !this.gemFinder.gemAt(x, y) &&
+    return (anyKind || this.world.tile(x, y).kind === "floor") && !this.gemFinder.gemAt(x, y) && !this.scarabFinder.scarabAt(x, y) &&
       !this.world.torches?.some((t) => t.active && t.x === x && t.y === y);
   }
   /** Drops the committed path when its card's gate badge no longer holds
@@ -1797,9 +1800,12 @@ export class Game {
     return this.run.outside ? Math.max(speed, FOREST_SPEED) : speed;
   }
   /** Steps a second the hero actually takes: `stepsPerSecond`, raised by
-   * the movement speed the equipment worn gives, never past `MAX_MOVE_RATE`. */
+   * the movement speed the equipment worn gives, and a Golden Scarab's Game
+   * Speed boost's steps while it runs and the hero isn't paused, never past
+   * `MAX_MOVE_RATE`. */
   get moveRate() {
-    return Math.min(MAX_MOVE_RATE, raised(this.stepsPerSecond, this.worn.moveSpeed));
+    const steps = this.stepsPerSecond, boost = steps > 0 ? boostPlus(this.save, "speed", this.clock()) : 0;
+    return Math.min(MAX_MOVE_RATE, raised(steps, this.worn.moveSpeed) + boost);
   }
   /** What the equipment this mode's hero wears does now. */
   get worn() {
@@ -2425,6 +2431,9 @@ export class Game {
    * when it reaches a new level, and inside a run starting its Level-up
    * Boost's time over (Gold ×3 for 10 minutes). */
   addXp(xp: number) {
+    // A Golden Scarab's XP boost raises all the hero's XP while it runs, a factor of its own.
+    const boost = boostFactor(this.save, "xp", this.clock());
+    if (boost !== 1) xp = Math.round(xp * boost);
     const level = levelForXp(this.save.xp);
     this.save.xp += xp;
     this.run.xp = (this.run.xp ?? 0) + xp;
@@ -2439,7 +2448,9 @@ export class Game {
   /** Card `id` gains `xp` toward its levels, each level it reaches queued
    * for the hand's animation. */
   gainCardXp(id: CardId, xp: number) {
-    const more = relicAmount(this.save, "cardXp"), gained = more ? Math.round((xp * (100 + more)) / 100) : xp;
+    // A Golden Scarab's Card XP boost is a factor of its own beside the relics'.
+    const more = relicAmount(this.save, "cardXp"), relic = more ? Math.round((xp * (100 + more)) / 100) : xp;
+    const boost = boostFactor(this.save, "cardXp", this.clock()), gained = boost === 1 ? relic : Math.round(relic * boost);
     const levels = addCardXp(this.save.cardXp, id, gained, cardMaxLevel(this.save.cardAscension, id));
     if (levels.length) this.cardLevelled(id, levels);
   }
@@ -2500,6 +2511,18 @@ export class Game {
    * fallen. */
   get playing() {
     return !this.run.outside && !this.fallen;
+  }
+  /** The tiles the Gems on the board lie on, which a Golden Scarab keeps off. */
+  get gemTiles() {
+    return this.gemFinder.gems;
+  }
+  /** Boost `id` gets more time (`start` adds it): ranks in training move
+   * to the faster pace when it is Training Speed's. */
+  boostStarting(id: BoostId, start: () => void) {
+    if (id !== "training") return start();
+    const before = this.training.pace;
+    start();
+    this.training.repace(before);
   }
   /** The hero fell in the fight just taken: the run waits at 0 HP, the hand
    * paused, until the player accepts defeat. */
@@ -2572,6 +2595,7 @@ export class Game {
     this.startSpeedLesson();
     // GEM's last step onto a Gem: a badge's Effective or Dampen scales what it pays.
     this.gemFinder.step(step.card.scale ?? 1);
+    this.scarabFinder.step();
     if (!step.card.hold) this.endTurn();
     return true;
   }
@@ -2713,7 +2737,7 @@ export class Game {
     if (this.mode !== "tower" || !(world instanceof RoomWorld)) return;
     const run = this.towerRun;
     if (!callsGreaterBoss(world, run.summoned)) return;
-    const at = greaterBossSpot(world, [run.player, ...this.gemFinder.gems]);
+    const at = greaterBossSpot(world, [run.player, ...this.gemFinder.gems, ...(this.scarabFinder.scarab ? [this.scarabFinder.scarab] : [])]);
     if (!at) return;
     run.summoned = [...(run.summoned ?? []), world.room];
     this.spawnEnemy(at, greaterBoss(world));
@@ -3292,6 +3316,7 @@ export class Game {
     this.dropHandPlan();
     this.feedback(this.rules.words.enter);
     this.gemFinder.step();
+    this.scarabFinder.step();
     this.autoTrain();
   }
   /** Whether the door or key at (x, y) on this floor rolls under `chance`

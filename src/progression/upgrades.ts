@@ -195,6 +195,7 @@ export const UPGRADES = [
     currency: "breakthrough",
   },
   { id: "gemCard", name: "Gem Card", description: "Add the GEM card to your deck", card: "gem", base: 2, max: 1, currency: "breakthrough" },
+  { id: "goldenScarab", name: "Golden Scarab Research", description: "Open Golden Scarab research: stronger, longer and more frequent boosts", base: 2, max: 1, currency: "breakthrough" },
   {
     id: "cardMastery",
     name: "Card Mastery",

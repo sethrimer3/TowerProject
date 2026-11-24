@@ -31,6 +31,7 @@ import { tileRandom } from "../random.ts";
 /** The salt a boss's extra Ruby rolls with (BOSS ENEMY's Boss Rubies). */
 const BOSS_RUBY_SALT = 0x2b7e9, DROP3_SALT = 0xd3093, DROP5_SALT = 0xd5095;
 import { floorChances, hasEnvironment, STELLAR_FACTOR, type FloorBloom } from "../environments.ts";
+import { boostFactor } from "../boosts/boosts.ts";
 
 /** The tiles whose Pickup Gold a skipped floor counts, beside its lit torches. */
 const ITEMS: ReadonlySet<Tile["kind"]> = new Set(["key", "potion", "attack", "defense", "door"]);
@@ -340,9 +341,11 @@ export class RunPurse {
     return this.tier;
   }
 
-  /** Banks `rubies` Rubies in the save, counted toward the profile's earnings. */
-  bankRubies(rubies: number) {
-    if (rubies <= 0) return 0;
+  /** Banks `rubies` Rubies in the save, counted toward the profile's
+   * earnings, a Golden Scarab's Rubies boost raising them (rounded) while it runs. */
+  bankRubies(found: number) {
+    if (found <= 0) return 0;
+    const boost = boostFactor(this.save, "rubies", this.now), rubies = boost === 1 ? found : Math.round(found * boost);
     this.save.rubies += rubies;
     earn(this.save, "rubies", rubies);
     return rubies;
@@ -356,7 +359,8 @@ export class RunPurse {
     if (!this.save.equipment.unlocked) return [];
     const tree = this.tree, found: EquipmentLoot[] = [], boss = enemy.strength === "boss" || enemy.strength === "greaterBoss";
     // The worn Fortune's Eye substats raise both chances, a kind of their own, and the gifts' ×3 and ×5 multiply them.
-    const eye = ((100 + this.worn.dropChance) / 100) * drops;
+    // A Golden Scarab's Equipment Drops boost is a factor of its own too.
+    const eye = ((100 + this.worn.dropChance) / 100) * drops * boostFactor(this.save, "equipmentDrops", this.now);
     const material = snap(((boss ? BOSS_DROPS.material : 0) + foeStat(tree, enemy, "Material") + (instakill ? foeStat(tree, enemy, "InstakillMaterial") : 0)) * eye);
     const piece = snap(((boss ? BOSS_DROPS.equipment : 0) + foeStat(tree, enemy, "Equipment")) * relicFactor(this.save, "equipmentDrops") * eye);
     if (material && this.equipmentRng() * 100 < material) found.push(this.chestEquipment("supply"));
@@ -375,8 +379,10 @@ export class RunPurse {
     return this.bankCells(scale === 1 ? found : snap(found * scale));
   }
 
-  /** Banks `cells` Cells in the save, counted toward the run's finds. */
-  private bankCells(cells: number) {
+  /** Banks `found` Cells in the save, counted toward the run's finds, a
+   * Golden Scarab's Cells boost raising them while it runs. */
+  private bankCells(found: number) {
+    const boost = boostFactor(this.save, "cells", this.now), cells = boost === 1 ? found : snap(found * boost);
     this.save.cells = snap(this.save.cells + cells);
     earn(this.save, "cells", cells);
     this.slice.runFinds.cells = snap(this.slice.runFinds.cells + cells);

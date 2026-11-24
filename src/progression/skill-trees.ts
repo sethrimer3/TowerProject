@@ -161,11 +161,13 @@ export const TREES: SkillTree[] = [
     // down from it: Esoteric Training down and left, with Aether Shield
     // (what reveals the Inspiration tree's Shield path), Phoenix Spark and
     // Echoes of Time (its charges) straight under it, and Offline Gold
-    // straight down, with Gem Card under it, above Ricochet Shock Research.
+    // straight down, with Gem Card under it and Golden Scarab Research
+    // under that, above Ricochet Shock Research.
     { id: "moreWealth", icon: "¤", x: 30, y: 85, requires: ["pathToWealth"] },
     { id: "goldenFloors", icon: "¤", x: 30, y: 111, requires: ["moreWealth"] },
     { id: "offlineGold", icon: "¤", x: 30, y: 137, requires: ["goldenFloors"] },
     { id: "gemCard", icon: "◆", x: 30, y: 163, requires: ["offlineGold"] },
+    { id: "goldenScarab", icon: "✶", x: 30, y: 189, requires: ["gemCard"] },
     { id: "esotericTraining", icon: "⇑", x: 10, y: 137, requires: ["goldenFloors"] },
     { id: "aetherShield", icon: "◯", x: 10, y: 163, requires: ["esotericTraining"] },
     { id: "phoenixSpark", icon: "✦", x: 10, y: 189, requires: ["aetherShield"] },

@@ -1,6 +1,6 @@
 {
   "image": "assets/atlases/ui.png",
-  "revision": "1399b9f2951dc040",
+  "revision": "6e7413193f51bd74",
   "width": 1024,
   "height": 1024,
   "padding": 2,
@@ -260,7 +260,7 @@
     "assets/style/barrel-broken.png": {
       "width": 12,
       "height": 12,
-      "x": 902,
+      "x": 930,
       "y": 726
     },
     "assets/style/barrel.png": {
@@ -680,163 +680,163 @@
     "assets/style/combat-armor.png": {
       "width": 9,
       "height": 8,
-      "x": 461,
+      "x": 477,
       "y": 754
     },
     "assets/style/combat-arrow-e.png": {
       "width": 16,
       "height": 16,
-      "x": 394,
+      "x": 422,
       "y": 726
     },
     "assets/style/combat-arrow-n.png": {
       "width": 16,
       "height": 16,
-      "x": 414,
+      "x": 442,
       "y": 726
     },
     "assets/style/combat-arrow-ne.png": {
       "width": 16,
       "height": 16,
-      "x": 434,
+      "x": 462,
       "y": 726
     },
     "assets/style/combat-arrow-nw.png": {
       "width": 16,
       "height": 16,
-      "x": 454,
+      "x": 482,
       "y": 726
     },
     "assets/style/combat-arrow-s.png": {
       "width": 16,
       "height": 16,
-      "x": 474,
+      "x": 502,
       "y": 726
     },
     "assets/style/combat-arrow-se.png": {
       "width": 16,
       "height": 16,
-      "x": 494,
+      "x": 522,
       "y": 726
     },
     "assets/style/combat-arrow-sw.png": {
       "width": 16,
       "height": 16,
-      "x": 514,
+      "x": 542,
       "y": 726
     },
     "assets/style/combat-arrow-w.png": {
       "width": 16,
       "height": 16,
-      "x": 534,
+      "x": 562,
       "y": 726
     },
     "assets/style/combat-charged-e.png": {
       "width": 16,
       "height": 16,
-      "x": 554,
+      "x": 582,
       "y": 726
     },
     "assets/style/combat-charged-n.png": {
       "width": 16,
       "height": 16,
-      "x": 574,
+      "x": 602,
       "y": 726
     },
     "assets/style/combat-charged-ne.png": {
       "width": 16,
       "height": 16,
-      "x": 594,
+      "x": 622,
       "y": 726
     },
     "assets/style/combat-charged-nw.png": {
       "width": 16,
       "height": 16,
-      "x": 614,
+      "x": 642,
       "y": 726
     },
     "assets/style/combat-charged-s.png": {
       "width": 16,
       "height": 16,
-      "x": 634,
+      "x": 662,
       "y": 726
     },
     "assets/style/combat-charged-se.png": {
       "width": 16,
       "height": 16,
-      "x": 654,
+      "x": 682,
       "y": 726
     },
     "assets/style/combat-charged-sw.png": {
       "width": 16,
       "height": 16,
-      "x": 674,
+      "x": 702,
       "y": 726
     },
     "assets/style/combat-charged-w.png": {
       "width": 16,
       "height": 16,
-      "x": 694,
+      "x": 722,
       "y": 726
     },
     "assets/style/combat-chest-equipment.png": {
       "width": 20,
       "height": 10,
-      "x": 354,
+      "x": 370,
       "y": 754
     },
     "assets/style/combat-chest-supply.png": {
       "width": 10,
       "height": 10,
-      "x": 378,
+      "x": 394,
       "y": 754
     },
     "assets/style/combat-fast.png": {
       "width": 12,
       "height": 8,
-      "x": 430,
+      "x": 446,
       "y": 754
     },
     "assets/style/combat-mark-blocked.png": {
       "width": 12,
       "height": 12,
-      "x": 918,
+      "x": 946,
       "y": 726
     },
     "assets/style/combat-mark-ignore.png": {
       "width": 16,
       "height": 16,
-      "x": 714,
+      "x": 742,
       "y": 726
     },
     "assets/style/combat-mark-skip.png": {
       "width": 12,
       "height": 12,
-      "x": 934,
+      "x": 962,
       "y": 726
     },
     "assets/style/combat-mark-target.png": {
       "width": 16,
       "height": 16,
-      "x": 734,
+      "x": 762,
       "y": 726
     },
     "assets/style/combat-ranged.png": {
       "width": 9,
       "height": 8,
-      "x": 474,
+      "x": 490,
       "y": 754
     },
     "assets/style/combat-rank-down.png": {
       "width": 7,
       "height": 6,
-      "x": 524,
+      "x": 540,
       "y": 754
     },
     "assets/style/combat-rank-up.png": {
       "width": 7,
       "height": 6,
-      "x": 535,
+      "x": 551,
       "y": 754
     },
     "assets/style/combat-shield-48.png": {
@@ -854,19 +854,19 @@
     "assets/style/combat-shot.png": {
       "width": 8,
       "height": 8,
-      "x": 500,
+      "x": 516,
       "y": 754
     },
     "assets/style/combat-wing.png": {
       "width": 9,
       "height": 8,
-      "x": 487,
+      "x": 503,
       "y": 754
     },
     "assets/style/crate-broken.png": {
       "width": 12,
       "height": 12,
-      "x": 950,
+      "x": 978,
       "y": 726
     },
     "assets/style/crate.png": {
@@ -2192,13 +2192,13 @@
     "assets/style/familiar-bolt.png": {
       "width": 8,
       "height": 10,
-      "x": 405,
+      "x": 421,
       "y": 754
     },
     "assets/style/familiar-burn.png": {
       "width": 8,
       "height": 8,
-      "x": 512,
+      "x": 528,
       "y": 754
     },
     "assets/style/familiar-dragon-icon.png": {
@@ -2318,13 +2318,13 @@
     "assets/style/familiar-flame.png": {
       "width": 36,
       "height": 12,
-      "x": 806,
+      "x": 834,
       "y": 726
     },
     "assets/style/familiar-mote.png": {
       "width": 5,
       "height": 5,
-      "x": 546,
+      "x": 562,
       "y": 754
     },
     "assets/style/familiar-slime-icon.png": {
@@ -2342,19 +2342,19 @@
     "assets/style/familiar-sparkle.png": {
       "width": 9,
       "height": 9,
-      "x": 417,
+      "x": 433,
       "y": 754
     },
     "assets/style/familiar-stun.png": {
       "width": 11,
       "height": 8,
-      "x": 446,
+      "x": 462,
       "y": 754
     },
     "assets/style/familiar-sword.png": {
       "width": 9,
       "height": 10,
-      "x": 392,
+      "x": 408,
       "y": 754
     },
     "assets/style/familiar-wisp-icon.png": {
@@ -2384,7 +2384,7 @@
     "assets/style/fern.png": {
       "width": 12,
       "height": 12,
-      "x": 966,
+      "x": 994,
       "y": 726
     },
     "assets/style/focus.png": {
@@ -2684,7 +2684,7 @@
     "assets/style/mushrooms.png": {
       "width": 12,
       "height": 12,
-      "x": 982,
+      "x": 1010,
       "y": 726
     },
     "assets/style/one-piece.png": {
@@ -2708,8 +2708,8 @@
     "assets/style/pebbles.png": {
       "width": 12,
       "height": 12,
-      "x": 998,
-      "y": 726
+      "x": 2,
+      "y": 754
     },
     "assets/style/phoenix-spark.png": {
       "width": 24,
@@ -3569,124 +3569,130 @@
       "x": 926,
       "y": 670
     },
-    "assets/style/scroll.png": {
+    "assets/style/scarab.png": {
       "width": 24,
       "height": 24,
       "x": 954,
       "y": 670
     },
-    "assets/style/settings-cog.png": {
+    "assets/style/scroll.png": {
       "width": 24,
       "height": 24,
       "x": 982,
       "y": 670
     },
-    "assets/style/shard.png": {
+    "assets/style/settings-cog.png": {
       "width": 24,
       "height": 24,
       "x": 2,
       "y": 698
     },
-    "assets/style/shield.png": {
+    "assets/style/shard.png": {
       "width": 24,
       "height": 24,
       "x": 30,
       "y": 698
     },
-    "assets/style/shrine-auto.png": {
+    "assets/style/shield.png": {
       "width": 24,
       "height": 24,
       "x": 58,
       "y": 698
     },
-    "assets/style/shrine-ban.png": {
+    "assets/style/shrine-auto.png": {
       "width": 24,
       "height": 24,
       "x": 86,
       "y": 698
     },
-    "assets/style/shrine-count.png": {
+    "assets/style/shrine-ban.png": {
       "width": 24,
       "height": 24,
       "x": 114,
       "y": 698
     },
-    "assets/style/shrine-fill.png": {
-      "width": 16,
-      "height": 4,
-      "x": 555,
-      "y": 754
-    },
-    "assets/style/shrine-grip.png": {
+    "assets/style/shrine-count.png": {
       "width": 24,
       "height": 24,
       "x": 142,
       "y": 698
     },
-    "assets/style/shrine.png": {
+    "assets/style/shrine-fill.png": {
+      "width": 16,
+      "height": 4,
+      "x": 571,
+      "y": 754
+    },
+    "assets/style/shrine-grip.png": {
       "width": 24,
       "height": 24,
       "x": 170,
       "y": 698
     },
-    "assets/style/silver.png": {
+    "assets/style/shrine.png": {
       "width": 24,
       "height": 24,
       "x": 198,
       "y": 698
     },
-    "assets/style/skeleton.png": {
+    "assets/style/silver.png": {
       "width": 24,
       "height": 24,
       "x": 226,
       "y": 698
     },
-    "assets/style/slime.png": {
+    "assets/style/skeleton.png": {
       "width": 24,
       "height": 24,
       "x": 254,
       "y": 698
     },
-    "assets/style/spore.png": {
+    "assets/style/slime.png": {
       "width": 24,
       "height": 24,
       "x": 282,
       "y": 698
     },
-    "assets/style/sprout.png": {
-      "width": 12,
-      "height": 12,
-      "x": 2,
-      "y": 754
-    },
-    "assets/style/stairs.png": {
+    "assets/style/spore.png": {
       "width": 24,
       "height": 24,
       "x": 310,
       "y": 698
     },
-    "assets/style/status-dilation-guard.png": {
+    "assets/style/sprout.png": {
+      "width": 12,
+      "height": 12,
+      "x": 18,
+      "y": 754
+    },
+    "assets/style/stairs.png": {
       "width": 24,
       "height": 24,
       "x": 338,
       "y": 698
     },
-    "assets/style/status-shock.png": {
+    "assets/style/status-dilation-guard.png": {
       "width": 24,
       "height": 24,
       "x": 366,
       "y": 698
     },
-    "assets/style/sword.png": {
+    "assets/style/status-shock.png": {
       "width": 24,
       "height": 24,
       "x": 394,
       "y": 698
     },
-    "assets/style/target.png": {
+    "assets/style/sword.png": {
       "width": 24,
       "height": 24,
       "x": 422,
+      "y": 698
+    },
+    "assets/style/target.png": {
+      "width": 24,
+      "height": 24,
+      "x": 450,
       "y": 698
     },
     "assets/style/theme-corner-frame.png": {
@@ -3908,13 +3914,13 @@
     "assets/style/ticket.png": {
       "width": 24,
       "height": 24,
-      "x": 450,
+      "x": 478,
       "y": 698
     },
     "assets/style/torch.png": {
       "width": 24,
       "height": 24,
-      "x": 478,
+      "x": 506,
       "y": 698
     },
     "assets/style/tower.png": {
@@ -3944,37 +3950,37 @@
     "assets/style/troll.png": {
       "width": 24,
       "height": 24,
-      "x": 506,
+      "x": 534,
       "y": 698
     },
     "assets/style/trophy.png": {
       "width": 24,
       "height": 24,
-      "x": 534,
+      "x": 562,
       "y": 698
     },
     "assets/style/tuft.png": {
       "width": 12,
       "height": 12,
-      "x": 18,
+      "x": 34,
       "y": 754
     },
     "assets/style/ui-auto-play.png": {
       "width": 12,
       "height": 12,
-      "x": 34,
+      "x": 50,
       "y": 754
     },
     "assets/style/ui-auto-train-off.png": {
       "width": 12,
       "height": 12,
-      "x": 50,
+      "x": 66,
       "y": 754
     },
     "assets/style/ui-auto-train-on.png": {
       "width": 12,
       "height": 12,
-      "x": 66,
+      "x": 82,
       "y": 754
     },
     "assets/style/ui-badge-annotation.png": {
@@ -3986,295 +3992,295 @@
     "assets/style/ui-card-points.png": {
       "width": 12,
       "height": 12,
-      "x": 82,
+      "x": 98,
       "y": 754
     },
     "assets/style/ui-chevron-down.png": {
       "width": 12,
       "height": 12,
-      "x": 98,
+      "x": 114,
       "y": 754
     },
     "assets/style/ui-chevron-left.png": {
       "width": 12,
       "height": 12,
-      "x": 114,
+      "x": 130,
       "y": 754
     },
     "assets/style/ui-chevron-right.png": {
       "width": 12,
       "height": 12,
-      "x": 130,
+      "x": 146,
       "y": 754
     },
     "assets/style/ui-codex-help.png": {
       "width": 24,
       "height": 24,
-      "x": 562,
+      "x": 590,
       "y": 698
     },
     "assets/style/ui-codex.png": {
       "width": 24,
       "height": 24,
-      "x": 590,
+      "x": 618,
       "y": 698
     },
     "assets/style/ui-control-back.png": {
       "width": 12,
       "height": 12,
-      "x": 146,
+      "x": 162,
       "y": 754
     },
     "assets/style/ui-control-check.png": {
       "width": 12,
       "height": 12,
-      "x": 162,
+      "x": 178,
       "y": 754
     },
     "assets/style/ui-control-close.png": {
       "width": 12,
       "height": 12,
-      "x": 178,
+      "x": 194,
       "y": 754
     },
     "assets/style/ui-control-down.png": {
       "width": 12,
       "height": 12,
-      "x": 194,
+      "x": 210,
       "y": 754
     },
     "assets/style/ui-control-forward.png": {
       "width": 12,
       "height": 12,
-      "x": 210,
+      "x": 226,
       "y": 754
     },
     "assets/style/ui-control-lock.png": {
       "width": 12,
       "height": 12,
-      "x": 226,
+      "x": 242,
       "y": 754
     },
     "assets/style/ui-control-star.png": {
       "width": 24,
       "height": 24,
-      "x": 618,
+      "x": 646,
       "y": 698
     },
     "assets/style/ui-control-swap.png": {
       "width": 12,
       "height": 12,
-      "x": 242,
+      "x": 258,
       "y": 754
     },
     "assets/style/ui-control-up.png": {
       "width": 12,
       "height": 12,
-      "x": 258,
+      "x": 274,
       "y": 754
     },
     "assets/style/ui-copy.png": {
       "width": 24,
       "height": 24,
-      "x": 646,
+      "x": 674,
       "y": 698
     },
     "assets/style/ui-crown.png": {
       "width": 24,
       "height": 24,
-      "x": 674,
+      "x": 702,
       "y": 698
     },
     "assets/style/ui-duplicate.png": {
       "width": 24,
       "height": 24,
-      "x": 702,
+      "x": 730,
       "y": 698
     },
     "assets/style/ui-equip-frame-ancestral.png": {
       "width": 24,
       "height": 24,
-      "x": 730,
+      "x": 758,
       "y": 698
     },
     "assets/style/ui-equip-frame-common.png": {
       "width": 24,
       "height": 24,
-      "x": 758,
+      "x": 786,
       "y": 698
     },
     "assets/style/ui-equip-frame-empty.png": {
       "width": 24,
       "height": 24,
-      "x": 786,
+      "x": 814,
       "y": 698
     },
     "assets/style/ui-equip-frame-epic.png": {
       "width": 24,
       "height": 24,
-      "x": 814,
+      "x": 842,
       "y": 698
     },
     "assets/style/ui-equip-frame-legendary.png": {
       "width": 24,
       "height": 24,
-      "x": 842,
+      "x": 870,
       "y": 698
     },
     "assets/style/ui-equip-frame-mythic.png": {
       "width": 24,
       "height": 24,
-      "x": 870,
+      "x": 898,
       "y": 698
     },
     "assets/style/ui-equip-frame-rare.png": {
       "width": 24,
       "height": 24,
-      "x": 898,
+      "x": 926,
       "y": 698
     },
     "assets/style/ui-equip-frame-selection.png": {
       "width": 24,
       "height": 24,
-      "x": 926,
+      "x": 954,
       "y": 698
     },
     "assets/style/ui-equip-frame-uncommon.png": {
       "width": 24,
       "height": 24,
-      "x": 954,
+      "x": 982,
       "y": 698
     },
     "assets/style/ui-equip-salvage.png": {
       "width": 12,
       "height": 12,
-      "x": 274,
+      "x": 290,
       "y": 754
     },
     "assets/style/ui-equip-unique.png": {
       "width": 12,
       "height": 12,
-      "x": 290,
+      "x": 306,
       "y": 754
     },
     "assets/style/ui-equip-worn.png": {
       "width": 12,
       "height": 12,
-      "x": 306,
+      "x": 322,
       "y": 754
     },
     "assets/style/ui-fill-gain.png": {
       "width": 16,
       "height": 4,
-      "x": 575,
+      "x": 591,
       "y": 754
     },
     "assets/style/ui-hand-swap.png": {
       "width": 12,
       "height": 12,
-      "x": 322,
+      "x": 338,
       "y": 754
     },
     "assets/style/ui-link.png": {
       "width": 24,
       "height": 24,
-      "x": 982,
-      "y": 698
-    },
-    "assets/style/ui-mastered.png": {
-      "width": 24,
-      "height": 24,
       "x": 2,
       "y": 726
     },
-    "assets/style/ui-menu-close.png": {
+    "assets/style/ui-mastered.png": {
       "width": 24,
       "height": 24,
       "x": 30,
       "y": 726
     },
-    "assets/style/ui-menu.png": {
+    "assets/style/ui-menu-close.png": {
       "width": 24,
       "height": 24,
       "x": 58,
       "y": 726
     },
-    "assets/style/ui-play-store.png": {
+    "assets/style/ui-menu.png": {
       "width": 24,
       "height": 24,
       "x": 86,
       "y": 726
     },
-    "assets/style/ui-revive.png": {
+    "assets/style/ui-play-store.png": {
       "width": 24,
       "height": 24,
       "x": 114,
       "y": 726
     },
-    "assets/style/ui-seal.png": {
+    "assets/style/ui-revive.png": {
       "width": 24,
       "height": 24,
       "x": 142,
       "y": 726
     },
-    "assets/style/ui-sign.png": {
+    "assets/style/ui-seal.png": {
       "width": 24,
       "height": 24,
       "x": 170,
       "y": 726
     },
-    "assets/style/ui-skeleton-key.png": {
+    "assets/style/ui-sign.png": {
       "width": 24,
       "height": 24,
       "x": 198,
       "y": 726
     },
-    "assets/style/ui-slider-thumb-active.png": {
+    "assets/style/ui-skeleton-key.png": {
       "width": 24,
       "height": 24,
       "x": 226,
       "y": 726
     },
-    "assets/style/ui-slider-thumb.png": {
+    "assets/style/ui-slider-thumb-active.png": {
       "width": 24,
       "height": 24,
       "x": 254,
       "y": 726
     },
-    "assets/style/ui-slider-track.png": {
-      "width": 48,
-      "height": 12,
-      "x": 754,
-      "y": 726
-    },
-    "assets/style/ui-ward.png": {
+    "assets/style/ui-slider-thumb.png": {
       "width": 24,
       "height": 24,
       "x": 282,
       "y": 726
     },
-    "assets/style/undo.png": {
+    "assets/style/ui-slider-track.png": {
+      "width": 48,
+      "height": 12,
+      "x": 782,
+      "y": 726
+    },
+    "assets/style/ui-ward.png": {
       "width": 24,
       "height": 24,
       "x": 310,
       "y": 726
     },
-    "assets/style/vip.png": {
+    "assets/style/undo.png": {
       "width": 24,
       "height": 24,
       "x": 338,
       "y": 726
     },
+    "assets/style/vip.png": {
+      "width": 24,
+      "height": 24,
+      "x": 366,
+      "y": 726
+    },
     "assets/style/web.png": {
       "width": 12,
       "height": 12,
-      "x": 338,
+      "x": 354,
       "y": 754
     },
     "assets/style/wraith.png": {
       "width": 24,
       "height": 24,
-      "x": 366,
+      "x": 394,
       "y": 726
     },
     "assets/ui/frames/banner.png": {
@@ -4334,19 +4340,19 @@
     "assets/ui/frames/fill-blue.png": {
       "width": 16,
       "height": 4,
-      "x": 595,
+      "x": 611,
       "y": 754
     },
     "assets/ui/frames/fill-green.png": {
       "width": 16,
       "height": 4,
-      "x": 615,
+      "x": 631,
       "y": 754
     },
     "assets/ui/frames/fill-red.png": {
       "width": 16,
       "height": 4,
-      "x": 635,
+      "x": 651,
       "y": 754
     },
     "assets/ui/frames/legacy/banner.png": {
@@ -4406,19 +4412,19 @@
     "assets/ui/frames/legacy/fill-blue.png": {
       "width": 16,
       "height": 4,
-      "x": 655,
+      "x": 671,
       "y": 754
     },
     "assets/ui/frames/legacy/fill-green.png": {
       "width": 16,
       "height": 4,
-      "x": 675,
+      "x": 691,
       "y": 754
     },
     "assets/ui/frames/legacy/fill-red.png": {
       "width": 16,
       "height": 4,
-      "x": 695,
+      "x": 711,
       "y": 754
     },
     "assets/ui/frames/legacy/panel.png": {
@@ -4436,7 +4442,7 @@
     "assets/ui/frames/legacy/surface.png": {
       "width": 24,
       "height": 12,
-      "x": 846,
+      "x": 874,
       "y": 726
     },
     "assets/ui/frames/legacy/track.png": {
@@ -4460,7 +4466,7 @@
     "assets/ui/frames/surface.png": {
       "width": 24,
       "height": 12,
-      "x": 874,
+      "x": 902,
       "y": 726
     },
     "assets/ui/frames/track.png": {

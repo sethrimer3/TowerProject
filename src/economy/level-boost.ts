@@ -1,4 +1,5 @@
 import type { RunCore } from "../runs.ts";
+import { countdown } from "../boosts/catalog.ts";
 
 /** The Level-up Boost: each level the hero reaches inside a run multiplies
  * all Gold the run finds for a while on the wall clock, a new level
@@ -17,8 +18,5 @@ export function startLevelBoost(run: Pick<RunCore, "levelBoostUntil">, now: numb
   run.levelBoostUntil = now + LEVEL_BOOST_MS;
 }
 
-/** The time left as a countdown: 9:59, 0:05. */
-export function levelBoostTime(ms: number) {
-  const seconds = Math.ceil(ms / 1000);
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
-}
+/** The time left as a countdown: 9:59, 0:05 (the boost table's). */
+export const levelBoostTime = countdown;

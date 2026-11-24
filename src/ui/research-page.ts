@@ -8,7 +8,9 @@ import { shortAmount, whole } from "../whole.ts";
 import type { BuyQuantity } from "../progression/buy-quantity.ts";
 import { bindBuyQuantity, buyQuantityHtml, maxCount } from "./buy-quantity-select.ts";
 import { TrainingParticles } from "../render/effects/training-particles.ts";
-import { TRAINER_GIFT, BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, nextTrainerGems, ranksInTraining, trainingJob, trainingSlots, workLeft, type TrainingJob } from "../progression/training-jobs.ts";
+import { TRAINER_GIFT, BOOST_CLAIM_MARGIN_MS, BOOST_MAX_MS, BOOST_RATE, boostLeft, claimBoost, nextTrainerGems, ranksInTraining, trainingJob, trainingSlots, type TrainingJob } from "../progression/training-jobs.ts";
+import { trainingLeft, trainingPace, trainingSpeedAt } from "../boosts/boosts.ts";
+import type { RateWindow } from "../boosts/pace.ts";
 import type { AppContext } from "./app.ts";
 import { adIcon, clamp, clockIcon, el, gemCount, gemIcon, goldIcon, pointsIcon, POINTER_SVG, redoIcon, riseFrom, uiSprite } from "./dom.ts";
 import { TRAINING_RESET_GEMS } from "../economy/gems.ts";
@@ -25,11 +27,11 @@ type TrainingRow = (typeof TRAINING)[number];
 type ResearchTab = "training" | "archives";
 
 /** The real ms until `job`'s timer next shows another second at `now`:
- * training goes `rate` times as fast, and the boost's ×2 besides until
- * `boostUntil`. */
-export function nextTrainingCountdownIn(job: TrainingJob, boostUntil: number, now: number, rate: number) {
-  const speed = rate * (now < boostUntil ? BOOST_RATE : 1);
-  return toNextSecond(workLeft(job.completesAt, boostUntil, now, rate)) / speed;
+ * training goes `rate` times as fast, the boost's ×2 besides until
+ * `boostUntil`, and a Golden Scarab's Training Speed boost (`scarab`) while it runs. */
+export function nextTrainingCountdownIn(job: TrainingJob, boostUntil: number, now: number, rate: number, scarab?: RateWindow) {
+  const pace = { until: boostUntil, rate, ...(scarab ? { scarab } : {}) };
+  return toNextSecond(trainingLeft(job.completesAt, now, pace)) / trainingSpeedAt(now, pace);
 }
 
 /** The Research page: what grows with time, a tab each. Training (open
@@ -628,8 +630,8 @@ export class ResearchPage {
   /** The real ms until a timer of a rank in training next shows another
    * second: a second, or less while training goes faster. */
   private nextTrainingIn() {
-    const { save } = this.ctx.game, now = this.ctx.game.clock(), rate = trainingRate(save);
-    return Math.min(1000, ...save.trainingJobs.map((job) => nextTrainingCountdownIn(job, save.trainingBoostUntil, now, rate)));
+    const { save } = this.ctx.game, now = this.ctx.game.clock(), { until, rate, scarab } = trainingPace(save);
+    return Math.min(1000, ...save.trainingJobs.map((job) => nextTrainingCountdownIn(job, until, now, rate, scarab)));
   }
 
   /** Each frame while the page shows: the tab's countdowns, the moment one

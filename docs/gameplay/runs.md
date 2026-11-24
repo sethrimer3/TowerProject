@@ -42,7 +42,8 @@ Tower I's floor 250 Goal opens the Archives' **Note Taking** (one level, 100,000
 Once it is researched, tapping the floor number during a run opens the run's notes, and the run plays on beneath them.
 During a run, resting the pointer on the floor number, its label or its tower, or tapping them, shows the tower's highest floor reached under it (*Max Floor: 57*; in the Delve, *Max Depth*), this run's climb included.
 Each level the hero reaches during a run starts a **Level-up Boost**: all Gold the run finds is multiplied by 3 for 10 minutes of real time, a further level starting the 10 minutes over (it never stacks past ×3), and it ends with the run.
-While it lasts, the hero's portrait wears the Gold icon, *×3* and the time left counting down (*9:59*), the Gold bonus under the floor counts it, and the *All Gold Bonuses* box lists it as *Level-up Boost*.
+While it lasts, the [boost table](boosts.md) over the board's top-left corner shows it (an up arrow and the time left counting down, *9:59*), the Gold bonus under the floor counts it, and the *All Gold Bonuses* box lists it as *Level-up Boost*.
+A Golden Scarab's Gold boost multiplies it rather than adding to it.
 Below the floor number during a run, under a line, stand the ATK, DEF and HP of a normal enemy at the run's deepest floor or depth, as strong as the real ones there: the tower's or cave's factor, a tournament's raise and the Shrine boons that change enemies all count.
 Large stats are shortened to three figures (1.21K, 12.3K, 123K).
 Pressing them opens a box of every enemy the floor the hero stands on can roll, while the run plays on behind it; its X, or a press anywhere outside it, closes it, and it follows the hero onto each new floor.

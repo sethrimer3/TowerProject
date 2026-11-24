@@ -4,6 +4,7 @@ import type { Step } from "../pathfinding.ts";
 import type { Renderer } from "../render/rendering.ts";
 import { el, gemIcon } from "./dom.ts";
 import { flyToPurse } from "./flourish.ts";
+import { claimHtml } from "./boost-table.ts";
 import { holdAmount } from "./hud.ts";
 import { litTorches } from "../board.ts";
 import { point } from "../entities.ts";
@@ -53,6 +54,18 @@ export class BoardOverlay {
    * refreshes the HUD (a tapped Gem landed in the purse). */
   constructor(private game: Game, private renderer: Renderer, private blacksmith: () => void = () => {}, private hall: () => void = () => {}, private update: () => void = () => {}) {}
 
+  /** Each Golden Scarab claimed since the last call flies from its tile
+   * to its boost's row in the boost table, showing the boost's icon, its
+   * value and the time it added ("×1.75 +12:35"). */
+  flyClaims() {
+    for (const c of this.game.scarabFinder.claims.splice(0)) {
+      const { left, top, s, frameRect } = this.tileRect(c.x, c.y);
+      flyToPurse(new DOMRect(frameRect.left + left, frameRect.top + top, s, s), [
+        { html: claimHtml(c.id, c.value, c.ms), to: document.querySelector(`#boost-table [data-boost="${c.id}"]`) },
+      ]);
+    }
+  }
+
   tap(x: number, y: number) {
     // A Gem is collected wherever the hero stands, and flies to the purse,
     // which counts it as it lands.
@@ -64,6 +77,13 @@ export class BoardOverlay {
       flyToPurse(new DOMRect(frameRect.left + left, frameRect.top + top, s, s), [
         { html: `${gemIcon()}<b>+${paid}</b>`, to: document.querySelector(".purse .gem-stat"), landed: () => (release(), this.update()) },
       ]);
+      return;
+    }
+    // A Golden Scarab is claimed wherever the hero stands; its boost drops
+    // into the boost table (`flyClaims`, on the HUD's refresh).
+    if (this.game.scarabFinder.collectAt(x, y)) {
+      this.hide();
+      this.update();
       return;
     }
     if (this.game.atBlacksmith(x, y)) {

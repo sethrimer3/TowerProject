@@ -11,7 +11,7 @@ export const PROFILE_FORMAT = "tower-delve-profile";
 export const PROFILE_SECTIONS = {
   profile: ["profile", "offline", "tutorials", "seen", "treeNotices", "review", "codex", "familiars"],
   settings: ["settings", "themes", "music"],
-  currencies: ["gold", "gems", "breakthrough", "arcanite", "arcaniteCarry", "rubies", "medals", "cells", "xp", "goldBoostUntil", "ads", "gemDrop"],
+  currencies: ["gold", "gems", "breakthrough", "arcanite", "arcaniteCarry", "rubies", "medals", "cells", "xp", "goldBoostUntil", "ads", "gemDrop", "scarab", "boosts"],
   deck: ["hand", "cardLinks", "handSlots", "manualHand", "manualSlots", "cardXp", "cardAscension", "badges"],
   upgrades: ["upgrades", "relics", "divineRelics", "gifts", "shrines"],
   training: ["bonusTrainingPoints", "training", "trainingPaid", "trainerRanks", "trainingJobs", "trainingAuto", "runAutoTrain", "runAutoTrainGroups", "trainingCredit", "trainingBank", "trainingBoostUntil", "trainers"],
@@ -41,8 +41,9 @@ export function exportProfile(save: Save, now: number): string {
     ...save,
     tower: { ...slice(save.tower), inspiration: save.tower.inspiration },
     delve: slice(save.delve),
-    // A Gem lying on a floor, and how far the runs have gone, are the runs'.
+    // A Gem or Golden Scarab lying on a floor, and how far the runs have gone, are the runs'.
     gemDrop: { ...save.gemDrop, out: null, reached: { tower: null, delve: null } },
+    scarab: { ...save.scarab, out: null, reached: { tower: null, delve: null } },
   };
   const sections = Object.fromEntries(Object.entries(PROFILE_SECTIONS).map(([name, keys]) =>
     [name, Object.fromEntries(keys.map((k) => [k, kept[k]]))]));

@@ -734,6 +734,7 @@ export const SPRITE_ASSETS = [
   "assets/style/respec-training.png",
   "assets/style/ring.png",
   "assets/style/ruby.png",
+  "assets/style/scarab.png",
   "assets/style/scroll.png",
   "assets/style/settings-cog.png",
   "assets/style/shard.png",

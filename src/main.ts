@@ -261,6 +261,7 @@ function update() {
   document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((b) => (b.disabled = !!only && b.dataset.tab !== only));
   holdTabs(!provingGrounds.active && isBoard(tab) && (game.boardLesson === "research" || game.boardLesson === "hire"));
   renderHud(shown, renderer, overlay, {hand:provingGrounds.displayHand, manual: runTraining.manualOpen});
+  overlay.flyClaims();
   if (runNotes.open) runNotes.refresh();
   refreshEnemyOddsBox(game);
   runTraining.render();
@@ -455,7 +456,7 @@ for (const id of USED_PROVISIONS)
  * it; else where a readied Ignore, Target or Bomb goes, else the overlay's. */
 function boardTap(x: number, y: number) {
   if (cinematic.active) {
-    if (game.gemFinder.collectAt(x, y) === null) cinematic.tap();
+    if (game.gemFinder.collectAt(x, y) === null && !game.scarabFinder.collectAt(x, y)) cinematic.tap();
     return;
   }
   if (!game.armed) return overlay.tap(x, y);

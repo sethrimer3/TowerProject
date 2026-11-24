@@ -39,6 +39,7 @@ The player-facing rules, in full, one topic a page:
 | [Layout](docs/gameplay/layout.md) | Portrait and landscape, switching on wide screens, Handedness, Battery saver and its themes |
 | [Cinematic mode](docs/gameplay/cinematic-mode.md) | The board alone: entering and leaving it, idle dimming, Gems in it |
 | [Currencies and the Shop](docs/gameplay/currencies-and-shop.md) | Gems and Gem finds, the ad boosts, Offline Gold, the Shop, gifts |
+| [Golden Scarabs and boosts](docs/gameplay/boosts.md) | Finding Golden Scarabs, the boosts they give, the boost table, their research |
 | [Towers, Areas and Goals](docs/gameplay/towers-areas-goals.md) | Higher towers, mastered and cleared areas, Goals and Warp |
 | [Shrines](docs/gameplay/shrines.md) | Shrines and boons |
 | [The Codex](docs/gameplay/codex.md) | The in-game reference and its categories |

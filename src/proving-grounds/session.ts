@@ -66,6 +66,8 @@ export class TrialSession {
       state.arcana.spells={ricochet:desk.ricochet(),shock:desk.shock?.factor,thunderbolt:desk.thunderbolt(),zap:desk.zapRule(),lifespring:spring&&{hp:spring.hp,waves:spring.waves,turns:spring.turns,reach:game.lifespringReach,amplify:spring.effects.amplify},timeDilation:dilation&&{duration:dilation.duration,slow:dilation.slow,turns:dilation.turns,reach:fieldReach(game.lifespringReach,dilation.effects)},phantasm,necroticFrost,voidwell:voidwell&&{...voidwell,reach:game.lifespringReach},beams:beams&&{count:beams.count,width:beams.width,bonus:beams.bonus},overseer:desk.held.some(h=>h.id==="overseer")};
     }
     game.save.gemDrop={...this.base.save.gemDrop};game.save.goldBoostUntil=this.base.save.goldBoostUntil;
+    // The boosts running count in a trial too; no Golden Scarab turns up in one.
+    game.save.boosts=this.base.save.boosts;game.save.scarab={...this.base.save.scarab,out:null,readyAt:Number.MAX_SAFE_INTEGER};
     for(const key of ["gold","gems","arcanite","medals"] as const) game.save[key]=this.base.save[key];
   }
   capture() {

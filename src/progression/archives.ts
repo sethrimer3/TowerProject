@@ -13,6 +13,8 @@ import { BUY_QUANTITIES, quantityLabel } from "./buy-quantity.ts";
 import { smittenText } from "../angel.ts";
 import { tally } from "../save/profile.ts";
 import { carrySpeedUp, completionAt, decodeSpeedUp, endSpeedUp, type SpeedUp } from "./speed-ups.ts";
+import { scaledBoost, type BoostId } from "../boosts/catalog.ts";
+import { doneAfter, workBetween, type Pace } from "../boosts/pace.ts";
 
 // The Archives: research that lasts between runs. An archivist takes one
 // research project at a time; each level costs Gold and real time, and once
@@ -46,6 +48,8 @@ const percent = (n: number) => `${n}%`;
 const tenths = (n: number) => `${n / 10}%`;
 /** A speed (0 = as fast as without research) as a percent of the base. */
 const speed = (n: number) => `${Math.round(100 + n * 100)}%`;
+/** A span of seconds as minutes and seconds, "14:58". */
+const minutesSeconds = (seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 /** A span of minutes as hours and minutes, "02h:10m". */
 export const hoursMinutes = (minutes: number) => {
   const m = Math.floor(minutes);
@@ -132,6 +136,13 @@ export const RESEARCH_TARGETS = {
   offlineGoldMultiplier: { name: "Offline Gold Multiplier", base: 100, shown: tenths },
   /** The most minutes offline that Offline Gold pays for, from 2 hours. */
   offlineGoldMinutes: { name: "Offline Gold Duration", base: 120, shown: hoursMinutes },
+  /** The percent of its effect a Golden Scarab's boost gives, from 100
+   * (boosts/catalog.ts: ×1.5 at 100%, ×4.5 at 300%). */
+  scarabEffect: { name: "Golden Scarab Effect", base: 100, shown: percent },
+  /** The percent of its 12 minutes a Golden Scarab's boost lasts, from 100. */
+  scarabDuration: { name: "Golden Scarab Duration", base: 100, shown: percent },
+  /** The seconds after one Golden Scarab is claimed before the next can appear, from 15 minutes. */
+  scarabCooldown: { name: "Golden Scarab Cooldown", base: 900, shown: minutesSeconds },
   /** The chance, in tenths of a percent, that a new floor climbed hands
    * the hero a gold key. */
   yellowKeyChance: { name: "Gold Key Chance", base: 0, shown: tenths },
@@ -627,6 +638,23 @@ const offlineDurationLevels = () => offlineMultiplierLevels().slice(0, 60).map((
   hours: level.hours * intPow(1.02, i),
   effect: { target: "offlineGoldMinutes", op: "add", value: 10 },
 }));
+
+/** Golden Scarab Effect research (+2% of a boost's effect a level, for
+ * 100 levels, to 300%): Critical Chance's Gold and hours, as Offline Gold
+ * Multiplier's. */
+const scarabEffectLevels = () => critLevels("scarabEffect");
+
+/** Golden Scarab Duration (+2% of a boost's time a level, for 100 levels)
+ * and Cooldown (2 seconds off a level, for 90): Offline Gold Duration's
+ * curve, Golden Scarab Effect's level n with its Gold and hours each
+ * 1.02^(n − 1) times more, carried on past its 60 levels (about 55 million
+ * Gold and 34 days at level 100). */
+const scarabTimeLevels = (target: "scarabDuration" | "scarabCooldown", length: number, value: number) =>
+  critLevels(target).slice(0, length).map((level, i): ResearchLevel => ({
+    gold: Math.round(level.gold * intPow(1.02, i)),
+    hours: level.hours * intPow(1.02, i),
+    effect: { target, op: "add", value },
+  }));
 
 /** Charged Shot research (+1% of ATK a turn waited, a level, for 100
  * levels): Critical Factor's hours, at ten times its Gold: level n costs
@@ -1186,6 +1214,27 @@ export const RESEARCH = {
     requires: [{ upgrade: "offlineGold" }],
     levels: offlineDurationLevels(),
   },
+  scarabEffect: {
+    name: "Golden Scarab Effect",
+    description: "Golden Scarab boosts are stronger.",
+    categories: ["qualityOfLife"],
+    requires: [{ upgrade: "goldenScarab" }],
+    levels: scarabEffectLevels(),
+  },
+  scarabDuration: {
+    name: "Golden Scarab Duration",
+    description: "Golden Scarab boosts last longer.",
+    categories: ["qualityOfLife"],
+    requires: [{ upgrade: "goldenScarab" }],
+    levels: scarabTimeLevels("scarabDuration", 100, 2),
+  },
+  scarabCooldown: {
+    name: "Golden Scarab Cooldown",
+    description: "Golden Scarabs appear more often.",
+    categories: ["qualityOfLife"],
+    requires: [{ upgrade: "goldenScarab" }],
+    levels: scarabTimeLevels("scarabCooldown", 90, -2),
+  },
   heartDoorResilience: {
     name: "Heart Door Resilience",
     description: "Heart Doors drain less HP.",
@@ -1658,6 +1707,8 @@ export type ArchivesOwner = RelicHolder & {
   /** Dev free purchases: research costs no Gold and takes no time, and
    * archivists are hired for nothing. */
   settings: Pick<Settings, "freePurchases">;
+  /** The boosts running (boosts/boosts.ts), for a Research Speed boost. */
+  boosts?: Partial<Record<BoostId, number>>;
 };
 
 export const researchLevel = (a: ArchivesSave, id: ResearchId) => a.levels[id] ?? 0;
@@ -1785,8 +1836,34 @@ function begin(o: ArchivesOwner, slot: number, id: ResearchId, now: number) {
   delete a.progress[id];
   o.gold -= paid;
   tally(o, "researchGold", paid);
-  const startedAt = now - Math.round(done * ms);
-  a.slots[slot].job = { research: id, level: researchLevel(a, id) + 1, startedAt, completesAt: startedAt + ms, paid };
+  let startedAt = now - Math.round(done * ms), completesAt = startedAt + ms;
+  // A Research Speed boost running hastens the part still to do, the share done kept.
+  const pace = researchPace(o);
+  if (pace.windows.some((w) => w.until > now) && ms > 0) {
+    completesAt = Math.round(doneAfter(completesAt - now, now, pace));
+    startedAt = completesAt - Math.round((completesAt - now) / (1 - done));
+  }
+  a.slots[slot].job = { research: id, level: researchLevel(a, id) + 1, startedAt, completesAt, paid };
+}
+
+/** How fast research goes over the wall clock: a Golden Scarab's Research
+ * Speed boost (×1.5, raised by Golden Scarab Effect) while it runs. */
+export function researchPace(o: Pick<ArchivesOwner, "archives" | "boosts">): Pace {
+  const until = o.boosts?.research ?? 0;
+  return { rate: 1, windows: until > 0 ? [{ until, factor: scaledBoost("research", researched(o.archives, "scarabEffect")) }] : [] };
+}
+
+/** Research's pace changed at `now` from `before` (a Research Speed boost
+ * claimed or lengthened): each job under way keeps its share done and the
+ * research it has left, which is done at the new pace. */
+export function repaceResearch(o: Pick<ArchivesOwner, "archives" | "boosts">, before: Pace, now: number) {
+  const after = researchPace(o);
+  for (const { job } of o.archives.slots) {
+    if (!job || job.completesAt <= now) continue;
+    const share = jobProgress(job, now), left = workBetween(now, job.completesAt, before);
+    job.completesAt = Math.round(doneAfter(left, now, after));
+    job.startedAt = share < 1 ? job.completesAt - Math.round((job.completesAt - now) / (1 - share)) : now;
+  }
 }
 
 /** Stops `slot`'s job at `now`: its Gold comes back, and the share done is
