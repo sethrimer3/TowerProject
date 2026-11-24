@@ -23,7 +23,10 @@ export const SETTINGS = {
    * finished while the player looked away (a Training rank, a mission, the
    * Gem bank), the UI's presses and pages, the run's events, the ambience's
    * beds (and, under it, the weather's wind, chimes and thunder) and the
-   * lake's music. */
+   * lake's music. `sound` is the section's master switch: off, nothing
+   * plays whatever the five say, and they keep their values for when it is
+   * back on. */
+  sound: { kind: "toggle", default: true, page: { id: "sound-all", label: "Sound" } },
   soundNotifications: { kind: "toggle", default: true, page: { id: "sound-notifications", label: "Notifications" } },
   soundUi: { kind: "toggle", default: true, page: { id: "sound-ui", label: "UI" } },
   soundEvents: { kind: "toggle", default: true, page: { id: "sound-events", label: "In-run events" } },
@@ -238,8 +241,6 @@ export function settingValue(setting: Setting, v: unknown): boolean | string | n
 export function decodeSettings(raw: any): Settings {
   const s = raw ?? {}, out = defaultSettings() as Record<SettingKey, unknown>;
   for (const k of KEYS) out[k] = settingValue(SETTINGS[k], s[k]) ?? out[k];
-  // TODO: remove once saves from before the Sounds section are gone (one Sound effects setting).
-  if (s.sound === false) for (const k of Object.values(SOUND_SETTINGS)) out[k] = false;
   // The dev section's settings are on only under Dev Mode.
   if (out.devMode || out.freePurchases || out.accessAll) out.devTools = true;
   return out as Settings;

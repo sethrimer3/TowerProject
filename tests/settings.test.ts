@@ -76,13 +76,12 @@ test("legacy borders are opt-in and survive saving without changing other visual
   assert.deepEqual(decode(JSON.stringify(s)).settings, s.settings);
 });
 
-test("a save from before the Sounds section keeps every kind of sound off if Sound effects was", () => {
-  const s = defaults();
-  const raw = JSON.parse(JSON.stringify(s));
+test("Sound is the master switch: off, it keeps the five kinds' own values for when it is back on", () => {
+  const raw = JSON.parse(JSON.stringify(defaults()));
   raw.settings.sound = false;
+  raw.settings.soundMusic = false;
   const back = decode(JSON.stringify(raw));
-  for (const key of Object.values(SOUND_SETTINGS)) assert.equal(back.settings[key], false);
-  const kept = decode(JSON.stringify({ ...raw, settings: { ...raw.settings, sound: true, soundMusic: false } }));
-  assert.equal(kept.settings.soundMusic, false);
-  assert.equal(kept.settings.soundUi, true);
+  assert.equal(back.settings.sound, false);
+  assert.equal(back.settings.soundMusic, false);
+  for (const key of Object.values(SOUND_SETTINGS).filter((k) => k !== "soundMusic")) assert.equal(back.settings[key], true);
 });

@@ -27,9 +27,10 @@ const PAGE = [
   "experimentalAtlas", "legacyBorders", "legacyEnemies", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "pixelPerfect", "autoLandscape", "hand", "batterySaver", "batteryWhite", "reduceMotion",
   "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems",
 ] as const satisfies readonly SettingKey[];
-/** The Sounds section's settings, in order: a toggle per kind of sound, the
- * weather's under Ambience, the Gem bank's chime under Notifications. */
-const SOUNDS = ["soundNotifications", "gemBankChime", "soundUi", "soundEvents", "soundAmbience", "weatherSound", "soundMusic"] as const satisfies readonly SettingKey[];
+/** The Sounds section's settings, in order: the master Sound, then (while it
+ * is on) a toggle per kind of sound, the weather's under Ambience, the Gem
+ * bank's chime under Notifications. */
+const SOUNDS = ["sound", "soundNotifications", "gemBankChime", "soundUi", "soundEvents", "soundAmbience", "weatherSound", "soundMusic"] as const satisfies readonly SettingKey[];
 /** The dev section's settings, shown under Dev Mode while it is on. */
 const DEV = ["devMode", "freePurchases", "accessAll"] as const satisfies readonly SettingKey[];
 /** The settings on the Toggles menu, in order: the values the board shows
@@ -66,14 +67,19 @@ const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   showPath: (save) => !!save.upgrades.autoClimb,
   cinematicIdle: (save) => save.settings.cinematic,
   batteryWhite: (save) => save.settings.batterySaver,
-  weatherSound: (save) => save.settings.soundAmbience,
+  weatherSound: (save) => save.settings.sound && save.settings.soundAmbience,
+  soundNotifications: (save) => save.settings.sound,
+  soundUi: (save) => save.settings.sound,
+  soundEvents: (save) => save.settings.sound,
+  soundAmbience: (save) => save.settings.sound,
+  soundMusic: (save) => save.settings.sound,
   cinematicGems: (save) => save.settings.cinematic,
   // Once the GEM card's Gem Bank holds a level, while Notifications is on.
-  gemBankChime: (save) => levelIn(save, "gem").level >= firstLevelOf("epic") && save.settings.soundNotifications,
+  gemBankChime: (save) => levelIn(save, "gem").level >= firstLevelOf("epic") && save.settings.sound && save.settings.soundNotifications,
 };
 /** Those shown only while another setting is on: Access to Everything
  * leaves them to it, opening only those an unlock holds back. */
-const UNDER_SETTING: ReadonlySet<PageKey> = new Set(["cinematicIdle", "cinematicGems", "batteryWhite", "weatherSound"]);
+const UNDER_SETTING: ReadonlySet<PageKey> = new Set(["cinematicIdle", "cinematicGems", "batteryWhite", "weatherSound", "soundNotifications", "soundUi", "soundEvents", "soundAmbience", "soundMusic"]);
 const shownOf = (keys: readonly PageKey[], save: Save) =>
   keys.filter((key) => (seesAll(save) && !UNDER_SETTING.has(key)) || (SHOWN[key]?.(save) ?? true));
 
@@ -90,7 +96,9 @@ const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s:
   batteryWhite: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); },
   // The board silences the weather itself once its sound is off, and the
   // ambience each bed once its kind is. Weather sounds shows only under
-  // Ambience, the Gem bank's chime only under Notifications.
+  // Ambience, the Gem bank's chime only under Notifications, and the five
+  // kinds only while Sound is on.
+  sound: (ctx) => { ctx.save(); ctx.update(); ctx.renderPage(); },
   weatherSound: (ctx) => ctx.update(),
   soundAmbience: (ctx) => { ctx.save(); ctx.update(); ctx.renderPage(); },
   soundMusic: (ctx) => ctx.update(),
