@@ -219,7 +219,7 @@ const DESCRIBE: Partial<Record<Kind, Describe>> = {
     if (rule.type === "fullHp") keyLine = `<br>${hpChange}`;
     else if (rule.type === "wood" && opened && !opened.keysSpent.length) keyLine = `<br>Break: ${hpChange}`;
     else if (rule.type === "wood" && !opened) keyLine = `<br>No key, and too weak to break it down`;
-    else keyLine = `<br>${opened ? keys(opened.keysSpent) : "Locked — insufficient keys"}${opened && drainsHp(rule) ? `<br>${hpChange}` : ""}`;
+    else keyLine = `<br>${opened ? keys(opened.keysSpent) : "Locked: not enough keys"}${opened && drainsHp(rule) ? `<br>${hpChange}` : ""}`;
     const durability = rule.type === "wood" ? `<br><small>Durability ${wholeChange(rule.durability)}</small>` : "";
     return { title: doorName(t), body: `<span>${doorDescription(t)}</span>${keyLine}${durability}` };
   },
@@ -261,7 +261,7 @@ export function tileInfo(g: Board, x: number, y: number): TileInfo {
   const t = g.world.tile(x, y);
   if (g.atPortal?.(x, y)) return { color: DIVINE_COLOR, title: "Divine Portal", body: g.inDivineRoom ? "Return to source." : "A unique opportunity." };
   if (g.inDivineRoom && t.kind === "reward") return { color: DIVINE_COLOR, title: "Divine Relic", body: "A unique opportunity, granted by the builders themselves." };
-  if (g.inDivineRoom && t.kind === "floor" && litTorches(g.world).has(point(x, y))) return { color: "#f2b25c", title: "Torch", body: "A torch the builders lit, burning for good." };
+  if (g.inDivineRoom && t.kind === "floor" && litTorches(g.world).has(point(x, y))) return { color: "#f2b25c", title: "Torch", body: "The builders lit this torch. It never goes out." };
   const describe = DESCRIBE[t.kind];
   if (t.flyer) return { color: KIND_COLORS.enemy!, title: enemyTitle(t.flyer, g.save.settings.legacyEnemies), body: flyerInfo(t.flyer, g.run.player, g.run.outside ? 0 : g.enemyGold(x, y)) };
   if (t.kind === "door") return { color: doorColor(t), ...describe!(t, g.run.player, g, { x, y }) };
@@ -278,7 +278,7 @@ export function tileInfo(g: Board, x: number, y: number): TileInfo {
 
 /** The tile info as one line of plain text, for the status row. */
 export const tileInfoLine = (d: TileInfo) =>
-  `${d.title} — ${d.body.replace(/<img[^>]*alt="([^"]+)"[^>]*>/g, " $1 ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()}`;
+  `${d.title}: ${d.body.replace(/<img[^>]*alt="([^"]+)"[^>]*>/g, " $1 ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()}`;
 
 /** One line per stat or key a previewed route would change. */
 export function routeTotalLines(effects: RouteEffects): string[] {

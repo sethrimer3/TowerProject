@@ -166,7 +166,7 @@ function elementalStep(s: TrialState, x: number, y: number): { changed: boolean;
     s.bossHp = Math.max(0, s.bossHp - strike);
     if (s.bossHp === 0) {
       s.status = "won"; s.playing = false; s.slimes = [];
-      return { changed: true, message: "Trial complete — the Light Elemental is defeated.", fired: false };
+      return { changed: true, message: "Trial complete. The Light Elemental is defeated.", fired: false };
     }
     const damage = foeActs(s,s.elemental,"boss") ? Math.max(1, Math.ceil(s.player.maxHp * 0.04) - Math.floor(s.player.defense * 0.1)) : 0;
     s.player.hp = Math.max(0, s.player.hp - damage);
@@ -197,7 +197,7 @@ function elementalStep(s: TrialState, x: number, y: number): { changed: boolean;
     materializeBoss(s);
     s.beam={origin:{x:s.elemental.x,y:s.elemental.y},axis:(Math.floor(bossClock(s)/(BEAM_INTERVAL*100))-1)%8,step:s.steps,count:beamCount(s.level)};
     const cells = beamCells(s.beam.axis,s.beam.origin,s.beam.count);
-    if(wasGhost) message="The elemental fires its lasers and becomes corporeal — it can be struck again.";
+    if(wasGhost) message="The elemental fires its lasers and turns solid. You can strike it again.";
     for (const p of cells) {s.scorches[key(p)] = s.steps;breakProp(s,p);}
     if (cells.some(p => same(p,s.player))) {
       const damage = Math.max(1, Math.ceil(s.player.maxHp * 0.25));

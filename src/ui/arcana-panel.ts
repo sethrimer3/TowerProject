@@ -102,7 +102,7 @@ export class ArcanaPanel {
 
   bind() {
     const { ctx, desk } = this, gear = el("gear");
-    el("arcana-help").onclick = () => showHelp(ctx, "GEAR", "Arcana", `<p>Arcana are mighty spells bought with Arcanite and kept for good. Each has three attributes to upgrade.</p><p>Each new arcanum is chosen from up to three drawn at random from those you don't own, each as likely as any other. The choice stays until you buy one or reroll it, and the next arcanum costs more the more you own.</p><p>Every arcanum you hold works at once in every run. Inside a run the Arcana tab switches each on and off, up to 40 times a run.</p><p class="hint">Arcanite comes from weekly missions, tournaments, Goals, Event stores and the Shop.</p>`);
+    el("arcana-help").onclick = () => showHelp(ctx, "GEAR", "Arcana", `<p>Arcana are spells you buy with Arcanite and keep permanently. Each has three attributes to upgrade.</p><p>For each new arcanum you pick from up to three, drawn at random, all equally likely, from the ones you don't own yet. The choice stays until you buy one or reroll it. Each arcanum you own makes the next one cost more.</p><p>Every arcanum you own is active in every run. During a run, the Arcana tab turns each one on or off, up to 40 times a run.</p><p class="hint">Arcanite comes from weekly missions, tournaments, Goals, Event stores and the Shop.</p>`);
     const select = document.getElementById("arcana-select");
     if (select) select.onclick = () => (desk.affords(desk.price!) ? this.showChoice() : askForArcanite(ctx));
     const respec = document.getElementById("arcana-respec");

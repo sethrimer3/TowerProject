@@ -78,7 +78,7 @@ test("impervious enemy's rejection reports the exact additional ATK required", (
   (g.world as RoomWorld).cells.set(point(1, 0), { kind: "enemy", enemy: IMPERVIOUS });
   const required = IMPERVIOUS.defense - g.run.player.attack + 1;
   g.move(1, 0, true);
-  assert.equal(g.message, `Impervious — requires ${required} more ATK`);
+  assert.equal(g.message, `Impervious: needs ${required} more ATK`);
   assert.equal(predict(g.run.player, IMPERVIOUS).requiredAttack, required);
 });
 

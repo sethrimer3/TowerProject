@@ -10,7 +10,7 @@ Closing the menu fades back to the dock; entering an attempt removes the voyage,
 The old forest square no longer draws or opens trials.
 Only the selection menu uses the shared modal; the encounter itself uses `#world`, the normal HUD, `#hand` and `RunTrainingBar`.
 `catalog.ts` defines one entry per boss, its trial number, difficulty multiplier and first-clear reward.
-Selecting Trial 1 — Light Elemental or Trial 2 — Keymaster opens a picker for Without cards, Only with cards or With both; there is no difficulty selector.
+Selecting Trial 1: Light Elemental or Trial 2: Keymaster opens a picker for Without cards, Only with cards or With both; there is no difficulty selector.
 `progression.ts` selects the highest cleared difficulty plus one (up to 10,000), shared by all three controls for that boss.
 `access.ts` owns the shared two-key daily allowance (`day`, the UTC day index, and `spent`); `trialKeys` refills on a strictly later day, and `spendTrialKey` guards both entry and retry before replacing an attempt.
 Unused keys do not bank; reload/resume does not charge, and Dev mode bypasses spending without changing the ordinary allowance.
@@ -203,7 +203,7 @@ The Keymaster browser flow compares actual floor and cover texels against Tower 
 
 ## Magic Tower and Obelisk (Boss Variants 1 & 2, 1b & 2b)
 
-`catalog.ts` adds Trial 3 — Magic Tower (`"magic-tower"`) and Trial 4 — Obelisk (`"obelisk"`).
+`catalog.ts` adds Trial 3: Magic Tower (`"magic-tower"`) and Trial 4: Obelisk (`"obelisk"`).
 `boss-variants.ts` and `boss-variants-art.ts` implement both encounters and their selectable multi-part sub-variants (`1b` and `2b`, stored in `TrialProgress.multiPart`).
 In both encounters, attacking the boss, a boss part or a boss minion resolves **one round of combat per turn** instead of fighting to the death in a single turn.
 Boss, part and minion ATK remain constant and never increase with each hit on the player.

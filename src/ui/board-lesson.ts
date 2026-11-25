@@ -21,7 +21,7 @@ import { TRAINER_GEMS } from "../progression/training-jobs.ts";
 // Each hand sits inside what it points at.
 
 /** The provisions lesson's note, on the board and the Upgrades page alike. */
-export const PROVISIONS_NOTE = { title: "Provisions unlocked.", text: "Tap the Gear tab to buy provisions with Gold: limited-use items every climb carries, tapped beside the board when you need them." };
+export const PROVISIONS_NOTE = { title: "Provisions unlocked.", text: "Tap the Gear tab to buy provisions with Gold. They're limited-use items you take into every climb. Tap one next to the board when you need it." };
 
 /** The `story` lesson's notes, tapped through one after the other. */
 export const STORY = [

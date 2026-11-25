@@ -44,7 +44,7 @@ export function renderThemeMenu(root: HTMLElement, game: PageGame, kind: ThemeKi
   const choices = [card(game, kind, "classic", CLASSIC_NAME, null), ...themesOf(kind).filter((id) => ownsTheme(game.save, id) || seesAll(game.save)).map((id) => card(game, kind, THEMES[id].look, THEMES[id].name, id))];
   root.innerHTML =
     `<button class="back" id="themes-back">${controlIcon("back")} Settings</button><div class="page-title"><small>${HEADINGS[kind].kicker}</small><h2>${HEADINGS[kind].title}</h2></div>` +
-    `<p class="hint theme-gold">Every UI theme owned adds ${perMilleText(THEME_GOLD_PER_MILLE.ui)}${goldIcon()} for good, every Game theme ${perMilleText(THEME_GOLD_PER_MILLE.game)}${goldIcon()}. Owned: <b>${owned}</b> · ${goldIcon()}<b>${factorText(collectionGoldFactor(game.save))}</b></p>` +
+    `<p class="hint theme-gold">Each UI theme you own permanently adds ${perMilleText(THEME_GOLD_PER_MILLE.ui)}${goldIcon()}, and each Game theme ${perMilleText(THEME_GOLD_PER_MILLE.game)}${goldIcon()}. Owned: <b>${owned}</b> · ${goldIcon()}<b>${factorText(collectionGoldFactor(game.save))}</b></p>` +
     `<div class="theme-grid">${choices.join("")}</div>` +
     `<p class="hint theme-more">More themes can be bought in the Store of limited-time Events, each featuring a UI theme and a Game theme.</p>`;
   el("themes-back").onclick = back;

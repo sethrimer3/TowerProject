@@ -228,7 +228,7 @@ const researchToasts = new ResearchToasts(() => game.save.settings.reduceMotion)
 function save(seen = !document.hidden) {
   if (seen) game.save.offline.seenAt = game.clock();
   if (!persist(game.save))
-    game.message = "Storage unavailable — progress is only kept for this session.";
+    game.message = "Storage unavailable. Progress is kept for this session only.";
 }
 /** Refreshes the HUD from game state, saves, and asks a fallen hero's player what next. */
 /** The Gems held when last updated: fewer now is Gems spent. */

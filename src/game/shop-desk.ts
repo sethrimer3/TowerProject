@@ -31,7 +31,7 @@ export class ShopDesk {
     // Ad-Disable's ×1.5 Gold is for good: the Gold ad's stored time goes.
     if (adsOff(save)) save.goldBoostUntil = 0;
     if (id === "dailyGems") this.events.record("freeGems");
-    this.host.message = o.item?.kind === "entitlement" ? `${t.item}: yours for good` : `+${t.item}`;
+    this.host.message = o.item?.kind === "entitlement" ? `${t.item}: yours to keep` : `+${t.item}`;
     return null;
   }
   /** How a Shop purchase is paid: for nothing (Dev), by the store, or with its price. */

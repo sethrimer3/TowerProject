@@ -62,7 +62,7 @@ function fightMimic(s:TrialState,mimic:Mimic) {
   const k=s.keymaster!;
   if(k.useKeys && k.keys>0) {
     k.keys--;k.mimics=k.mimics.filter(m=>m.id!==mimic.id);
-    return "One key unlocks the mimic — defeated with no damage.";
+    return "One key unlocks the mimic and beats it without a scratch.";
   }
   mimic.hp=Math.max(0,mimic.hp-Math.max(1,heroAttackOn(s,mimic,`mimic:${mimic.id}`)));
   if(mimic.hp===0){k.mimics=k.mimics.filter(m=>m.id!==mimic.id);return "You defeat the mimic in combat.";}
@@ -123,7 +123,7 @@ export function advanceKeymasterEffects(s:TrialState,ms:number) {
   }
   if(!impacts)return unchanged;
   if(s.bossHp===0)win(s);
-  return {changed:true,message:s.bossHp===0?"Trial complete — the Keymaster is defeated.":`Red spirits strike the Keymaster for ${impacts*20}% of his maximum HP.`,fired:false};
+  return {changed:true,message:s.bossHp===0?"Trial complete. The Keymaster is defeated.":`Red spirits strike the Keymaster for ${impacts*20}% of his maximum HP.`,fired:false};
 }
 /** Bumping a mimic fights it, or spends one reserved key for a free kill.
  * Doors consume one key and release a single delayed 20%-max-HP burst. */
@@ -138,7 +138,7 @@ export function keymasterStep(s:TrialState,x:number,y:number) {
     // He answers from where he stood, before he teleports.
     const answers=foeActs(s,s.elemental,"boss");
     move=false;hitKeymaster(s,Math.max(1,heroAttackOn(s,s.elemental,"boss")),s.steps+1);
-    if(s.bossHp===0){win(s);return {changed:true,message:"Trial complete — the Keymaster is defeated.",fired:false};}
+    if(s.bossHp===0){win(s);return {changed:true,message:"Trial complete. The Keymaster is defeated.",fired:false};}
     const damage=answers?Math.max(1,Math.ceil(s.player.maxHp*.04)-Math.floor(s.player.defense*.1)):0;
     s.player.hp=Math.max(0,s.player.hp-damage);
     message=`Three keys scatter. The Keymaster teleports and becomes invincible until his next reformation.${damage?` He deals ${damage} damage.`:""}`;

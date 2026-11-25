@@ -39,7 +39,7 @@ try {
   const tower=(await read()).tower.run;
   await expect(page.locator("dialog .trial-choice")).toHaveCount(2);
   await expect(page.locator("#trial-light-elemental")).toContainText("Difficulty 5");
-  await page.locator("#trial-keymaster").click();await expect(page.locator("#trial-heading")).toHaveText("Trial 2 — Keymaster");
+  await page.locator("#trial-keymaster").click();await expect(page.locator("#trial-heading")).toHaveText("Trial 2: Keymaster");
   await expect(page.locator("#trial-difficulty")).toContainText("Difficulty 1");
   for(const width of [320,390,1024]) {
     await page.setViewportSize({width,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

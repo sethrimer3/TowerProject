@@ -372,7 +372,7 @@ export const powerText = (power: CardPower, levels: number) => powerAmounts(powe
  * dimmed, naming the rarity that opens it (the base power, level 1). */
 export function cardPowersHtml(card: CardId, level: number, upTo: number) {
   const powers = powersOf(card).filter((power) => rarityRank(power.rarity) <= upTo);
-  if (!powers.length) return `<p class="card-powers-none">No powers yet: this card still levels and ascends.</p>`;
+  if (!powers.length) return `<p class="card-powers-none">No powers yet. This card still levels up and ascends.</p>`;
   const rows = powers.map((power) => {
     const n = powerLevel(power, level), open = n > 0, first = Object.keys(power.stats)[0] as PowerStat;
     const value = open ? powerValueText(power, n) : power.rarity === "base" ? "Opens at level 1" : `Opens at ${CARD_RARITY_NAMES[power.rarity]}`;

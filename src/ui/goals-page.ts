@@ -51,79 +51,92 @@ const UNLOCK_ICONS = Object.fromEntries((Object.keys(GOAL_SPRITES) as GoalUnlock
 const TOWER_ICON = kitIcon("tower", "", "goal-icon");
 /** What each unlock does, shown once it is claimed and again whenever its claimed reward is pressed. */
 const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
-  aetherShield: `<p>Shield HP and Regrow Shield research open in the Archives once you own their skills: your shield holds more HP, and regrows in fewer turns after it breaks.</p>`,
-  superCriticalResearch: `<p>Super Critical Chance and Super Critical Factor research open in the Archives once you own the Super Critical skill: more chance a critical hit becomes a Super Critical hit, and a larger multiplier when it does.</p>`,
-  flyingEnemyCard: `<p>The Flying Enemy card joins your deck: it moves you toward the closest Flying enemy your arrows can hurt, stops once one is within your Attack Range, and waits there while your arrows fly.</p>` +
+  aetherShield: `<p>Once you own the Shield HP and Regrow Shield skills, their research opens in the Archives. Your shield holds more HP, and grows back sooner after it breaks.</p>`,
+  superCriticalResearch: `<p>Once you own the Super Critical skill, Super Critical Chance and Super Critical Factor research open in the Archives. Critical hits turn Super Critical more often, and hit harder when they do.</p>`,
+  flyingEnemyCard: `<p>The Flying Enemy card joins your deck. It walks you toward the closest Flying enemy your arrows can hurt, then stops and holds still once that enemy is within your Attack Range.</p>` +
     `<p>While it is in your hand, your arrows strike with 5% more ATK and charge 5% faster.</p>` +
-    `<p class="hint">Flying enemies hover out of reach of your sword: walk under them freely, but only arrows can bring them down. A Flying enemy an arrow wounds comes after you.</p>`,
-  warpLoot: `<p>Warp Loot opens in the Archives: research it, and a climb that starts above floor 1 (a Warp, or a Retry from one) goes inside with a share of the Silver its skipped floors would have paid, 2% a level, up to all of it at level 50.</p>` +
-    `<p class="hint">The skipped floors' kills, Wishing Well and Interest are estimated from your training and research as the climb begins.</p>`,
-  trainingDiscount: `<p>Training Discount opens in the Archives: research it, and every rank a trainer trains costs 0.5% less Gold a level, up to 49.5% at level 99.</p>` +
-    `<p class="hint">Training points and a climb's Silver cost the same as ever.</p>`,
-  cardGroups: `<p>Card Groups opens on the Deck: tap a diamond under the hand, between two cards, to link them into a group. The cards of a group share one priority: of every target any of them can reach, the hand heads for the closest.</p>` +
-    `<p class="hint">Link Gold Key and Blue Key, and the hero takes whichever key is nearer. Moving a card out of place breaks its links.</p>`,
-  archerCard: `<p>The Archer card joins your deck. It never moves you, but while it is in your hand your hero is an Archer: every 10 turns it fires an arrow at the closest enemy within 3 m, walls and doors no obstacle, dealing one strike's damage (critical hits and the enemy's DEF counted) before you ever touch it.</p>` +
-    `<p>While it is in your hand, your arrows strike bosses with 5% more ATK, and your Archer training can be raised with Silver during the climb. Training it between climbs works with or without the card.</p>` +
-    `<p class="hint">A ready shot waits for an enemy to come in range, and fires the turn one does. Ranged enemies reach five sixths as far as your arrows: strike first, then close in.</p>`,
-  attackRange: `<p>Attack Range joins Offense training: each rank lets your arrows reach 0.05 m further, from 3 m up to 7 m.</p>` +
+    `<p class="hint">Flying enemies hover out of reach of your sword. You can walk right under them, but only arrows bring them down, and one your arrow wounds will come after you.</p>`,
+  warpLoot: `<p>Warp Loot opens in the Archives. When a climb starts above floor 1, from a Warp or a Retry after one, it brings some of the Silver the skipped floors would have paid.</p>` +
+    `<p>Each level adds 2%, so level 50 brings all of it.</p>` +
+    `<p class="hint">The skipped floors' kills, Wishing Well and Interest are estimated from your training and research when the climb begins.</p>`,
+  trainingDiscount: `<p>Training Discount opens in the Archives. Each level takes 0.5% off the Gold your trainers charge per rank, up to 49.5% at level 99.</p>` +
+    `<p class="hint">Training points and a climb's Silver cost the same as before.</p>`,
+  cardGroups: `<p>Card Groups opens on the Deck. Tap a diamond under the hand, between two cards, to link them.</p>` +
+    `<p>Linked cards share one priority, and the hero goes for whichever of their targets is closest.</p>` +
+    `<p class="hint">Link Gold Key and Blue Key, and the hero takes the nearer key. Moving a card out of place breaks its links.</p>`,
+  archerCard: `<p>The Archer card joins your deck. It never moves you, but while you hold it your hero is an Archer.</p>` +
+    `<p>Every 10 turns you fire an arrow at the closest enemy within 3 m, straight through walls and doors. It deals one strike's damage, crits and the enemy's DEF counted, before you ever reach it.</p>` +
+    `<p>Holding the card also adds 5% ATK against bosses, and lets you raise Archer training with Silver during a climb. Training it between climbs works with or without the card.</p>` +
+    `<p class="hint">A ready shot waits until an enemy comes in range. Ranged enemies reach five sixths as far as you do, so shoot first and close in after.</p>`,
+  attackRange: `<p>Attack Range joins Offense training. Each rank adds 0.05 m to your arrows' reach, from 3 m up to 7 m.</p>` +
     `<p class="hint">Ranged enemies always reach five sixths as far as you do.</p>`,
-  attackPerTile: `<p>ATK / m joins Offense training: each arrow's ATK is multiplied by more for every meter (a tile) its target stands away, counted straight across. The first rank makes it ×1.01 a meter, and 200 ranks ×2.204 a meter.</p>` +
-    `<p class="hint">A far enemy your arrows can't hurt up close may fall to a shot from further off. Critical hits multiply on top.</p>`,
-  chargedShot: `<p>Charged Shot opens in the Archives: once your arrow is ready, every turn it waits without firing adds to the next arrow's ATK, by 1% a turn for each level researched.</p>` +
-    `<p class="hint">A charged arrow flies in a blue glow, and its number wears a gold outline. Its bonus multiplies with ATK / m and critical hits, and resets once it fires.</p>`,
-  multishot: `<p>Multishot Chance and Multishot Targets join Offense training: each rank of Chance gives every shot 0.5% more chance, up to 49.5%, to fire at several enemies in range at once, 2 of them and one more for each rank of Targets, up to 9.</p>` +
-    `<p class="hint">Every arrow of a multishot carries the first's Charged Shot, rolls its own critical hit, and has its own ATK / m for its distance. With fewer enemies in range, it fires one at each.</p>`,
-  rapidFire: `<p>Rapid Fire Chance and Rapid Fire Duration join Offense training: each rank of Chance gives every shot 0.4% more chance, up to 34%, to start Rapid Fire, and your arrows come four times as fast from that moment for 1 turn, and 0.05 turns more for each rank of Duration, up to 5.95.</p>` +
-    `<p class="hint">A shot fired during Rapid Fire can't start another. Time left toward a shot when it ends carries on toward the next one at the usual pace.</p>`,
-  attackSpeed: `<p>Attack Speed joins Offense training: each rank adds 0.05 shots every 10 turns, from 1 up to 6.</p>` +
-    `<p class="hint">A fraction of a turn left over carries to the next shot: 3 shots in 10 turns fire 4, 3 and 3 turns apart.</p>`,
-  tournament: `<p>Twice a week, on Wednesday and Saturday (GMT), the Tournament opens: one Delve run from seeds every player in your league shares, among stronger enemies, scored by the depth you reach and ranked worldwide.</p>` +
-    `<p>Its Hall now stands in the forest, right of the path: tap it to see when the next one opens. While one is open, the Delve opens with it: the trophy at the right leads down to its cave, and entering costs a Ticket.</p>` +
-    `<p class="hint">Each new tournament gives you a Ticket to enter. Place high to win Gems and Arcanite, and climb from Copper through Silver, Gold and Platinum to Champion.</p>`,
-  events: `<p>Every two weeks an Event begins: missions released over its first eight days, each with three tiers paying Medals as you complete them.</p>` +
-    `<p>The Medals an event pays count toward its relics, unique keepsakes that each give a permanent bonus. The Event Booster doubles them, and opens two premium relics.</p>` +
-    `<p class="hint">Tap the pennant at the right to see the running event. The relics you own wait on the Relics screen, in the menu.</p>`,
-  damagePrediction: `<p>Inspect an enemy in a climb and its panel now says how much HP the fight would cost you, and whether you survive it: Survivable, Harmless when it costs no HP, LETHAL, or Instakill when your first strike defeats it.</p>`,
-  combatForecast: `<p>Inspect an enemy in a climb and its panel now also says how many of your hits defeat it, or Instakill when one does.</p>`,
-  attackLore: `<p>Inspect an enemy in a climb and its panel now also says how much more ATK would defeat it in one hit fewer.</p>` +
-    `<p class="hint">Train ATK in the climb, even mid-fight, to make the most of it.</p>`,
-  warp: `<p>Master an area, climbing its ten floors without taking damage, to warp to the next checkpoint: tap the floor number to begin a new climb there at once, on the floor just above it.</p>` +
+  attackPerTile: `<p>ATK / m joins Offense training. Your arrows hit harder the farther away the target stands, counted in tiles straight across.</p>` +
+    `<p>The first rank gives ×1.01 per tile, and 200 ranks give ×2.204.</p>` +
+    `<p class="hint">An enemy your arrows can't hurt up close may fall to a shot from farther off. Critical hits multiply on top.</p>`,
+  chargedShot: `<p>Charged Shot opens in the Archives. Each turn a ready arrow goes unfired, the next one gains 1% ATK per level researched.</p>` +
+    `<p class="hint">A charged arrow flies in a blue glow, and its number has a gold outline. The bonus stacks with ATK / m and critical hits, and resets when the arrow fires.</p>`,
+  multishot: `<p>Multishot Chance and Multishot Targets join Offense training. A multishot fires at several enemies in range together.</p>` +
+    `<p>Each rank of Chance adds 0.5%, up to 49.5%. A multishot hits 2 enemies, plus one for each rank of Targets, up to 9.</p>` +
+    `<p class="hint">Each arrow of a multishot carries the first one's Charged Shot, rolls its own crit and uses its own distance for ATK / m. With fewer enemies in range, each gets one arrow.</p>`,
+  rapidFire: `<p>Rapid Fire Chance and Rapid Fire Duration join Offense training. Each shot has a chance to start Rapid Fire, and while it lasts your arrows come four times as fast.</p>` +
+    `<p>Each rank of Chance adds 0.4%, up to 34%. Rapid Fire lasts 1 turn, plus 0.05 turns for each rank of Duration, up to 5.95.</p>` +
+    `<p class="hint">A shot fired during Rapid Fire can't start another. When it ends, the next shot carries on from where it was, at the usual pace.</p>`,
+  attackSpeed: `<p>Attack Speed joins Offense training. Each rank adds 0.05 shots every 10 turns, from 1 up to 6.</p>` +
+    `<p class="hint">Leftover fractions of a turn carry over, so 3 shots in 10 turns fire 4, 3 and 3 turns apart.</p>`,
+  tournament: `<p>The Tournament opens twice a week, on Wednesday and Saturday (GMT). It is one Delve run with tougher enemies, on the same seeds for everyone in your league, scored by how deep you get and ranked worldwide.</p>` +
+    `<p>Its Hall stands in the forest, right of the path. Tap it to see when the next one opens. While a tournament is open, the trophy at the right leads down to the Delve's cave, and going in costs a Ticket.</p>` +
+    `<p class="hint">Each new tournament gives you a Ticket. Place high to win Gems and Arcanite, and climb the leagues from Copper through Silver, Gold and Platinum to Champion.</p>`,
+  events: `<p>A new Event starts every two weeks. Its missions come out over the first eight days, and each has three tiers that pay Medals.</p>` +
+    `<p>Medals from an event count toward its relics, keepsakes that each give a permanent bonus. The Event Booster doubles them and opens two premium relics.</p>` +
+    `<p class="hint">Tap the pennant at the right to see the current event. Relics you own are on the Relics screen, in the menu.</p>`,
+  damagePrediction: `<p>When you inspect an enemy in a climb, its panel now tells you how much HP the fight would cost and whether you'd survive.</p>` +
+    `<p>It reads Survivable, Harmless if it costs no HP, LETHAL, or Instakill if your first strike wins.</p>`,
+  combatForecast: `<p>When you inspect an enemy in a climb, its panel now also says how many hits it takes to defeat it, or Instakill if one does.</p>`,
+  attackLore: `<p>When you inspect an enemy in a climb, its panel now also says how much more ATK you'd need to defeat it in one hit fewer.</p>` +
+    `<p class="hint">You can train ATK during a climb, even mid-fight, to take advantage of it.</p>`,
+  warp: `<p>Master an area by climbing its ten floors without taking damage, and you can warp to the next checkpoint. Tap its floor number to start a new climb on the floor just above it.</p>` +
     `<p class="hint">Checkpoints with a golden swirl can be warped to. Entering the tower from the forest always starts on floor 1.</p>`,
-  relativeDamageColor: `<p>Each enemy's damage number now takes its colour from your HP as it stands: bright green when the fight costs under 1% of it, sliding through yellow at 10% and orange at 25% to red at half your HP or more.</p>` +
+  relativeDamageColor: `<p>Each enemy's damage number is now coloured by how much of your current HP the fight would cost.</p>` +
+    `<p>Under 1% is bright green. It shifts to yellow at 10%, orange at 25%, and red at half your HP or more.</p>` +
     `<p class="hint">Gray still marks an Instakill, and red a lethal fight.</p>`,
-  damageVisual: `<p>Every enemy on the board now shows, in its lower-left corner, how much HP its fight would cost you: red when it is lethal, white when it strikes you but costs no HP, gray when your first strike defeats it, and ∞ when you can't hurt it.</p>` +
-    `<p>Items show what they give: a potion's HP in blue, a shard's ATK or DEF in white, and a chest's Gold in yellow.</p>` +
+  damageVisual: `<p>Every enemy on the board now shows, in its lower-left corner, how much HP its fight would cost you.</p>` +
+    `<p>The number is red when the fight is lethal, white when it hits you but costs no HP, and gray when your first strike wins. ∞ means you can't hurt it.</p>` +
+    `<p>Items show what they give too. A potion's HP is blue, a shard's ATK or DEF white, and a chest's Gold yellow.</p>` +
     `<p class="hint">Turn it off in Settings if the board feels crowded.</p>`,
-  equipment: `<p>A Blacksmith opens in the forest: tap it, or the Gear tab, to wear weapons, armour and trinkets, level them up with Gold and materials, and merge them.</p>` +
-    `<p class="hint">With the Chest card in your hand, a treasure chest may now be a Supply Chest, holding upgrade materials, or an Equipment Chest, holding a piece of equipment.</p>`,
-  noteTaking: `<p>Note Taking opens in the Archives: research it, and tap the floor number during a climb to read the climb's notes, kept as you play: its time, steps, kills, keys, doors, chests and loot.</p>` +
-    `<p class="hint">The notes stay open while the climb plays on, and copy to paste elsewhere. The climb's summary opens them too.</p>`,
-  rerollMission: `<p>Reroll Daily Mission opens in the Archives: research it, and each daily mission not yet complete gets a looping arrow on the Missions screen. Tap it to spend 5 Gems swapping the mission for a different one.</p>` +
-    `<p class="hint">The new mission is never one already on your list. Its progress starts over.</p>`,
-  bossPotion: `<p>Boss Potion Drop opens in the Archives: research it, and each boss you defeat drops a percent potion that you drink at once, wherever you stand.</p>` +
-    `<p class="hint">It heals as a percent potion picked up would, Potion % and HEAL's tree included.</p>`,
+  equipment: `<p>A Blacksmith opens in the forest. Tap it, or the Gear tab, to wear weapons, armour and trinkets, level them up with Gold and materials, and merge them.</p>` +
+    `<p class="hint">With the Chest card in your hand, a treasure chest may now be a Supply Chest with upgrade materials, or an Equipment Chest with a piece of equipment.</p>`,
+  noteTaking: `<p>Note Taking opens in the Archives. Once researched, tap the floor number during a climb to read its notes.</p>` +
+    `<p>They're kept as you play and cover time, steps, kills, keys, doors, chests and loot.</p>` +
+    `<p class="hint">The notes stay open while the climb goes on, and you can copy them to paste elsewhere. The climb's summary opens them too.</p>`,
+  rerollMission: `<p>Reroll Daily Mission opens in the Archives. Once researched, each unfinished daily mission gets a looping arrow on the Missions screen.</p>` +
+    `<p>Tap it and spend 5 Gems to swap the mission for a different one.</p>` +
+    `<p class="hint">You never get a mission already on your list, and its progress starts from zero.</p>`,
+  bossPotion: `<p>Boss Potion Drop opens in the Archives. Once researched, each boss you defeat drops a percent potion that you drink on the spot, wherever you are.</p>` +
+    `<p class="hint">It heals the same as picking up a percent potion, Potion % and HEAL's tree included.</p>`,
   esotericResearch: `<p>Esoteric Research opens the last 50 levels of every Archives project that has 100 or 150, such as Research Speed, Potion HP and the ATK, DEF and Max HP projects.</p>` +
-    `<p class="hint">Until it is claimed, those projects stop 50 levels short of their full length.</p>`,
-  dropResearch: `<p>Drop & Material Research opens two projects in the Archives' Equipment section: Common Drop Chance gives each boss you defeat a chance, 0.1% a level up to 1%, to drop a Common piece of equipment, and Daily Mission Materials adds one upgrade material a level, up to 50, to what each daily mission pays.</p>` +
-    `<p class="hint">The Common piece is rolled on its own, beside the boss's usual drops.</p>`,
-  familiarResearch: `<p>Familiar Research opens five projects in the Archives' Familiars section, one for each familiar's Cooldown: every level brings its effect 1 turn sooner, up to 25 turns.</p>` +
-    `<p class="hint">Familiars hatch from eggs on the Events screen's Familiars tab, for Medals.</p>`,
-  researchSpeed: `<p>Research Speed opens in the Archives: train the archivists to read faster, and every research, those under way included, takes less time.</p>`,
-  badgeSlots: `<p>Badge Slots opens in the Archives: research it, and each card holds one more badge a level. Drag a badge onto a card on the Deck page to fill its next slot; on a card with every slot full, it takes the bottom slot's place.</p>` +
-    `<p class="hint">Badges that can't work together can't share a card: a key colour's &lt; gate with its ≥ gate (GK &lt; with GK ≥), or Effective with Dampen.</p>`,
-  shardAttack: `<p>Shard ATK opens in the Archives: research it, and every ATK shard a climb picks up raises ATK by more, from the next one on, in the Tower and the Delve alike.</p>`,
-  parryPercent: `<p>Parry % opens in the Archives once Parry is yours: research it, and every strike you parry is cut by more, at once, in the Tower and the Delve alike.</p>` +
-    `<p class="hint">However it is raised, a parry cuts a strike's damage by at most 98%.</p>`,
-  shardDefense: `<p>Shard DEF opens in the Archives: research it, and every DEF shard a climb picks up raises DEF by more, from the next one on, in the Tower and the Delve alike.</p>`,
-  shrines: `<p>Unlock Shrines opens in the Archives: research it, and every so many floors climbed in the Tower grants a boon, a bonus that lasts the rest of the climb, chosen from a few offered.</p>` +
-    `<p class="hint">Its research also opens Floors Required and Standard Boon Bonus. Boons are the Tower's alone, not the Delve's.</p>`,
-  firstBoonChoice: `<p>First Boon Choice opens in the Archives once Shrines are yours: research it, and pick on the forest's Shrine Boons page a standard boon to head every climb's first offer.</p>`,
-  improveTradeoffs: `<p>Improve Trade-off Boons opens in the Archives once Shrines are yours: research it, and the benefit of every trade-off boon grows, its cost unchanged.</p>`,
-  autoPickBoons: `<p>Auto Pick Boons opens in the Archives once Shrines are yours: research it, and a climb can pick its boons itself, the top one offered, as soon as each is earned.</p>` +
-    `<p class="hint">Turn it on or off from the Shrine button in a climb.</p>`,
-  boonOptions: `<p>Boon Option Quantity opens in the Archives once Shrines are yours: research it, and each boon offered gives one more to choose from, up to four.</p>`,
-  banBoons: `<p>Ban Boons opens in the Archives once Shrines are yours: research it, and ban boons from ever being offered, on the forest's Shrine Boons page.</p>`,
-  autoPickRanking: `<p>Auto Pick Ranking opens in the Archives once Auto Pick Boons is yours: research it, and rank the boons Auto Pick takes first, on the forest's Shrine Boons page.</p>`,
+    `<p class="hint">Until it is claimed, those projects stop 50 levels short.</p>`,
+  dropResearch: `<p>Drop &amp; Material Research opens two projects in the Archives' Equipment section.</p>` +
+    `<p>Common Drop Chance gives each boss you defeat a chance to drop a Common piece of equipment, 0.1% per level up to 1%. Daily Mission Materials adds one upgrade material per level, up to 50, to each daily mission's reward.</p>` +
+    `<p class="hint">The Common piece is rolled separately from the boss's usual drops.</p>`,
+  familiarResearch: `<p>Familiar Research opens five projects in the Archives' Familiars section, one for each familiar's Cooldown. Each level makes its effect come 1 turn sooner, up to 25 turns.</p>` +
+    `<p class="hint">Familiars hatch from eggs bought with Medals, on the Events screen's Familiars tab.</p>`,
+  researchSpeed: `<p>Research Speed opens in the Archives. It trains your archivists to read faster, so every project takes less time, including ones already under way.</p>`,
+  badgeSlots: `<p>Badge Slots opens in the Archives. Each level lets every card hold one more badge.</p>` +
+    `<p>Drag a badge onto a card on the Deck page to fill its next slot. If every slot is full, it replaces the bottom one.</p>` +
+    `<p class="hint">Some badges can't share a card, such as a key colour's &lt; gate and its ≥ gate (GK &lt; with GK ≥), or Effective with Dampen.</p>`,
+  shardAttack: `<p>Shard ATK opens in the Archives. Each level makes every ATK shard you pick up give more ATK, starting with the next one, in both the Tower and the Delve.</p>`,
+  parryPercent: `<p>Once you have Parry, Parry % opens in the Archives. Each level makes your parries block more damage, starting right away, in both the Tower and the Delve.</p>` +
+    `<p class="hint">No matter how it's raised, a parry blocks at most 98% of a strike.</p>`,
+  shardDefense: `<p>Shard DEF opens in the Archives. Each level makes every DEF shard you pick up give more DEF, starting with the next one, in both the Tower and the Delve.</p>`,
+  shrines: `<p>Unlock Shrines opens in the Archives. Once researched, every few floors you climb in the Tower earns a boon, a bonus for the rest of the climb, picked from a short list.</p>` +
+    `<p class="hint">It also opens Floors Required and Standard Boon Bonus research. Boons are only found in the Tower, not the Delve.</p>`,
+  firstBoonChoice: `<p>Once you have Shrines, First Boon Choice opens in the Archives. Use the forest's Shrine Boons page to pick a standard boon that leads every climb's first offer.</p>`,
+  improveTradeoffs: `<p>Once you have Shrines, Improve Trade-off Boons opens in the Archives. It makes every trade-off boon's benefit bigger without raising its cost.</p>`,
+  autoPickBoons: `<p>Once you have Shrines, Auto Pick Boons opens in the Archives. A climb can then take the top boon offered each time it earns one.</p>` +
+    `<p class="hint">Switch it on or off from the Shrine button during a climb.</p>`,
+  boonOptions: `<p>Once you have Shrines, Boon Option Quantity opens in the Archives. Each level adds one more boon to choose from, up to four.</p>`,
+  banBoons: `<p>Once you have Shrines, Ban Boons opens in the Archives. Use the forest's Shrine Boons page to stop boons you don't want from being offered.</p>`,
+  autoPickRanking: `<p>Once you have Auto Pick Boons, Auto Pick Ranking opens in the Archives. Use the forest's Shrine Boons page to set which boons Auto Pick takes first.</p>`,
 };
 const LOCK_ICON = kitIcon("lock", "", "goal-badge");
 /** Beside a checkpoint's floor: its area mastered (a golden swirl, shown once Warp is owned) and cleared (a green check). */

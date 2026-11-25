@@ -2762,7 +2762,7 @@ export class Game {
     if (outcome.blocked === "wall") this.reject(x, y, "A wall blocks the way.");
     else if (outcome.blocked === "locked") this.reject(x, y, doorBlockedMessage(t));
     else {
-      this.reject(x, y, `Impervious — requires ${outcome.combat.requiredAttack} more ATK`);
+      this.reject(x, y, `Impervious: needs ${outcome.combat.requiredAttack} more ATK`);
     }
     return false;
   }

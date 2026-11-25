@@ -18,7 +18,7 @@ export function currencyHelp(save: Save, tree: NoticeTree) {
     return {
       title: "Earning Breakthrough",
       body: p("Claim a Tower Goal to earn a Breakthrough point: +1 for each Goal's reward you claim.") +
-        `<p class="hint">Spend them on breakthroughs: each unlocks a new limit for you to reach. Premium rewards pay no Breakthrough points.</p>`,
+        `<p class="hint">Spend them on breakthroughs. Each one unlocks a new limit to reach. Premium rewards pay no Breakthrough points.</p>`,
     };
   const far = furthest(save);
   const body = p("Climb past your highest floor to earn Inspiration: +1 for each new floor you complete, paid as you climb its stairs.") +

@@ -111,5 +111,5 @@ export function giftsShown(granted: GiftsGranted, kicker: string): RewardShown |
     const def = GIFTS[g.id]!;
     return `<span class="gift-reveal-cell" title="${GIFT_TEXT[def.stat](def.percent)}">${giftItemIcon(g.id)}${g.count > 1 ? `<b>×${g.count}</b>` : ""}</span>`;
   }).join("");
-  return { icon: "", grid, kicker, name: `${total} Gifts`, text: "Their bonuses are yours for good, on the Relics page.", permanent: true };
+  return { icon: "", grid, kicker, name: `${total} Gifts`, text: "Their bonuses are permanent. Find them on the Relics page.", permanent: true };
 }

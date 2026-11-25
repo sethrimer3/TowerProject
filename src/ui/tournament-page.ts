@@ -111,7 +111,7 @@ export class TournamentPage {
     const game = this.ctx.game, desk = game.tournament;
     if (desk.phase !== "open") return "";
     if (!game.canBeginTournament) return `<p class="hint tournament-hint">${game.run.outside ? REFUSALS.busy : "Finish this run to enter again."}</p>`;
-    return `<button class="tournament-begin" id="tournament-begin">${ticketIcon()}Go to the Delve</button><p class="hint tournament-hint">Enter its cave to begin: each entry costs a Ticket. Your best score counts.</p>`;
+    return `<button class="tournament-begin" id="tournament-begin">${ticketIcon()}Go to the Delve</button><p class="hint tournament-hint">Enter its cave to begin. Each entry costs a Ticket. Your best score counts.</p>`;
   }
 
   /** The player's best score and place, with the prize it pays; the

@@ -18,7 +18,7 @@ export const UPGRADES = [
   {
     id: "angelWings",
     name: "Angel Wings",
-    description: "Add the ANGEL WINGS card to your deck: while in hand, a strike that would fell you and that Revive doesn't save raises you at full HP instead. Limited use",
+    description: "Add the ANGEL WINGS card to your deck. While it's in your hand, a strike that would defeat you, and that Revive doesn't save, brings you back at full HP instead. Limited use",
     card: "angelWings",
     base: 10,
     max: 1,
@@ -271,7 +271,7 @@ export const UPGRADES = [
   {
     id: "autoClimb",
     name: "Auto-Climb",
-    description: "Automate your hand selection: the first card in your hand that can play goes next",
+    description: "Your hand plays itself. The first card that can play goes next",
     base: 1,
     max: 1,
     currency: "inspiration",
@@ -521,7 +521,7 @@ export const UPGRADES = [
   {
     id: "manualHand",
     name: "Manual Hand",
-    description: "Open a second hand on the Deck page: additional hand capacity for manually-activated cards",
+    description: "Open a second hand on the Deck page, with more room for cards you play by hand",
     base: 1,
     max: 1,
     currency: "breakthrough",

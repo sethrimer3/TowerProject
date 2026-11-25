@@ -152,7 +152,7 @@ export class DeckPage {
    * and ascending work. */
   private showCardHelp() {
     showHelp(this.ctx, "DECK", "Cards",
-      "<p>Your hand's cards move you through a climb: it tries them left to right, and the first that can act moves you.</p>"
+      "<p>Your hand's cards move you through a climb. The hand tries them left to right, and the first one that can act moves you.</p>"
       + "<p>A card gains XP each time it acts (Archer and Angel Wings each floor) and levels up as it gathers enough. Each level raises its <b>base power</b>, and every card's level shows its rarity: Base at 0, then Common, Uncommon, Rare, Epic, Legendary and Mythic, ten levels each.</p>"
       + "<p>Each rarity opens a new <b>power</b>, which grows with each of that rarity's ten levels. Powers count while the card is in either hand, from the moment it levels up, even in the middle of a climb.</p>"
       + `<p>At level 10, 20, 30, 40 and 50 a card stops levelling: it keeps gathering XP, and once it has the XP for the next level it is <b>Ready to ascend</b>. Ascending costs ${rubyIcon()} Rubies, dropped by bosses and Greater Bosses, and raises the card to its next rarity, opening ten more levels and a new power. Each rarity's ascension first needs its <b>Card Ascension</b> skill from the Breakthrough tree.</p>`);
@@ -761,7 +761,7 @@ export class DeckPage {
         ? `<label class="badge-slider">Threshold<input type="range" id="badge-pick" min="0" max="${level - 1}" step="1" value="${owned.pick}"><output id="badge-pick-value">${this.thresholdText(id, owned.pick)}</output></label><small class="badge-slider-note">Each level opens a tighter threshold.</small>`
         : `<small class="badge-slider-note">Level up to open tighter thresholds.</small>`;
     const modal = this.ctx.modal;
-    modal.innerHTML = `<small><span style="color:${rarity.color}">${rarity.displayName.toUpperCase()}</span> · LEVEL ${level}</small><h2>${def.name}</h2><div class="badge-detail">${tokenHtml(id, level, "big")}</div><p id="badge-detail-text">${badgeText(id, level, owned.pick)}</p>${gate}<p id="badge-detail-levels">${badgeLevelsHtml(id, level, owned.pick)}</p><p class="badge-detail-meta">${progress === "MAX" ? "Top level reached." : `${progress} copies toward level ${level + 1}.`}${on ? ` On ${CARDS[on].name}.` : " On no card: drag it onto one."}</p><button class="wide" id="badge-detail-ok">Done</button>`;
+    modal.innerHTML = `<small><span style="color:${rarity.color}">${rarity.displayName.toUpperCase()}</span> · LEVEL ${level}</small><h2>${def.name}</h2><div class="badge-detail">${tokenHtml(id, level, "big")}</div><p id="badge-detail-text">${badgeText(id, level, owned.pick)}</p>${gate}<p id="badge-detail-levels">${badgeLevelsHtml(id, level, owned.pick)}</p><p class="badge-detail-meta">${progress === "MAX" ? "Top level reached." : `${progress} copies toward level ${level + 1}.`}${on ? ` On ${CARDS[on].name}.` : " Not on a card yet. Drag it onto one."}</p><button class="wide" id="badge-detail-ok">Done</button>`;
     const slider = modal.querySelector<HTMLInputElement>("#badge-pick");
     if (slider) slider.oninput = () => {
       const pick = Number(slider.value);

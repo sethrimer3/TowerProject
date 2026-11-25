@@ -277,7 +277,7 @@ export function trialArcanaTurn<O extends { message: string }>(s: TrialState, ou
   if (spells.timeDilation && s.status === "active") stepDilation((a.dilation ??= {}), spells.timeDilation);
   if (spells.overseer) a.beamTurns++;
   a.strikes = strikes;
-  if (s.status !== "active") return { ...outcome, message: `Trial complete — ${TRIALS[s.trialId].name} falls to your Arcana.` };
+  if (s.status !== "active") return { ...outcome, message: `Trial complete. ${TRIALS[s.trialId].name} falls to your Arcana.` };
   return strikes.length && !outcome.message ? { ...outcome, message: `Your Arcana strike ${strikes.length} ${strikes.length === 1 ? "time" : "times"}.` } : outcome;
 }
 

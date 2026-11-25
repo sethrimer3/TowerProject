@@ -232,7 +232,7 @@ export class EventsPage {
       `<section class="store-section"><h3>Currencies</h3>${currencies}<p class="hint">Each bought raises its price, until the next event.</p></section>` +
       `<section class="store-section"><h3>Themes</h3><div class="store-row" style="--cols:2">${themes}</div></section>` +
       relicsHtml +
-      `<section class="store-section"><h3>Music</h3><p class="hint">Bonus tracks join the music for good, each adding ${perMilleText(TRACK_GOLD_PER_MILLE)}${goldIcon()}.</p>${tracks}</section>`;
+      `<section class="store-section"><h3>Music</h3><p class="hint">Bonus tracks stay in your music permanently, and each adds ${perMilleText(TRACK_GOLD_PER_MILLE)}${goldIcon()}.</p>${tracks}</section>`;
   }
 
   /** A Currencies offer: what it gives and its price now. */

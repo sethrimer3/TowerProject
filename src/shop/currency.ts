@@ -33,7 +33,7 @@ export const CURRENCIES: Record<CurrencyId, Currency> = {
   },
   gold: {
     name: "Gold",
-    info: "Kept between climbs: found on floors, paid for kills, and spent on training, provisions and research.",
+    info: "Kept between climbs. You find it on floors and earn it from kills, and spend it on training, provisions and research.",
     balance: (save) => save.gold,
     spend: (save, n) => void (save.gold = snap(save.gold - n)),
     credit: (save, n) => { save.gold = snap(save.gold + n); earn(save, "gold", n); },
@@ -47,7 +47,7 @@ export const CURRENCIES: Record<CurrencyId, Currency> = {
   },
   vip: {
     name: "VIP Points",
-    info: "Earned with every purchase in the Shop, by its price, and kept for good. Nothing spends them yet.",
+    info: "Earned with every Shop purchase, more for bigger ones, and never lost. Nothing spends them yet.",
     balance: (save) => save.vip,
     spend: (save, n) => void (save.vip -= n),
     credit: (save, n) => void (save.vip += n),

@@ -424,7 +424,7 @@ export function bossVariantStep(s: TrialState, x: number, y: number): { changed:
       };
       return {
         changed: true,
-        message: `Trial complete — the ${v.variant === "magic-tower" ? "Arcane Spire" : "Dread Obelisk"} is defeated!`,
+        message: `Trial complete. The ${v.variant === "magic-tower" ? "Arcane Spire" : "Dread Obelisk"} is defeated!`,
         fired: false,
       };
     }

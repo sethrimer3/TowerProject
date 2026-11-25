@@ -345,7 +345,7 @@ export const TRAINING = [
   {
     id: "rapidFireChance", name: "Rapid Fire Chance", short: "Rapid %", group: "offense", goal: "rapidFire", cost: 1, max: 85,
     curve: { per: 40 }, scale: 100, unit: "%",
-    description: "Raises the chance each of your shots starts Rapid Fire: shots fire four times as fast for a while.",
+    description: "Raises the chance each shot starts Rapid Fire, which makes your shots four times as fast for a while.",
     silver: rapidFireChancePrices, gold: rapidFireChancePrices,
   },
   // How long Rapid Fire lasts, in hundredths of a turn: 1 turn, and 0.05

@@ -1314,7 +1314,7 @@ export const RESEARCH = {
   },
   phantasmStun: {
     name: "Phantasm Stun",
-    description: "Enemies a Phantasm ghost's strike hits are stunned: they don't move or shoot, and skip strikes in a fight.",
+    description: "Enemies hit by a Phantasm ghost are stunned. They can't move or shoot, and skip strikes in a fight.",
     categories: ["arcana", "offense"],
     requires: [{ upgrade: "archives" }, { upgrade: "phantasmResearch" }],
     levels: scheduled("phantasmStun", 1, PHANTASM_STUN_GOLD, PHANTASM_STUN_TIMES),
@@ -1529,7 +1529,7 @@ export const RESEARCH = {
   },
   bossPotion: {
     name: "Boss Potion Drop",
-    description: "Each boss you defeat drops a percent potion, drunk at once wherever you stand.",
+    description: "Each boss you defeat drops a percent potion, which you drink on the spot.",
     categories: ["defense"],
     requires: [{ upgrade: "archives" }, { goalUnlock: "bossPotion" }],
     levels: [levelOf("bossPotion", 1, 1e9, 11667)],

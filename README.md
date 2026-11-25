@@ -54,6 +54,7 @@ The player-facing rules, in full, one topic a page:
 | [How it's built](docs/project/how-its-built.md) | The two modes, saved worlds, and where the code lives |
 | [Development](docs/project/development.md) | Browser tests and the GitHub Pages deploy |
 | [Prototype boundaries](docs/project/prototype-boundaries.md) | What the prototype leaves simple or out |
+| [Voice guide](docs/project/voice.md) | How the game's text should read, and the phrases to avoid |
 | [AGENTS.md](AGENTS.md) | Commands, architecture and conventions for contributors, with each area in [docs/agents/](docs/agents/) |
 
 ## Design notes

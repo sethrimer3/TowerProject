@@ -129,6 +129,7 @@ Read the area's doc before changing code there or answering questions about it; 
   A change spread over several commits adds one line; a refactor, test or docs change the player can't see adds a short line too (*Faster floor generation.*, *Tidier code behind the Shop.*).
   `tests/devlog.test.ts` checks the order, the dates and the length.
 - Write one sentence per line (a paragraph's lines render joined), and start a new line for each new fact, so diffs and merges stay local; don't re-join lines into long paragraphs.
+- Player-facing text (help, tutorials, the Codex, tooltips, messages, the DEVLOG) follows `docs/project/voice.md`: one idea a sentence, no em dashes, none of its stock phrases.
 - `CONTEXT.md` is the domain glossary (terms only, no implementation). Use its words in code, comments and docs, and add a term there when a change names a new domain concept.
 
 - Percent bonuses from the same kind of source (cards, badges, equipment, themes, research levels, copies of one standard boon) add into one factor, and the kinds' factors multiply: sum(cards) × sum(badges) × sum(equipment) × ….

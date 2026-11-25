@@ -128,7 +128,7 @@ export const MODES: { tower: ModeProfile<TowerRun>; delve: ModeProfile<DelveRun>
       subtitle: "ONE CHAMBER AT A TIME",
       enter: "You enter the tower.",
       begin: "Tap Enter or the tower entrance to begin a climb.",
-      entrance: "Begin the climb — Floor 1",
+      entrance: "Begin the climb at Floor 1",
       floor: "Well-worn stone floor.",
     },
   },

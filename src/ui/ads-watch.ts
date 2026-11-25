@@ -148,7 +148,7 @@ export class AdsWatch {
 
   /** Permanent Ad-Disable as the Shop shows it, with its buy button. */
   private adFreeBox() {
-    if (owns(this.game.save, "adFree")) return `<p class="ads-owned">Ads are off for good: every ad button pays at once.</p>`;
+    if (owns(this.game.save, "adFree")) return `<p class="ads-owned">Ads are off permanently. Every ad button pays out right away.</p>`;
     return `<div class="ads-shop shop-grid">${this.shop.offerCard("adFree")}</div>${this.message ? `<p class="shop-why">${this.message}</p>` : ""}`;
   }
 

@@ -213,7 +213,7 @@ export class EquipmentPanel {
     }).join("");
     const auto = this.e.autoSalvage;
     const toggle = `<button class="eq-auto-salvage" data-eq-auto-salvage="1" aria-pressed="${auto}"><span class="eq-check" aria-hidden="true">${auto ? kitIcon("check", "✓", "eq-check-icon") : ""}</span>${kitIcon("ui-equip-salvage", "", "eq-salvage-icon")}Auto-salvage common drops</button>`;
-    return `<details class="eq-salvage"${this.salvageOpen ? " open" : ""}><summary>${ACTION_ICONS.dismantle} Salvage</summary><div class="equip-quick">${quick}</div>${toggle}<p class="hint">While on, a ${RARITY_TIERS.common.name} piece an Equipment Chest holds, or a Gem pull brings, is dismantled at once into its material instead of joining the inventory.</p></details>`;
+    return `<details class="eq-salvage"${this.salvageOpen ? " open" : ""}><summary>${ACTION_ICONS.dismantle} Salvage</summary><div class="equip-quick">${quick}</div>${toggle}<p class="hint">While on, a ${RARITY_TIERS.common.name} piece from an Equipment Chest or a Gem pull is broken down into its material right away, instead of going to your inventory.</p></details>`;
   }
 
   // --- Assemble: pieces alike into the next rarity, or a Star ---
@@ -273,7 +273,7 @@ export class EquipmentPanel {
     const inputs = this.inputsHtml([this.tile(target, "eq-untarget", " eq-kept"),
       ...Array.from({ length: need }, (_, k) => copies[k] ? this.tile(copies[k], "eq-unpick") : this.ghost(category))]);
     const lost = copies.filter((i) => i.spent);
-    const warning = lost.length ? `<p class="warning">⚠ ${lost.length === 1 ? "One piece has" : `${lost.length} pieces have`} been leveled: what was put into ${lost.length === 1 ? "it" : "them"} (${currencyAmount(lost.reduce((n, i) => n + (i.spent?.gold ?? 0), 0))} Gold, ${lost.reduce((n, i) => n + (i.spent?.material ?? 0), 0)} material) is lost.</p>` : "";
+    const warning = lost.length ? `<p class="warning">⚠ ${lost.length === 1 ? "One piece has" : `${lost.length} pieces have`} been leveled. Everything put into ${lost.length === 1 ? "it" : "them"} (${currencyAmount(lost.reduce((n, i) => n + (i.spent?.gold ?? 0), 0))} Gold, ${lost.reduce((n, i) => n + (i.spent?.material ?? 0), 0)} material) is lost.</p>` : "";
     const ready = fodderFits(target, plan, copies);
     const blocked = this.e.items.filter((i) => i.id !== target.id && isProtected(this.e, i) && (plan.kind === "star"
       ? i.def === target.def && i.rarity === STARS.fodder
@@ -471,7 +471,7 @@ export class EquipmentPanel {
     modal.innerHTML = `<div class="eq-rates"><button id="eq-close" class="dialog-x" aria-label="Close" title="Close">${controlIcon("close")}</button>
       <small>GEM PULLS</small><h2>Draw rates · ${c === "all" ? "All types" : CATEGORIES[c].plural}</h2>
       <table class="pull-rate-table"><tbody>${rows}</tbody></table>${note}
-      <p class="hint">Pity aside: the ${PITY}th pull without an Epic or better brings an Epic Unique.</p></div>`;
+      <p class="hint">Pity: if ${PITY - 1} pulls in a row bring nothing Epic or better, the next is an Epic Unique.</p></div>`;
     if (!modal.open) modal.showModal();
     el("eq-close").onclick = () => modal.close();
     modal.querySelectorAll<HTMLInputElement>("[data-eq-draw]").forEach((box) => (box.onchange = () => {
@@ -619,7 +619,7 @@ export class EquipmentPanel {
       <p>Each pull in Acquire brings a piece at a rolled rarity:</p>
       <table class="eq-welcome-rates"><tbody>${rows}</tbody></table>
       <p><b>Pity.</b> The ${PITY}th pull in a row without an Epic or better is sure to bring an Epic Unique. Each category, and pulls of all types, counts its own.</p>
-      <p class="hint">Spend your tickets, then tap the pieces they bring in List to wear them: each raises your stats, and Uniques bring powers of their own.</p>
+      <p class="hint">Spend your tickets, then tap the pieces they bring in List to wear them. Each one raises your stats, and Uniques add powers of their own.</p>
       <div class="dialog-actions"><button id="eq-welcome-later">Later</button><button id="eq-welcome-go" class="eq-go">To Acquire</button></div>`;
     if (!modal.open) modal.showModal();
     el("eq-welcome-later").onclick = () => modal.close();
@@ -731,10 +731,10 @@ export class EquipmentPanel {
 
   /** Where `item` stands on its way up: what merging next raises its cap to. */
   private progressHtml(item: EquipItem) {
-    if (item.rarity === "common") return `<p class="hint">${RARITY_TIERS.common.name} pieces can't be merged: wear them as they are, or salvage them.</p>`;
+    if (item.rarity === "common") return `<p class="hint">${RARITY_TIERS.common.name} pieces can't be merged. Wear them as they are, or salvage them.</p>`;
     const step = this.nextStepText(item);
     if (step) return `<p class="hint">${step.trim()}</p>`;
-    return `<p class="hint">${item.rarity === "ancestral" ? "Every Star added: its cap can rise no higher." : `${isUnique(item) ? "Top rarity" : `Standard pieces go no higher than ${RARITY_TIERS[item.rarity].name}`}.`}</p>`;
+    return `<p class="hint">${item.rarity === "ancestral" ? "Every Star is added, so its cap can't go any higher." : `${isUnique(item) ? "Top rarity" : `Standard pieces go no higher than ${RARITY_TIERS[item.rarity].name}`}.`}</p>`;
   }
 
   /** An effect at a rarity on `item`: its name, rarity and what it does there. */
@@ -773,7 +773,7 @@ export class EquipmentPanel {
     if (!item || !slot || index >= openSlotCount(item)) return;
     const { modal } = this.ctx;
     const current = slot.effect && slot.rarity ? `<div class="slot-current"><small>CURRENT</small><p>${this.choiceHtml(item, { effect: slot.effect, rarity: slot.rarity })}</p></div>` : "";
-    const first = !slot.effect && !slot.offer ? `<p class="hint">This slot's first roll is free: ${EFFECT_CANDIDATES} candidates from the ${CATEGORIES[categoryOf(item)].name.toLowerCase()}'s substats; take the one you like.</p><div class="dialog-actions"><button id="eq-first">Roll (free)</button></div>` : "";
+    const first = !slot.effect && !slot.offer ? `<p class="hint">This slot's first roll is free. Pick one of ${EFFECT_CANDIDATES} candidates from the ${CATEGORIES[categoryOf(item)].name.toLowerCase()}'s substats.</p><div class="dialog-actions"><button id="eq-first">Roll (free)</button></div>` : "";
     modal.innerHTML = `<small>${nameOf(item).toUpperCase()} · SUBSTAT ${index + 1}</small><h2>${slot.effect ? "Refine" : "New substat slot"}</h2>
       ${note ? `<p class="warning">${note}</p>` : ""}${current}${this.offerHtml(item, slot)}${first}${this.refinementHtml(item, slot)}${this.slotActionsHtml(item, slot)}
       <div class="dialog-actions"><button id="eq-back">Back</button></div>`;
@@ -805,7 +805,7 @@ export class EquipmentPanel {
     const milestone = nextMilestone(slot), refinement = slot.refinement ?? 0;
     return `<div class="refine-progress"><small>REFINEMENT</small><p>Refinement: ${refinement} / ${milestone.at}</p>
       <div class="refine-bar"><span style="width:${Math.round(((refinement % REFINE_GUARANTEE_EVERY) / REFINE_GUARANTEE_EVERY) * 100)}%"></span></div>
-      <p class="hint">Next milestone: ${this.milestoneText(item, milestone.reward)}. Every Refine counts, whatever you keep: every ${REFINE_GUARANTEE_EVERY}th guarantees ${article(RARITY_TIERS[effectCap(item)].name)} candidate, every ${REFINE_CHOICE_EVERY}th earns a Choice.</p></div>`;
+      <p class="hint">Next milestone: ${this.milestoneText(item, milestone.reward)}. Every Refine counts, whatever you keep. Every ${REFINE_GUARANTEE_EVERY}th guarantees ${article(RARITY_TIERS[effectCap(item)].name)} candidate, and every ${REFINE_CHOICE_EVERY}th earns a Choice.</p></div>`;
   }
 
   /** Refine, Improve (while the effect is below the piece's cap) and Use a

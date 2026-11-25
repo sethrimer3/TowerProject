@@ -206,10 +206,10 @@ export class RunEndDialog {
     const score = counts ? tournamentScore(game.run) : (game.save.tournament.entries[t.id]?.best ?? 0);
     void client?.sendRun().then((s) => {
       const line = document.getElementById("summary-tournament-place");
-      if (line) line.textContent = s ? `Place: ${placeText(s.place, s.entrants)}` : counts ? "Offline — your score will be sent later" : "";
+      if (line) line.textContent = s ? `Place: ${placeText(s.place, s.entrants)}` : counts ? "Offline. Your score will be sent later." : "";
     });
     return `<div class="summary-tournament"><small>TOURNAMENT · ${LEAGUE_INFO[t.league].name.toUpperCase()} LEAGUE</small>` +
-      `<p>Score: <b>${score}</b></p>${counts ? "" : `<p class="hint">The tournament has ended: depth reached since doesn't count.</p>`}` +
+      `<p>Score: <b>${score}</b></p>${counts ? "" : `<p class="hint">The tournament has ended. Depth reached after that doesn't count.</p>`}` +
       `<p id="summary-tournament-place">${client ? "Checking your place…" : ""}</p></div>`;
   }
 
@@ -240,7 +240,7 @@ export class RunEndDialog {
     if (cause === "fallen") {
       const by = slice.fall?.by;
       // Encourages another run: the next one is a new layout, and what this one earned can make the hero stronger.
-      const again = `<p>Look over what this ${words.run} earned, spend it to grow stronger, and try again: the ${words.tierName} will shift to a new layout for your next ${words.run}.</p>`;
+      const again = `<p>Look over what this ${words.run} earned, spend it to grow stronger, and try again. The ${words.tierName} will have a new layout for your next ${words.run}.</p>`;
       modal.innerHTML = `<span class="summary-icon">${uiSprite("revive")}</span><small>FALLEN IN COMBAT</small><h2>Regroup and try again.</h2><p>${by ? `Felled by ${by}` : "Felled"} at ${where}. ${kept}</p>${stats}${again}<div class="dialog-actions"><button id="defeat-accept">Return to entrance</button>${this.retryButton("defeat-retry")}</div>`;
       modal.showModal();
       this.bindNotes();

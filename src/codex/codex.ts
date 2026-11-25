@@ -145,10 +145,10 @@ export const GENERAL_TOPICS: readonly Topic[] = [
   { id: "towers", icon: { kind: "kit", id: "tower" }, name: "New Towers", open: (s) => s.save.tower.tiersOpen > 1,
     text: "New towers provide a higher level of challenge and greater rewards. Enemies, gold, and loot scale with each new tower. New enemies, game elements, and exclusive goal rewards become available." },
   { id: "delve", icon: { kind: "kit", id: "cave" }, name: "Tournament: The Delve", open: (s) => s.tournament,
-    text: "While a tournament is open, take the forest sign into the Delve: an endless labyrinth where you race other players to go deepest. Climb the leagues for Arcanite and prizes.",
+    text: "While a tournament is open, take the forest sign into the Delve, an endless labyrinth where you race other players to get deepest. Climb the leagues for Arcanite and prizes.",
     link: () => anywhereLink("Tournament", { page: "tournament" }) },
   { id: "proving", icon: { kind: "trial", id: "light-elemental" }, name: "Proving Grounds", open: (s) => levelForXp(s.save.xp) >= 10,
-    text: "Sail from the fisherman's dock by the lake to face legendary guardians in tactical trials. Each boss you beat grows harder, and pays Trial Points for good." },
+    text: "Sail from the fisherman's dock by the lake to face legendary guardians in tactical trials. Each boss gets harder every time you beat it, and pays Trial Points you keep." },
   { id: "missions", icon: { kind: "kit", id: "mission" }, name: "Missions", open: always,
     text: "Daily and weekly missions pay Gold, Medals and Training Points. Check back each day.",
     link: () => anywhereLink("Missions", { page: "missions" }) },
@@ -156,7 +156,7 @@ export const GENERAL_TOPICS: readonly Topic[] = [
     text: "Seasonal events provide missions that give special rewards. Don't miss them!",
     link: () => anywhereLink("Events", { page: "events" }) },
   { id: "relics", icon: { kind: "kit", id: "relic-epic" }, name: "Relics", open: (s) => s.events || s.save.relics.length > 0,
-    text: "Unique artifacts that permanently boost your hero's stats. Seek them out - some even provide new powers! Events provide limited access relics, so watch carefully for these.",
+    text: "Unique artifacts that permanently boost your hero's stats. Seek them out; some even provide new powers! Events provide limited access relics, so watch carefully for these.",
     link: (s) => forestLink(s, "Relics", { page: "relics" }) },
   { id: "shop", icon: { kind: "kit", id: "cart" }, name: "Shop", open: always,
     text: "Get free gems and buy powerful game unlocks to speed your ascent to being the most powerful.",
@@ -385,18 +385,18 @@ const TRAINING_GROUP_ICONS: Record<TrainingGroup, CodexIcon> = { offense: { kind
  * auto-continue, stopping, and the free points. */
 const TRAINING_HOW: CodexEntry[] = [
   { id: "points", icon: { kind: "currency", id: "training" }, name: "Free training", brief: "Training points from levelling up and weekly mission rewards buy ranks instantly, for free. Spend them first!" },
-  { id: "gold", icon: { kind: "currency", id: "gold" }, name: "Train with Gold", brief: "Once you have Trainers, hire one with Gems, then pay Gold to train a stat over time. Every rank finished is yours for good." },
+  { id: "gold", icon: { kind: "currency", id: "gold" }, name: "Train with Gold", brief: "Once you have Trainers, hire one with Gems, then pay Gold to train a stat over time. Every finished rank is permanent." },
   { id: "batch", icon: { kind: "mark", id: "clock" }, name: "Train more at once", brief: "Training several ranks together goes faster than one at a time." },
-  { id: "rush", icon: { kind: "currency", id: "gems" }, name: "Rush with Gems", brief: "Tap the Gem button beside a countdown to finish training at once." },
+  { id: "rush", icon: { kind: "currency", id: "gems" }, name: "Rush with Gems", brief: "Tap the Gem button next to a countdown to finish training instantly." },
   { id: "repeat", icon: { kind: "mark", id: "repeat" }, name: "Auto-continue", brief: "Tick the box with this icon to start the next rank as soon as one finishes, while you have the Gold." },
-  { id: "stop", icon: { kind: "mark", id: "stop" }, name: "Stop any time", brief: "Tap a countdown to stop it: your Gold comes back, and the time spent is saved for later." },
+  { id: "stop", icon: { kind: "mark", id: "stop" }, name: "Stop any time", brief: "Tap a countdown to stop it. You get your Gold back, and the time spent is saved for later." },
 ];
 /** How the Archives are used, likewise. */
 const ARCHIVES_HOW: CodexEntry[] = [
   { id: "gold", icon: { kind: "currency", id: "gold" }, name: "Research with Gold", brief: "Each level of a project costs Gold and takes time. An archivist works on one project at a time." },
-  { id: "rush", icon: { kind: "currency", id: "gems" }, name: "Rush with Gems", brief: "Tap Rush to finish research at once." },
+  { id: "rush", icon: { kind: "currency", id: "gems" }, name: "Rush with Gems", brief: "Tap Rush to finish research instantly." },
   { id: "repeat", icon: { kind: "mark", id: "repeat" }, name: "Auto-continue", brief: "Tick the box with this icon to start the next level as soon as one completes, while you have the Gold." },
-  { id: "switch", icon: { kind: "mark", id: "stop" }, name: "Switch projects", brief: "Choose another project for a busy archivist: your Gold comes back, and its progress is saved for later." },
+  { id: "switch", icon: { kind: "mark", id: "stop" }, name: "Switch projects", brief: "Switch a busy archivist to another project. You get your Gold back, and the progress is saved for later." },
   { id: "archivists", icon: { kind: "kit", id: "book" }, name: "More archivists", brief: "Hire more archivists with Gems to research several projects at once." },
   { id: "cells", icon: { kind: "currency", id: "cells" }, name: "Speed Ups", brief: "Spend Cells, dropped by Greater Bosses, to make research go faster." },
 ];
@@ -506,7 +506,7 @@ const FIGHT_BASICS: CodexEntry[] = [
   { id: "order", icon: { kind: "kit", id: "sword" }, name: "Taking turns", brief: "Step into an enemy to fight it. You strike first, then it strikes back, round after round, until one of you falls." },
   { id: "damage", icon: { kind: "kit", id: "shield" }, name: "Damage", brief: "Each strike deals the striker's ATK minus the target's DEF, never less than 0. A fight's damage to you is every strike the enemy lands before it falls." },
   { id: "rising", icon: { kind: "kit", id: "heart" }, name: "Rising ATK", brief: "After every round the enemy's ATK rises by 1%, so even high DEF can't hold one off forever." },
-  { id: "forecast", icon: { kind: "kit", id: "scroll" }, name: "Before you fight", brief: "Tap an enemy to inspect it: its HP, ATK and DEF, and the damage it would deal you." },
+  { id: "forecast", icon: { kind: "kit", id: "scroll" }, name: "Before you fight", brief: "Tap an enemy to see its HP, ATK and DEF, and how much damage it would deal you." },
 ];
 const FIGHT_STATS: CodexEntry[] = [
   { id: "hp", icon: { kind: "kit", id: "heart" }, name: "HP", brief: "How much damage you can take. At 0 your climb ends, unless something saves you." },
@@ -518,8 +518,8 @@ const FIGHT_TIPS: CodexEntry[] = [
   { id: "scratch", icon: { kind: "kit", id: "sword" }, name: "Can't hurt it?", brief: "Your ATK must beat its DEF. Raise ATK, or wear its DEF down with Armor Break." },
   { id: "tough", icon: { kind: "strength", id: "boss" }, name: "Bosses and tough enemies", brief: "Lots of HP means a long fight: ATK and critical hits shorten it most." },
   { id: "hard", icon: { kind: "trait", id: "fast" }, name: "Hard hitters", brief: "Brutes and Fast enemies hit hard: DEF cuts every blow, and Shroud blocks the first damage of each fight." },
-  { id: "many", icon: { kind: "item", id: "potion_flat" }, name: "Long climbs", brief: "Many fights wear you down: max HP, Regen, Lifesteal and potions keep you going." },
-  { id: "shooters", icon: { kind: "trait", id: "ranged" }, name: "Shooters", brief: "Ranged and Flying enemies hurt you from afar: max HP and Regen absorb it, and the Archer's arrows strike back." },
+  { id: "many", icon: { kind: "item", id: "potion_flat" }, name: "Long climbs", brief: "Many fights wear you down. Max HP, Regen, Lifesteal and potions keep you going." },
+  { id: "shooters", icon: { kind: "trait", id: "ranged" }, name: "Shooters", brief: "Ranged and Flying enemies hit you from a distance. Max HP and Regen soak it up, and the Archer's arrows hit back." },
 ];
 
 function enemies(src: CodexSource): CodexCategory {
@@ -619,7 +619,7 @@ function environments(src: CodexSource): CodexCategory {
   };
   const entries = ENVIRONMENT_IDS.map((id) => shownIf(src, known[id], { id, icon: { kind: "environment", id }, name: ENVIRONMENTS[id].name, brief: ENVIRONMENT_BRIEFS[id] }));
   return { id: "environments", name: "Environments", icon: { kind: "currency", id: "gold" }, open: ENVIRONMENT_IDS.some((id) => known[id]) || seesAll(s), links: [],
-    summary: "Some floors have an environment: a rule for the whole floor that changes what it holds or pays.", sections: [{ id: "environments", title: "Environments", entries }] };
+    summary: "Some floors have an environment, a rule for the whole floor that changes what it holds or pays.", sections: [{ id: "environments", title: "Environments", entries }] };
 }
 
 // —— Archives —————————————————————————————————————————————————————————

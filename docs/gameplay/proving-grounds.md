@@ -13,7 +13,7 @@ Reduce motion also makes trial camera and player movement instant.
 Each trial automatically offers the next difficulty after the highest one you defeated, starting at difficulty 1.
 You cannot select a difficulty manually.
 The menu shows that trial's number, next difficulty, difficulty multiplier, beam count, slime timing and one-time reward.
-**Trial 1 — Light Elemental** begins in a small staging room whose staircase leads to a dark, hexagonal chamber inside a 25×25 tile square.
+**Trial 1: Light Elemental** begins in a small staging room whose staircase leads to a dark, hexagonal chamber inside a 25×25 tile square.
 The attempt uses your current max HP, ATK and DEF and starts at full health; your Tower run, currencies and supplies stay safe.
 Reloading resumes the attempt, including its training purchases.
 **Leave trial**, the HUD menu's **Leave trial**, or Escape from the board returns to the dock and discards the attempt.
@@ -109,7 +109,7 @@ Attempts saved in the older, larger chamber restart in the new staging room with
 
 ## The Keymaster
 
-**Trial 2 — Keymaster** has its own difficulty progression and first-clear Trial Points, shared across the same three control modes.
+**Trial 2: Keymaster** has its own difficulty progression and first-clear Trial Points, shared across the same three control modes.
 Its staircase leads to a fully lit 25×25 chamber using Tower II's warm limestone walls and rectangular paving, with a locked door at each cardinal edge: north, east, south and west.
 Six solid 2×2 and 3×3 wall blocks are scattered through the chamber; you and the mimics must route around them, and the Keymaster cannot retreat or teleport into them.
 Torches, crates and potions remain around the inside edge, and the four door approaches stay clear.
@@ -150,18 +150,18 @@ Next to the bar, **Damage this run: X** and **DPT: Y** display the total damage 
 
 ## Single-Round Combat, Magic Tower, and Obelisk
 
-In **Trial 3 — Magic Tower** and **Trial 4 — Obelisk**, attacking the boss, a boss part, or a boss minion performs **one round of combat per turn** instead of resolving the entire fight to the death in a single turn.
+In **Trial 3: Magic Tower** and **Trial 4: Obelisk**, attacking the boss, a boss part, or a boss minion performs **one round of combat per turn** instead of resolving the entire fight to the death in a single turn.
 A fight animation shows the strike and counter-strike results of each round.
 Boss ATK remains constant and does not increase with each hit on you.
 In **Only with cards** or **With both**, you can click any card in your hand at any time to break off combat and target something else in the arena (such as a stat shard, potion, coin drop, minion, or boss part), then click your boss card later to resume attacking the boss.
 
-### Trial 3 — Magic Tower (Variant 1 & 1b)
+### Trial 3: Magic Tower (Variant 1 & 1b)
 
 The Magic Tower has high HP (around 30× your ATK) and no turn limit, so multiple partial combat engagements take place before it falls.
 It has a **Regen** stat that restores its HP every turn, meaning turns spent away from combat require dealing more total damage to finish it off.
 Each time you damage the boss, **Gold and Silver coins pop out** as loot drops, which you can use with the in-run training bar and floor stat shards to raise your stats during the encounter and surpass the boss's regeneration threshold.
 
-### Trial 4 — Obelisk (Variant 2 & 2b)
+### Trial 4: Obelisk (Variant 2 & 2b)
 
 The Obelisk has very high HP (requiring hundreds of turns to defeat), and you are given a fixed number of turns per run to inflict damage, starting at **100 turns** and increasing by +10 per level of the **Trial Turn Limit** research project in the Archives.
 The Obelisk fires periodic arcane shots every 3 turns and an **Arcane Pulse** special attack every 8 turns.

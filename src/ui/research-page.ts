@@ -266,7 +266,7 @@ export class ResearchPage {
   /** How Training works: the text the tab keeps off its rows. */
   private showTrainingHelp() {
     const hired = this.ctx.game.training.hired, p = (text: string) => `<p>${text}</p>`;
-    const body = p(`Each level the hero gains earns ${TRAINING_PER_LEVEL} Training Points. Spend them to train a stat a rank at once.`) +
+    const body = p(`Each level the hero gains earns ${TRAINING_PER_LEVEL} Training Points. Spend them to train a stat one rank instantly.`) +
       p("A rank is worth more as the hero levels up, ranks already bought included.") +
       (hired
         ? p("Or pay Gold to a trainer: the rank takes the time under the stat's name, and trainers work while you play or are away. Gems hire trainers, and each trains one stat at a time.") +
@@ -563,7 +563,7 @@ export class ResearchPage {
   private speedHtml() {
     const save = this.ctx.game.save, speed = (permanentBoost(save) ? BOOST_RATE : 1) * trainingRate(save);
     if (speed === 1) return "";
-    const label = `Training goes ×${speed} as fast for good`;
+    const label = `Training permanently runs ×${speed} as fast`;
     return `<span class="training-speed" id="training-speed" role="img" aria-label="${label}" title="${label}">×${speed}</span>`;
   }
 

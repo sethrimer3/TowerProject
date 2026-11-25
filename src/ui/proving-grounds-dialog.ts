@@ -122,7 +122,7 @@ export class ProvingGroundsDialog {
     this.show(`<h2 id="trial-heading">Proving Grounds Trials</h2>${this.header()}<small>Two keys daily, shared by all trials. Refills at midnight UTC. An attempt costs one key.</small>
       ${TRIAL_IDS.map(id=> {
         const trial=TRIALS[id],level=nextDifficulty(this.base.save,id);
-        return `<button id="trial-${id}" class="trial-choice"><b>Trial ${trial.number} — ${trial.name}</b><small>${level===null?"All difficulties cleared":`Next: Difficulty ${level} · Multiplier ×${trial.multiplier(level).toFixed(1)}`}</small><span>${clearedDifficulty(this.base.save,id)} difficulties cleared</span></button>`;
+        return `<button id="trial-${id}" class="trial-choice"><b>Trial ${trial.number}: ${trial.name}</b><small>${level===null?"All difficulties cleared":`Next: Difficulty ${level} · Multiplier ×${trial.multiplier(level).toFixed(1)}`}</small><span>${clearedDifficulty(this.base.save,id)} difficulties cleared</span></button>`;
       }).join("")}<button id="trial-menu-leave">Return to the docks</button>`);
     for(const id of TRIAL_IDS)el(`trial-${id}`).onclick=()=>this.openDetails(id);
     el("trial-menu-leave").onclick=()=>{if(this.active)this.modal.addEventListener("close",()=>this.leave(),{once:true});this.modal.close();};
@@ -135,8 +135,8 @@ export class ProvingGroundsDialog {
     const turnLimit=researched(this.base.save.archives,"trialTurns");
     const summary=level===null?"":id==="keymaster"?`Hit: ghost teleport · Both move every 2 steps · Tough mimic every ${mimicInterval(level)} turns · Four doors deal 20% max HP each.`:id==="magic-tower"?`High HP (~30×) · Single-round combat per turn · Boss regenerates away from combat · Gold & Silver coins pop out on hit · Constant boss ATK · No turn limit.`:id==="obelisk"?`Massive HP (~150×) · ${turnLimit} turns per run · Periodic bolts every ${OBELISK_SHOT_INTERVAL} turns & Arcane Pulse every ${OBELISK_SPECIAL_INTERVAL} turns · Damage inflicted persists across runs.${saved?` Saved damage: ${shortAmount(saved.damage,1000)}.`:""}`:`${beamCount(level)} beam${beamCount(level)===1?"":"s"} every 10 turns · Slime every ${slimeSpawnInterval(level)} turns.`;
     const variantTag=id==="magic-tower"?"1":"2";
-    const variantToggle=isVariant && level!==null?`<div class="trial-variant-pick" role="group" aria-label="Boss configuration"><button type="button" id="trial-variant-standard" class="${!multiPart?"selected":""}" aria-pressed="${!multiPart}">${variantTag} — Standard Boss</button><button type="button" id="trial-variant-multipart" class="${multiPart?"selected":""}" aria-pressed="${multiPart}">${variantTag}b — Multi-Part Boss (3 parts)</button></div>`:"";
-    this.show(`<h2 id="trial-heading">Trial ${trial.number} — ${trial.name}</h2>${this.header()}
+    const variantToggle=isVariant && level!==null?`<div class="trial-variant-pick" role="group" aria-label="Boss configuration"><button type="button" id="trial-variant-standard" class="${!multiPart?"selected":""}" aria-pressed="${!multiPart}">${variantTag}: Standard Boss</button><button type="button" id="trial-variant-multipart" class="${multiPart?"selected":""}" aria-pressed="${multiPart}">${variantTag}b: Multi-Part Boss (3 parts)</button></div>`:"";
+    this.show(`<h2 id="trial-heading">Trial ${trial.number}: ${trial.name}</h2>${this.header()}
       <p id="trial-difficulty">${level===null?"All difficulties cleared":`Difficulty ${level} · Difficulty multiplier ×${trial.multiplier(level).toFixed(1)}`}</p>
       <p id="trial-reward">${level===null?"All first-clear rewards claimed.":`First-clear reward: ${trial.rewardPoints(level)} Trial ${level===1?"Point":"Points"}. One reward per difficulty, shared across all control modes.`}</p>
       ${level===null?"":`<small>${summary}</small>`}${variantToggle}
@@ -239,7 +239,7 @@ export class ProvingGroundsDialog {
     this.navigation.clear();this.session!.game.activeCard=s.bossVariant?.focusedCard===null?null:slot;
     if(!s.playing){s.playing=true;if(this.base.save.settings.speed===0)this.base.save.settings.speed=1;}
     this.nextAutoAt=performance.now()+150;
-    this.message=s.bossVariant?.focusedCard===null?"Cleared card focus.":`Selected ${CARDS[cardId].name} — switching target.`;
+    this.message=s.bossVariant?.focusedCard===null?"Cleared card focus.":`Selected ${CARDS[cardId].name}. Switching target.`;
     this.save();this.changed();return true;
   }
   purchasesChanged(){if(this.session){this.message=this.session.game.message;this.save();this.changed();}}
@@ -263,7 +263,7 @@ export class ProvingGroundsDialog {
     for(const id of ["section-pick","enter-run","stuck-end-run","run-earned","best-reward","gold-bonus","gold-bonus-divider"])el(id).hidden=true;
     el("end-run").textContent="Leave trial";(el("base-enemy") as HTMLButtonElement).disabled=true;el("base-enemy").title=trial.name;
     (el("auto") as HTMLButtonElement).disabled=manual || s.status!=="active";
-    if(manual){el("auto-state").textContent="MANUAL";el("auto").setAttribute("aria-label","Manual movement — cards disabled");}
+    if(manual){el("auto-state").textContent="MANUAL";el("auto").setAttribute("aria-label","Manual movement, cards disabled");}
     (el("speed-down") as HTMLButtonElement).disabled ||= manual;(el("speed-up") as HTMLButtonElement).disabled ||= manual;
     const bar=document.getElementById("trial-boss-bar"),fill=document.getElementById("trial-boss-fill"),hpText=document.getElementById("trial-boss-hp"),dmgRun=document.getElementById("trial-damage-run"),dptEl=document.getElementById("trial-dpt"),iconEl=document.getElementById("trial-boss-icon");
     if(bar && fill && hpText && dmgRun && dptEl && iconEl) {
@@ -290,7 +290,7 @@ export class ProvingGroundsDialog {
     el("hand").classList.toggle("can-focus",!manual && s.status==="active");
     el("hand").querySelectorAll<HTMLElement>(".hand-card").forEach(card=> {
       const id=card.dataset.card as keyof typeof CARDS,slot=Number(card.dataset.handSlot);
-      card.setAttribute("aria-disabled",String(manual));card.title=`${CARDS[id].name}${manual?" — disabled in manual trials":" — tap to switch target"}`;
+      card.setAttribute("aria-disabled",String(manual));card.title=`${CARDS[id].name}${manual?" (disabled in manual trials)":" (tap to switch target)"}`;
       if(manual)card.classList.remove("active","focused");
       else card.classList.toggle("focused",bv?.focusedCard===slot);
     });
