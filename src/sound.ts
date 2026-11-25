@@ -36,12 +36,14 @@ export type Cue =
  * Settings page's Sounds section (`SOUND_SETTINGS`): notifications (what
  * finished while the player looked away), the UI's presses and pages, the
  * run's own events, the ambience's beds and the music. */
-export type SoundKind = "notifications" | "ui" | "events" | "ambience" | "music";
-export const SOUND_KINDS: readonly SoundKind[] = ["notifications", "ui", "events", "ambience", "music"];
+export type SoundKind = "notifications" | "ui" | "events" | "ambience" | "music"
+  /** The Gem bank's chime, under its own setting alone: Master Sound leaves it be. */
+  | "gemBank";
+export const SOUND_KINDS: readonly SoundKind[] = ["notifications", "ui", "events", "ambience", "music", "gemBank"];
 
 /** Which kind each cue is, so its setting silences it. */
 export const CUE_KIND: Readonly<Record<Cue, SoundKind>> = {
-  trained: "notifications", gemBankFull: "notifications", dailyMission: "notifications", eventMission: "notifications",
+  trained: "notifications", gemBankFull: "gemBank", dailyMission: "notifications", eventMission: "notifications",
   knock: "ui", stone: "ui", confirm: "ui", error: "ui", coin: "ui", chime: "ui", unlock: "ui",
   cardLevelUp: "ui", badgeDraw: "ui", equipmentTab: "ui", tournamentRewards: "ui", tutorialStart: "ui",
   shopPurchase: "ui", eggHatch: "ui", cardAscension: "ui", openGift: "ui", newTower: "ui",

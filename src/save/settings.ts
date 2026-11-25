@@ -23,10 +23,10 @@ export const SETTINGS = {
    * finished while the player looked away (a Training rank, a mission, the
    * Gem bank), the UI's presses and pages, the run's events, the ambience's
    * beds (and, under it, the weather's wind, chimes and thunder) and the
-   * lake's music. `sound` is the section's master switch: off, nothing
-   * plays whatever the five say, and they keep their values for when it is
-   * back on. */
-  sound: { kind: "toggle", default: true, page: { id: "sound-all", label: "Sound" } },
+   * lake's music. `sound` (Master Sound) is the section's master switch:
+   * off, none of the five plays whatever they say, and they keep their
+   * values for when it is back on. */
+  sound: { kind: "toggle", default: true, page: { id: "sound-all", label: "Master Sound" } },
   soundNotifications: { kind: "toggle", default: true, page: { id: "sound-notifications", label: "Notifications" } },
   soundUi: { kind: "toggle", default: true, page: { id: "sound-ui", label: "UI" } },
   soundEvents: { kind: "toggle", default: true, page: { id: "sound-events", label: "In-run events" } },
@@ -188,8 +188,8 @@ export const SETTINGS = {
   /** With Cinematic mode on: keep the ad's Gem button while it shows. */
   cinematicGems: { kind: "toggle", default: false, page: { id: "cinematic-gems-setting", label: "Show the Gem button in cinematic mode" } },
   /** With the GEM card's Gem Bank: chime as the Gem button's bank fills,
-   * to hear when to collect without watching (a notification, so silent
-   * while Notifications is off). */
+   * to hear when to collect without watching. Its own switch: Master Sound
+   * and Notifications leave it alone (`SoundKind` `gemBank`). */
   gemBankChime: { kind: "toggle", default: true, page: { id: "gem-bank-chime", label: "Notification chime when the Gem bank is full" } },
   /** With Auto-Climb: draw the golden line along the path of the card the
    * hand chose itself, as it is drawn for a pressed card's
@@ -211,7 +211,7 @@ export const SETTINGS = {
 export type SettingKey = keyof typeof SETTINGS;
 /** The setting that turns each kind of sound on or off. */
 export const SOUND_SETTINGS = {
-  notifications: "soundNotifications", ui: "soundUi", events: "soundEvents", ambience: "soundAmbience", music: "soundMusic",
+  notifications: "soundNotifications", ui: "soundUi", events: "soundEvents", ambience: "soundAmbience", music: "soundMusic", gemBank: "gemBankChime",
 } as const satisfies Record<SoundKind, SettingKey>;
 type ValueOf<S> = S extends { kind: "toggle" } ? boolean
   : S extends { choices: readonly (readonly [infer V, string])[] } ? V

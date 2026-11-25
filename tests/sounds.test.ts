@@ -233,7 +233,7 @@ test("each kind of sound answers to its own setting, the lake's music to Music",
   }
   assert.equal(CUE_KIND.knock, "ui");
   assert.equal(CUE_KIND.punch, "events");
-  assert.equal(CUE_KIND.gemBankFull, "notifications");
+  assert.equal(CUE_KIND.gemBankFull, "gemBank");
   assert.equal(CUE_KIND.dailyMission, "notifications");
   assert.equal(BED_KIND.meditative, "music");
   assert.equal(BED_KIND.windForest, "ambience");

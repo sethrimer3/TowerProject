@@ -16,8 +16,8 @@ To add a recording: convert it to Ogg Vorbis (`ffmpeg -i in -ac 1 -af volume=…
 
 ## Cues
 
-Each cue and bed is one kind of sound (`SoundKind`: `notifications`, `ui`, `events`, `ambience`, `music`; `CUE_KIND` in `sound.ts`, `BED_KIND` in `ambience.ts`), each turned on or off by its own setting in the Settings page's Sounds section (`SOUND_SETTINGS` in `save/settings.ts`: Notifications, UI, In-run events, Ambience, Music), under the master **Sound** (`settings.sound`), which silences them all and hides them on the page while off, keeping their values.
-`main.ts` hands `bindFeedback` which are on (Sound and the kind's own), which hands it to `soundEnabledBy`; `soundOn(kind)` asks for one, `soundOn()` for any.
+Each cue and bed is one kind of sound (`SoundKind`: `notifications`, `ui`, `events`, `ambience`, `music`, and `gemBank` for the Gem bank's chime alone; `CUE_KIND` in `sound.ts`, `BED_KIND` in `ambience.ts`), each turned on or off by its own setting in the Settings page's Sounds section (`SOUND_SETTINGS` in `save/settings.ts`: Notifications, UI, In-run events, Ambience, Music), under **Master Sound** (`settings.sound`), which silences them all and hides them on the page while off, keeping their values; the Gem bank's chime (`gemBankChime`) answers only to itself, below the group.
+`main.ts` hands `bindFeedback` which are on (Master Sound and the kind's own, or for `gemBank` its own alone), which hands it to `soundEnabledBy`; `soundOn(kind)` asks for one, `soundOn()` for any.
 A new cue goes in `CUE_KIND` (the compiler insists), and a new bed in `BED_KIND`.
 `src/sound.ts`'s `play(cue)` plays a cue now, unless its kind is off, the browser has no audio, the player hasn't pressed anything yet, or the same cue played in the last 60 ms.
 The audio graph (voices → dry out and a generated stone-hall echo → a gentle compressor) is built on the first press (`unlockAudio`, bound by `bindFeedback` to `pointerdown` and `keydown`), which preloads every one-shot (only while some kind of sound is on; a later press builds it once one is); `runningAudio` hands the running context to the ambience and the thunder, never building one.

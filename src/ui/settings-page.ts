@@ -27,10 +27,17 @@ const PAGE = [
   "experimentalAtlas", "legacyBorders", "legacyEnemies", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "pixelPerfect", "autoLandscape", "hand", "batterySaver", "batteryWhite", "reduceMotion",
   "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems",
 ] as const satisfies readonly SettingKey[];
-/** The Sounds section's settings, in order: the master Sound, then (while it
- * is on) a toggle per kind of sound, the weather's under Ambience, the Gem
- * bank's chime under Notifications. */
-const SOUNDS = ["sound", "soundNotifications", "gemBankChime", "soundUi", "soundEvents", "soundAmbience", "weatherSound", "soundMusic"] as const satisfies readonly SettingKey[];
+/** The Sounds section's settings, in order: Master Sound, then (indented
+ * under it, while it is on) a toggle per kind of sound, with the weather's
+ * under Ambience, and last the Gem bank's chime, which answers only to
+ * itself. */
+const SOUNDS = ["sound", "soundNotifications", "soundUi", "soundEvents", "soundAmbience", "weatherSound", "soundMusic", "gemBankChime"] as const satisfies readonly SettingKey[];
+/** The settings indented under each one that shows them only while it is
+ * on (`.setting-group`): every such grouping is drawn this way. */
+const UNDER: Partial<Record<SettingKey, readonly SettingKey[]>> = {
+  sound: ["soundNotifications", "soundUi", "soundEvents", "soundAmbience", "soundMusic"],
+  soundAmbience: ["weatherSound"],
+};
 /** The dev section's settings, shown under Dev Mode while it is on. */
 const DEV = ["devMode", "freePurchases", "accessAll"] as const satisfies readonly SettingKey[];
 /** The settings on the Toggles menu, in order: the values the board shows
@@ -74,8 +81,8 @@ const SHOWN: Partial<Record<PageKey, (save: Save) => boolean>> = {
   soundAmbience: (save) => save.settings.sound,
   soundMusic: (save) => save.settings.sound,
   cinematicGems: (save) => save.settings.cinematic,
-  // Once the GEM card's Gem Bank holds a level, while Notifications is on.
-  gemBankChime: (save) => levelIn(save, "gem").level >= firstLevelOf("epic") && save.settings.sound && save.settings.soundNotifications,
+  // Once the GEM card's Gem Bank holds a level.
+  gemBankChime: (save) => levelIn(save, "gem").level >= firstLevelOf("epic"),
 };
 /** Those shown only while another setting is on: Access to Everything
  * leaves them to it, opening only those an unlock holds back. */
@@ -96,13 +103,11 @@ const AFTER: Partial<Record<PageKey, (ctx: AppContext, overlay: BoardOverlay, s:
   batteryWhite: (ctx) => { applyUiTheme(ctx.game.save); ctx.save(); ctx.update(); },
   // The board silences the weather itself once its sound is off, and the
   // ambience each bed once its kind is. Weather sounds shows only under
-  // Ambience, the Gem bank's chime only under Notifications, and the five
-  // kinds only while Sound is on.
+  // Ambience, and the five kinds only while Master Sound is on.
   sound: (ctx) => { ctx.save(); ctx.update(); ctx.renderPage(); },
   weatherSound: (ctx) => ctx.update(),
   soundAmbience: (ctx) => { ctx.save(); ctx.update(); ctx.renderPage(); },
   soundMusic: (ctx) => ctx.update(),
-  soundNotifications: (ctx) => { ctx.save(); ctx.renderPage(); },
   infoDisplay: (ctx, overlay, s) => {
     if (s.infoDisplay === "status" || s.infoDisplay === "none") overlay.hideInspect();
     ctx.save();
@@ -224,12 +229,23 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
     `<button class="setting menu-open" id="arcana-lab-open">Arcana Effects Lab<b>${controlIcon("forward")}</b></button>` +
     `<button class="setting menu-open" id="toggles-open">Toggles<b>${controlIcon("forward")}</b></button>` +
     shownOf(PAGE, game.save).map((key) => control(key, game) + (key === "experimentalAtlas" ? `<p class="hint">Loads artwork from sprite atlases. Changing this reloads the game.</p>` : "") + (key === "squareDoors" ? `<p class="hint">Pixel art is the default. Other UI and Game themes use their own art.</p>` : "")).join("") +
-    `<h3 class="settings-visual-title">Sounds</h3>` + shownOf(SOUNDS, game.save).map((key) => control(key, game)).join("") +
+    `<h3 class="settings-visual-title">Sounds</h3>` + grouped(SOUNDS, game) +
     `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p>` +
     control("devTools", game) +
-    (game.save.settings.devTools ? `<div class="dev-section">${DEV.map((key) => control(key, game)).join("")}${profileButtons}</div>` : "") +
+    (game.save.settings.devTools ? `<div class="setting-group dev-section">${DEV.map((key) => control(key, game)).join("")}${profileButtons}</div>` : "") +
     `<button class="wide danger" id="erase">Erase all progress</button><p class="seed">RUN SEED · ${game.run.seed}</p>`;
   bindSettings(ctx, overlay);
+}
+
+/** The controls of `keys` shown now, each setting in `UNDER` followed by
+ * those it shows, indented in a `.setting-group` (nested as deep as they go). */
+function grouped(keys: readonly PageKey[], game: PageGame): string {
+  const shown = shownOf(keys, game.save), inner = new Set(Object.values(UNDER).flat());
+  const draw = (key: PageKey): string => {
+    const under = shown.filter((k) => UNDER[key as SettingKey]?.includes(k as SettingKey));
+    return control(key, game) + (under.length ? `<div class="setting-group">${under.map(draw).join("")}</div>` : "");
+  };
+  return shown.filter((k) => !inner.has(k as SettingKey)).map(draw).join("");
 }
 
 /** The dev section's profile file buttons: download everything kept

@@ -6,13 +6,15 @@ Every UI theme sounds the same.
 ## Settings
 
 The Settings page's **Sounds** section turns each kind of sound on or off on its own; all are on by default.
-**Sound**, at its top, turns every sound off at once; the five below show only while it is on, and keep their choices for when it is back on.
-- **Notifications**: what finished while you looked away: a Training rank, a daily mission, an Event mission's tier, and the Gem bank filling (its own chime setting shows beneath while this is on).
+**Master Sound**, at its top, turns every sound off at once; the five indented beneath it show only while it is on, and keep their choices for when it is back on.
+- **Notifications**: what finished while you looked away: a Training rank, a daily mission, an Event mission's tier.
 - **UI**: presses, tabs, and the pages' own sounds: the Shop, cards levelling up and ascending, badges drawn, hatching, prizes and gifts claimed, skill-tree ranks, Training's coins, a new tower.
 - **In-run events**: everything the run itself sounds: pickups, doors, Gems, fights, arcana and familiars, the stairs, footsteps, Shrine boons, Warps, the infinity loop and the run's summary.
 - **Ambience**: the forest's wind and evening, the Blacksmith, the dock's water and the Divine Relic's hum.
   **Weather sounds**, beneath it while it is on, turns the wind, the chimes and the thunder on or off on their own.
 - **Music**: the meditative music by the lake and at sea.
+
+Below the group, the Gem bank's **Notification chime when the Gem bank is full** (once the GEM card's Gem Bank has a level) is its own switch: Master Sound and Notifications leave it alone.
 
 ## Effects
 

@@ -106,7 +106,8 @@ stampProfile(game.save, game.clock());
 const offlineGrant = game.arriveOffline();
 applyUiTheme(game.save);
 bindFeedback({
-  sound: (kind) => game.save.settings.sound && game.save.settings[SOUND_SETTINGS[kind]],
+  // The Gem bank's chime answers only to its own setting, not Master Sound.
+  sound: (kind) => (kind === "gemBank" || game.save.settings.sound) && game.save.settings[SOUND_SETTINGS[kind]],
   look: () => (game.save.settings.batterySaver ? "battery" : uiLook(game.save)),
   medieval: () => uiLook(game.save) === "medieval",
   reduceMotion: () => game.save.settings.reduceMotion,

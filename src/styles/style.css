@@ -1864,8 +1864,9 @@ dialog > small {
   border-left: 2px solid #3e4c59;
 }
 
-/* The Settings page's dev section, under Dev Mode while it is on. */
-.dev-section {
+/* Settings shown only while the setting above them is on, indented under
+   it: Dev Mode's dev section, Master Sound's kinds, Ambience's weather. */
+.setting-group {
   margin-left: 16px;
   padding-left: 12px;
   border-left: 2px solid #3e4c59;
