@@ -12,7 +12,7 @@ const HOUR = 3_600_000;
 const T0 = Date.UTC(2026, 9, 11, 12);
 
 /** A profile researching Heart Door Resilience's first level (8 hours) from T0,
- * holding `cells` Cells. */
+ * holding `cells` Lore. */
 function researching(cells = 10_000) {
   const save = defaults();
   save.upgrades.archives = 1;
@@ -47,7 +47,7 @@ test("the countdown moves on as it shows another second: every second, or a Spee
   assert.equal(nextCountdownIn({ autoContinue: false }, T0), undefined, "an idle archivist has none");
 });
 
-test("Speed Ups cost 15, 75, 450 and 3,150 Cells an hour by factor", () => {
+test("Speed Ups cost 15, 75, 450 and 3,150 Lore an hour by factor", () => {
   assert.deepEqual(SPEED_UP_FACTORS.map((f) => CELLS_PER_HOUR[f]), [15, 75, 450, 3150]);
   assert.equal(speedUpCells(4, 24), 75_600);
   assert.equal(speedUpCells(1.5, 8), 120);
@@ -104,10 +104,10 @@ test("a Speed Up waits while its archivist is idle, and carries on with the next
   assert.equal(slot.speedUp!.endsAt, T0 + 11 * HOUR + 40 * 60_000);
 });
 
-test("one Speed Up at a time, only on a busy archivist, and only with the Cells", () => {
+test("one Speed Up at a time, only on a busy archivist, and only with the Lore", () => {
   const save = researching(100);
   const slot = save.archives.slots[0];
-  assert.equal(startSpeedUp(save, slot, 2, 4, false, T0), false, "300 Cells needed");
+  assert.equal(startSpeedUp(save, slot, 2, 4, false, T0), false, "300 Lore needed");
   assert.equal(save.cells, 100);
   assert.ok(startSpeedUp(save, slot, 1.5, 1, false, T0));
   assert.equal(startSpeedUp(save, slot, 1.5, 1, false, T0), false, "one is in progress");
@@ -117,7 +117,7 @@ test("one Speed Up at a time, only on a busy archivist, and only with the Cells"
   assert.equal(startSpeedUp(save, slot, 1.5, 1, false, T0), false, "an idle archivist");
 });
 
-test("a queued Speed Up buys itself again as it ends, while the Cells are there", () => {
+test("a queued Speed Up buys itself again as it ends, while the Lore is there", () => {
   const save = researching(160);
   const slot = save.archives.slots[0];
   assert.ok(startSpeedUp(save, slot, 2, 1, true, T0));
@@ -125,7 +125,7 @@ test("a queued Speed Up buys itself again as it ends, while the Cells are there"
   assert.equal(save.cells, 10, "bought again at its end");
   assert.equal(slot.speedUp?.endsAt, T0 + 2 * HOUR);
   settleArchives(save, T0 + 2 * HOUR);
-  assert.equal(slot.speedUp, undefined, "10 Cells can't buy another");
+  assert.equal(slot.speedUp, undefined, "10 Lore can't buy another");
   // 2 hours at 2x: 4 hours' research in 2, so 4 more to go.
   assert.equal(slot.job!.completesAt, T0 + 6 * HOUR);
 });
@@ -174,7 +174,7 @@ test("a Speed Up survives a save round trip, and a malformed one is dropped", ()
 
 const enemy = (strength: Enemy["strength"]): Enemy => ({ name: "Test", hp: 10, attack: 1, defense: 0, strength });
 
-test("a Greater Boss drops 1 Cell in Tower I, from 1 to the tower's number later, scaled by a badge, once per kill", () => {
+test("a Greater Boss drops 1 Lore in Tower I, from 1 to the tower's number later, scaled by a badge, once per kill", () => {
   const purse = (tier: number, draws: number[]) => {
     const g = new Game(defaults());
     g.newRun({ seed: 3, height: 9 });

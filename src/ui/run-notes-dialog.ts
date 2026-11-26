@@ -57,7 +57,7 @@ export function notesSections(save: Save, mode: Mode, run: Run, now: number): No
       ["ATK shards", amount(notes.attackShards)],
       ["DEF shards", amount(notes.defenseShards)],
       ["Gems", amount(finds.gems)],
-      ["Cells", amount(finds.cells)],
+      ["Lore", amount(finds.cells)],
       ["Equipment", amount(finds.equipment)],
     ] },
   ];

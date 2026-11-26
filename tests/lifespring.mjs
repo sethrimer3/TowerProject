@@ -55,7 +55,7 @@ try {
   await expect(card.locator(".arcana-cooldown span")).toHaveText("100");
   await card.locator(".drill-name").click();
   const modal=page.locator("dialog[open]");
-  for(const name of ["HP Pool","Health Bonus","Damage Amplification","Gold Bonus","Cell Bonus","DEF Reduction"])await expect(modal.getByRole("cell",{name,exact:true})).toBeVisible();
+  for(const name of ["HP Pool","Health Bonus","Damage Amplification","Gold Bonus","Lore Bonus","DEF Reduction"])await expect(modal.getByRole("cell",{name,exact:true})).toBeVisible();
   await modal.screenshot({path:`${OUT}/card.png`});
   await page.keyboard.press("Escape");
   await expect(modal).toHaveCount(0);

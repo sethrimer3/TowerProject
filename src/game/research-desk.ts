@@ -97,15 +97,15 @@ export class ResearchDesk {
     return this.settle();
   }
 
-  /** The Cells a Speed Up of `factor` for `hours` costs (none with Dev
+  /** The Lore a Speed Up of `factor` for `hours` costs (none with Dev
    * free purchases). */
   speedUpCells(factor: SpeedUpFactor, hours: SpeedUpHours) {
     return this.host.free ? 0 : speedUpCells(factor, hours);
   }
 
   /** Speeds busy archivist `slot`'s research up by `factor` for `hours`,
-   * paying its Cells; `queued` buys it again each time it ends while the
-   * Cells are there. False while one is in progress or the Cells fall short. */
+   * paying its Lore; `queued` buys it again each time it ends while the
+   * Lore is there. False while one is in progress or the Lore falls short. */
   speedUp(slot: number, factor: SpeedUpFactor, hours: SpeedUpHours, queued: boolean) {
     this.settle();
     return this.open && startSpeedUp(this.save, this.save.archives.slots[slot], factor, hours, queued, this.host.clock());
@@ -121,7 +121,7 @@ export class ResearchDesk {
   }
 
   /** The Speed Up archivist `slot`'s queued one buys as it ends: `factor`
-   * for `hours`, its Cells paid then. False unless one is in progress and
+   * for `hours`, its Lore paid then. False unless one is in progress and
    * queued. */
   queueNextSpeedUp(slot: number, factor: SpeedUpFactor, hours: SpeedUpHours) {
     return this.open && queueNextSpeedUp(this.save.archives.slots[slot], factor, hours);

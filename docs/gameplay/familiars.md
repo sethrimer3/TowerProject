@@ -79,7 +79,7 @@ Damage predictions count you without it, as the worst case.
 
 It circles the floor, 50 turns a circuit, its circle slowly drifting round the middle.
 While its effect lasts, a golden circle follows it, and an enemy killed inside pays Bonus times the Gold, however it fell.
-Silver, Cells and drops aren't multiplied.
+Silver, Lore and drops aren't multiplied.
 
 ### Support Wisp
 

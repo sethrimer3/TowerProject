@@ -267,8 +267,8 @@ export const RESEARCH_TARGETS = {
   lifespringGold: { name: "Gold Bonus", base: 150, shown: (n: number) => `×${n / 100}` },
   /** Lifespring's Damage Amplification a wave, in tenths: ×5 untrained, ×1.5 more a level. */
   lifespringAmplify: { name: "Damage Amplification", base: 50, shown: (n: number) => `×${n / 10}` },
-  /** Lifespring's Cell Bonus, in tenths: ×1 untrained (no Cells more), ×0.1 more a level. */
-  lifespringCells: { name: "Cell Bonus", base: 10, shown: (n: number) => `×${n / 10}` },
+  /** Lifespring's Lore Bonus, in tenths: ×1 untrained (no Lore more), ×0.1 more a level. */
+  lifespringCells: { name: "Lore Bonus", base: 10, shown: (n: number) => `×${n / 10}` },
   /** What Aurum Bloom's Bonus gains (ArcanaDesk.valuesOf), in hundredths: none untrained, ×0.15 more a level. */
   aurumBloomBonus: { name: "Bonus", base: 0, shown: (n: number) => `+${(n / 100).toFixed(2)}×` },
   /** What Aurum Bloom's Golden Chance gains (ArcanaDesk.valuesOf), in whole percent: none untrained, 1 more a level. */
@@ -542,7 +542,7 @@ const LIFESPRING_AMPLIFY_TIMES: readonly [days: number, hours: number, minutes: 
   [25, 21, 10, 10], [28, 23, 42, 35], [32, 11, 11, 42], [36, 8, 41, 54], [40, 17, 25, 20], [45, 14, 42, 47], [51, 2, 4, 43], [57, 5, 12, 29], [64, 1, 59, 35], [71, 18, 33, 8],
   [80, 9, 15, 31], [90, 0, 46, 11], [100, 20, 3, 43], [112, 22, 28, 10], [126, 11, 43, 33], [141, 16, 0, 47], [158, 16, 0, 52], [177, 16, 58, 34], [199, 0, 46, 25], [222, 21, 59, 11],
 ];
-/** Lifespring Cell Bonus research: ×0.1 more Cells a level, for 20 levels, from ×1.1 to ×3. */
+/** Lifespring Lore Bonus research: ×0.1 more Lore a level, for 20 levels, from ×1.1 to ×3. */
 const LIFESPRING_CELLS_GOLD = [
   1_000_000_000, 1_500_000_000, 2_250_000_000, 3_380_000_000, 5_060_000_000, 7_590_000_000, 11_390_000_000, 17_090_000_000, 25_630_000_000, 38_440_000_000,
   57_670_000_000, 86_500_000_000, 129_750_000_000, 194_620_000_000, 291_930_000_000, 437_890_000_000, 656_840_000_000, 985_260_000_000, 1_480_000_000_000, 2_220_000_000_000,
@@ -1437,8 +1437,8 @@ export const RESEARCH = {
     levels: scheduled("lifespringAmplify", 15, LIFESPRING_AMPLIFY_GOLD, LIFESPRING_AMPLIFY_TIMES),
   },
   lifespringCells: {
-    name: "Lifespring Cell Bonus",
-    description: "Enemies hit by Effect Waves or Lifespring's field drop more of their Cells.",
+    name: "Lifespring Lore Bonus",
+    description: "Enemies hit by Effect Waves or Lifespring's field drop more of their Lore.",
     categories: ["arcana", "economy"],
     requires: [{ upgrade: "archives" }, { upgrade: "lifespringResearch" }],
     levels: scheduled("lifespringCells", 1, LIFESPRING_CELLS_GOLD, LIFESPRING_CELLS_TIMES),
@@ -1694,7 +1694,7 @@ export type ArchivesOwner = RelicHolder & {
   gold: number;
   /** Gems, which hire archivists. */
   gems: number;
-  /** Cells, which buy Speed Ups. */
+  /** Lore, which buys Speed Ups. */
   cells: number;
   /** The lifetime tallies, which count research completed and the Gold
    * paid for it. */

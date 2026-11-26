@@ -222,7 +222,7 @@ function currencies(src: CodexSource): CodexCategory {
     row(s.profile.earned.rubies > 0 || s.upgrades.breakthrough > 0, "rubies", "Rubies", "Dropped by bosses. Ascend your cards to higher rarities.", s.rubies),
     row(s.profile.earned.arcanite > 0 || s.arcanite > 0, "arcanite", "Arcanite", "Rare crystals that buy and strengthen Arcana.", s.arcanite),
     row(s.profile.earned.medals > 0 || src.events, "medals", "Medals", "Paid by missions. Spent in Event stores.", s.medals),
-    row(s.profile.earned.cells > 0, "cells", "Cells", "Dropped by Greater Bosses. Speed up research.", s.cells),
+    row(s.profile.earned.cells > 0, "cells", "Lore Fragments", "Dropped by Greater Bosses. Speed up research.", s.cells),
     row(src.tournament, "tickets", "Tournament Tickets", "Enter tournaments in the Delve.", s.tournament.tickets),
     row(s.equipment.unlocked, "equip-tickets", "Equipment Tickets", "Each pays for one equipment pull.", s.equipment.tickets),
     row(isChampion(s), "vip", "VIP Points", "Earned with every Shop purchase.", s.vip),
@@ -398,7 +398,7 @@ const ARCHIVES_HOW: CodexEntry[] = [
   { id: "repeat", icon: { kind: "mark", id: "repeat" }, name: "Auto-continue", brief: "Tick the box with this icon to start the next level as soon as one completes, while you have the Gold." },
   { id: "switch", icon: { kind: "mark", id: "stop" }, name: "Switch projects", brief: "Switch a busy archivist to another project. You get your Gold back, and the progress is saved for later." },
   { id: "archivists", icon: { kind: "kit", id: "book" }, name: "More archivists", brief: "Hire more archivists with Gems to research several projects at once." },
-  { id: "cells", icon: { kind: "currency", id: "cells" }, name: "Speed Ups", brief: "Spend Cells, dropped by Greater Bosses, to make research go faster." },
+  { id: "cells", icon: { kind: "currency", id: "cells" }, name: "Speed Ups", brief: "Spend Lore, dropped by Greater Bosses, to make research go faster." },
 ];
 
 /** An entry's rank, with what it adds once there is one. */

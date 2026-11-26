@@ -28,8 +28,8 @@ const DAMAGE_RISE = 0.9;
 const DAMAGE_START = 0.35;
 /** Rewards without a sprite are written in the feedback text's gold. */
 const REWARD_COLOR = "#f3d69a";
-/** A Cell's yellow, its triangle and its amount alike. */
-const CELL_COLOR = "#ffd83a";
+/** Lore's clay, the colour of its amount on the board. */
+const CELL_COLOR = "#e1bb78";
 /** Damage the hero deals and the darker damage it takes; HP it heals rises
  * in the labels' blue, `HEAL_COLOR`. */
 const DAMAGE_COLOR = "#ff4040";
@@ -518,7 +518,7 @@ function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gai
   if ("tile" in art) return paintSpentTile(c, f, p, art);
   if ("gem" in art) return drawGemArt(c, art.kind ?? "plain", f.now, true, !!f.look.styledSprites);
   if ("cell" in art) {
-    // The amount, then the Cell: "+3 ▲" in place of "+3 Cells".
+    // The amount, then Lore's tablet in place of the word "Lore".
     if (!(f.look.styledSprites && drawKit(c, "cell"))) paintCell(c);
     mark(c, p.gain.text.split(" ")[0], { x: 10, y: 12 }, { color: CELL_COLOR, size: 10, align: "right", styled: f.look.styledSprites });
     return;
@@ -574,18 +574,23 @@ function paintRuby(c: CanvasRenderingContext2D) {
   c.stroke();
 }
 
-/** A Cell's yellow triangle, filling the same 18 px square as a coin. */
+/** Lore's clay tablet, chipped at its top right and scored with wedges,
+ * filling the same 18 px square as a coin. */
 function paintCell(c: CanvasRenderingContext2D) {
   c.beginPath();
-  c.moveTo(20, 4);
-  c.lineTo(28.5, 19);
-  c.lineTo(11.5, 19);
+  c.moveTo(13, 4);
+  c.lineTo(23, 4);
+  c.lineTo(27, 8);
+  c.lineTo(27, 20);
+  c.lineTo(13, 20);
   c.closePath();
-  c.fillStyle = CELL_COLOR;
+  c.fillStyle = "#b28a52";
   c.fill();
   c.lineWidth = 1.2;
-  c.strokeStyle = "#5a4200";
+  c.strokeStyle = "#29251f";
   c.stroke();
+  c.fillStyle = "#493a2c";
+  for (let row = 0; row < 4; row++) for (let col = 0; col < 3; col++) c.fillRect(15 + col * 3.6, 7 + row * 3.4, 2.4, 1.4);
 }
 
 /** A 12×12 pixel icon (Equipment's) filling the same 18 px square as a

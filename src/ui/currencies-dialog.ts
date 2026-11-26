@@ -17,7 +17,7 @@ export type CurrencyRow = { id: string; icon: string; name: string; value: strin
 
 /** Every currency the player holds, in the dialog's order: Gold, Gems,
  * Rubies (once one is had), Arcanite, Medals, VIP Points (for a Champion), the run's Silver, Training Points, Inspiration
- * and Breakthrough, then Cells, Tournament, Equipment and One Piece Tickets (once one is had) and each Equipment material. Each shows
+ * and Breakthrough, then Lore, Tournament, Equipment and One Piece Tickets (once one is had) and each Equipment material. Each shows
  * once the system behind it is open (all of them in Dev mode), so the list
  * never names what the player hasn't reached. */
 export function currencyRows(game: Game): CurrencyRow[] {
@@ -34,7 +34,7 @@ export function currencyRows(game: Game): CurrencyRow[] {
     [true, "training", pointsIcon(), "Training Points", trainingPoints(save).left],
     [true, "inspiration", uiSprite("inspiration"), "Inspiration", save.tower.inspiration],
     [!!save.upgrades.breakthrough, "breakthrough", uiSprite("breakthrough"), "Breakthrough", save.breakthrough],
-    [save.profile.earned.cells > 0, "cells", cellIcon(), "Cells", save.cells],
+    [save.profile.earned.cells > 0, "cells", cellIcon(), "Lore Fragments", save.cells],
     [game.tournament.unlocked, "tickets", ticketIcon(), "Tournament Tickets", save.tournament.tickets],
     [save.equipment.unlocked, "equip-tickets", equipTicketIcon(), "Equipment Tickets", save.equipment.tickets],
     [save.champion.ticketsClaimed > 0, "one-piece", onePieceIcon(), "One Piece Tickets", save.champion.tickets],

@@ -7,7 +7,7 @@ export type SpeedUpFactor = (typeof SPEED_UP_FACTORS)[number];
 /** How long a Speed Up lasts, in hours. */
 export const SPEED_UP_HOURS = [1, 4, 8, 24] as const;
 export type SpeedUpHours = (typeof SPEED_UP_HOURS)[number];
-/** The Cells each factor costs an hour. */
+/** The Lore each factor costs an hour. */
 export const CELLS_PER_HOUR: Record<SpeedUpFactor, number> = { 1.5: 15, 2: 75, 3: 450, 4: 3150 };
 
 const HOUR = 3_600_000;
@@ -18,20 +18,20 @@ const HOUR = 3_600_000;
  * with no boost from then on; while the archivist is idle it is paused,
  * `endsAt` moving on with the clock, so only time spent researching uses
  * it up. `queued` buys the same Speed Up again as it
- * ends, while the Cells are there, or `next`, another chosen meanwhile. */
+ * ends, while the Lore is there, or `next`, another chosen meanwhile. */
 export type SpeedUp = {
   factor: SpeedUpFactor; hours: SpeedUpHours; endsAt: number; appliedUntil: number; queued: boolean;
   next?: { factor: SpeedUpFactor; hours: SpeedUpHours };
 };
 
-/** The Cells a Speed Up of `factor` for `hours` costs. */
+/** The Lore a Speed Up of `factor` for `hours` costs. */
 export const speedUpCells = (factor: SpeedUpFactor, hours: SpeedUpHours) => CELLS_PER_HOUR[factor] * hours;
 
-/** What paying for a Speed Up reads: the Cells held and Dev free purchases. */
+/** What paying for a Speed Up reads: the Lore held and Dev free purchases. */
 export type CellPurse = { cells: number; settings: { freePurchases: boolean } };
 
 /** Pays for `speedUp`'s factor and hours from `o`; false, paying nothing,
- * when the Cells fall short. */
+ * when the Lore falls short. */
 function pay(o: CellPurse, factor: SpeedUpFactor, hours: SpeedUpHours) {
   if (o.settings.freePurchases) return true;
   const cells = speedUpCells(factor, hours);
@@ -40,16 +40,16 @@ function pay(o: CellPurse, factor: SpeedUpFactor, hours: SpeedUpHours) {
   return true;
 }
 
-/** Why `slot` can't take a Speed Up now, or null when it can (Cells aside). */
+/** Why `slot` can't take a Speed Up now, or null when it can (Lore aside). */
 export function cannotSpeedUp(slot: ArchivistSlot | undefined) {
   if (!slot?.job) return "That archivist is idle.";
   if (slot.speedUp) return "A Speed Up is already in progress.";
   return null;
 }
 
-/** Starts a Speed Up on busy archivist `slot` at `now`, paying its Cells.
+/** Starts a Speed Up on busy archivist `slot` at `now`, paying its Lore.
  * False when one is already in progress, the archivist is idle, or the
- * Cells fall short. The slot's boost must be carried to `now` first. */
+ * Lore falls short. The slot's boost must be carried to `now` first. */
 export function startSpeedUp(o: CellPurse, slot: ArchivistSlot | undefined, factor: SpeedUpFactor, hours: SpeedUpHours, queued: boolean, now: number) {
   if (!slot || cannotSpeedUp(slot) || !pay(o, factor, hours)) return false;
   slot.speedUp = { factor, hours, endsAt: now + hours * HOUR, appliedUntil: now, queued };
@@ -109,7 +109,7 @@ export function queueNextSpeedUp(slot: ArchivistSlot | undefined, factor: SpeedU
 
 /** `slot`'s Speed Up ends at `at` (only ever while the archivist is busy):
  * a queued one buys its `next`, or itself again, from there while the
- * Cells are there; otherwise it is gone. */
+ * Lore is there; otherwise it is gone. */
 export function endSpeedUp(o: CellPurse, slot: ArchivistSlot, at: number) {
   const s = slot.speedUp!, next = s.next ?? s;
   delete slot.speedUp;

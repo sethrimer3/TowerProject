@@ -105,7 +105,7 @@ function boltStrike(s: TrialState, a: NonNullable<TrialState["arcana"]>, t: Targ
 /** Lifespring's part of a turn: its cooldown, its Effect Wave or its field forming,
  * then the field on what stands in it, closest first. Every wave counts for
  * everything in the arena, even what came after it, and nothing there pays a
- * kill, so its Gold, Cell and Health Bonuses find nothing to raise. */
+ * kill, so its Gold, Lore and Health Bonuses find nothing to raise. */
 function lifespringTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, { hp, waves, turns, reach, amplify }: NonNullable<TrialSpells["lifespring"]>, strikes: TrialStrike[]) {
   const spring = (a.lifespring ??= {}), hero = s.player;
   a.springStep = stepLifespring(spring, { waves, turns, amount: hp * hero.attack });

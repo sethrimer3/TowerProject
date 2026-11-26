@@ -52,7 +52,7 @@ export type ModeSave<R extends Run = Run> = {
    * beside `runGold`. */
   runCurrency: number;
   /** What the current run found for good (materials,
-   * Cells, Gems, equipment), for its notes (run-notes.ts), kept beside
+   * Lore, Gems, equipment), for its notes (run-notes.ts), kept beside
    * `runGold`. */
   runFinds: RunFinds;
   /** What the current run has done with its arcana (arcana/arcana.ts), kept
@@ -113,7 +113,7 @@ export type Save = {
   /** Champion Status's own state (shop/champion.ts): the Daily Training
    * Points' last claim and the One Piece Tickets; kept by Erase All. */
   champion: ChampionSave;
-  /** Cells: dropped by Greater Bosses, kept between runs with their
+  /** Lore: dropped by Greater Bosses, kept between runs with their
    * fractions (a badge's scale can change a drop), spent on the Archives'
    * Speed Ups (progression/speed-ups.ts). */
   cells: number;

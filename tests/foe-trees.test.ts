@@ -112,7 +112,7 @@ test("BOSS ENEMY's Takedown and Tangle cut bosses and Greater Bosses both, besid
   assert.deepEqual(g.run.player.tangle, { boss: 15, greaterBoss: 21 });
 });
 
-test("an enemy card's drops: upgrade materials by Salvage (Instakill Salvage on an Instakill), a piece by Equipment Drop, Cells", () => {
+test("an enemy card's drops: upgrade materials by Salvage (Instakill Salvage on an Instakill), a piece by Equipment Drop, Lore", () => {
   const salvage = purse(["nonBossEnemy"], { nonBossEnemy: { nonBossEnemyInstakillMaterial: 1 } }, 0).purse;
   assert.deepEqual(salvage.enemyLoot(foe("weak"), 2, 2).equipment, [], "Instakill Salvage only on an Instakill");
   const [materials] = salvage.enemyLoot(foe("weak"), 3, 3, 1, true).equipment;
@@ -125,7 +125,7 @@ test("an enemy card's drops: upgrade materials by Salvage (Instakill Salvage on 
   locked.g.save.equipment.unlocked = false;
   assert.deepEqual(locked.purse.enemyLoot(foe("elite"), 2, 2).equipment, [], "nothing before Equipment opens");
   const boss = purse(["bossEnemy"], { bossEnemy: { bossEnemyCells: 3 } }).purse;
-  assert.equal(boss.enemyLoot(foe("boss"), 2, 2).cells, 3, "a boss's Cells, its own");
+  assert.equal(boss.enemyLoot(foe("boss"), 2, 2).cells, 3, "a boss's Lore, its own");
   assert.equal(boss.enemyLoot(foe("greaterBoss"), 3, 3).cells, 4, "a Greater Boss's 1 in tower I, and BOSS's 3");
   assert.equal(boss.enemyLoot(foe("elite"), 4, 4).cells, 0);
 });

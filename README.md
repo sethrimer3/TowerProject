@@ -27,7 +27,7 @@ The player-facing rules, in full, one topic a page:
 | [The hand and cards](docs/gameplay/hand-and-cards.md) | The hand and every card, card levels, rarity, ascension and powers, the Deck page, pressing a card, Ignore and Target, Badges |
 | [Upgrades](docs/gameplay/upgrades.md) | The skill trees' tabs, prices and help, Critical |
 | [Gear and Equipment](docs/gameplay/gear-and-equipment.md) | Provisions, the Blacksmith and Equipment |
-| [The Archives](docs/gameplay/archives.md) | Archivists, Rush, Cells and Speed Up, the library |
+| [The Archives](docs/gameplay/archives.md) | Archivists, Rush, Lore and Speed Up, the library |
 | [Skills and stats](docs/gameplay/skills-and-stats.md) | Shroud, potions, Silver and Gold skills, Free Training, Buy Quantity, Revive, Angel Wings, Thorns, Parry |
 | [The Aether Shield](docs/gameplay/aether-shield.md) | The shield, its bar and bubble, regrowing, its training and research |
 | [Fights](docs/gameplay/fights.md) | How a fight plays out, Fast, Ranged, Flying and Shielded monsters, the Archer, kill pay, fractions |

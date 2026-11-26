@@ -39,7 +39,7 @@ export const UPGRADES = [
   { id: "life", name: "Life", description: "Reveal revive skills in the Inspiration tree", base: 2, max: 1, currency: "breakthrough" },
   { id: "autoTrain", name: "Auto-Train", description: "Automatically buy stats during a run. Tap stats and categories to toggle upgrading each floor.", base: 2, max: 1, currency: "breakthrough" },
   // The Arcana's research, opened in the Breakthrough tree under Extra Trainer.
-  { id: "lifespringResearch", name: "Lifespring Research", description: "Open Lifespring Health, Lifespring Gold Bonus, Lifespring Damage Amplifier and Lifespring Cell Bonus research", base: 5, max: 1, currency: "breakthrough" },
+  { id: "lifespringResearch", name: "Lifespring Research", description: "Open Lifespring Health, Lifespring Gold Bonus, Lifespring Damage Amplifier and Lifespring Lore Bonus research", base: 5, max: 1, currency: "breakthrough" },
   { id: "thunderboltResearch", name: "Thunderbolt Research", description: "Open Thunderbolt Amplifier and Thunderbolt Expansion research", base: 5, max: 1, currency: "breakthrough" },
   { id: "phantasmResearch", name: "Phantasm Research", description: "Open Phantasm Drain Radius, Phantasm Rotation Speed and Phantasm Stun research", base: 5, max: 1, currency: "breakthrough" },
   { id: "necroticFrostResearch", name: "Necrotic Frost Research", description: "Open Frost Radius and Necrotic Freeze research", base: 5, max: 1, currency: "breakthrough" },

@@ -105,7 +105,7 @@ test("Takedown and Tangle cut a boss as a fight with it begins, their Greater ki
   assert.equal(g.run.player.tangle, undefined);
 });
 
-test("CHEST's Double and Triple multiply a chest's Gold and finds, TORCH's Chest Cells adds a Greater Boss's, Rarity Up raises a piece", () => {
+test("CHEST's Double and Triple multiply a chest's Gold and finds, TORCH's Chest Lore adds a Greater Boss's, Rarity Up raises a piece", () => {
   const g = new Game(defaults());
   g.newRun({ seed: 7 });
   g.save.equipment.unlocked = true;
@@ -129,7 +129,7 @@ test("CHEST's Double and Triple multiply a chest's Gold and finds, TORCH's Chest
   assert.deepEqual(run.chestRoll(1, 0), { multiplier: 6, cells: true });
   assert.ok(run.move(1, 0));
   assert.ok(run.gains.some((gain) => gain.text === "×6" && gain.art && "multiplier" in gain.art));
-  assert.match(run.message, /×6 · \+[\d.,]+ Gold · \+12 Silver · \+1 Cell/);
+  assert.match(run.message, /×6 · \+[\d.,]+ Gold · \+12 Silver · \+1 Lore/);
   assert.deepEqual(corridor([], {}).chestRoll(1, 0), { multiplier: 1, cells: false });
 });
 

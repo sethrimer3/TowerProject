@@ -207,7 +207,7 @@ test("boosts tap XP, Card XP and Game Speed while they run", () => {
   assert.equal(g.moveRate, 0, "a paused hero stays paused");
 });
 
-test("Rubies and Cells: those found are ×1.5 while their boost runs", () => {
+test("Rubies and Lore: those found are ×1.5 while their boost runs", () => {
   const save = defaults();
   const purse = new RunPurse(save, "tower", save.tower.run ?? defaults().tower.run!, () => 0.5, NOW);
   assert.equal(purse.bankRubies(2), 2);

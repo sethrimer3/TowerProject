@@ -20,7 +20,7 @@ export type BoostOwner = {
   equipment: { unlocked: boolean };
   trainers: number;
   entitlements?: EntitlementId[];
-  /** What the profile has earned, for the Rubies and Cells boosts. */
+  /** What the profile has earned, for the Rubies and Lore boosts. */
   profile: { earned: { rubies: number; cells: number } };
 };
 
@@ -52,7 +52,7 @@ export const scarabCooldown = (save: Pick<BoostOwner, "archives">) => researched
 /** Whether a Golden Scarab may give boost `id` now: what it speeds up is
  * open (research once the Archives are, training once a trainer is hired,
  * End Rush once its skill is owned, Equipment drops once Equipment is open,
- * the Gem Bank once the GEM card is, Rubies and Cells once one has been
+ * the Gem Bank once the GEM card is, Rubies and Lore once one has been
  * earned), and Game Speed only while the speed arrows can still go faster
  * than they reach. */
 export function boostOpen(save: BoostOwner, id: BoostId) {

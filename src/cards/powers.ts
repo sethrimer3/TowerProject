@@ -139,13 +139,13 @@ export type PowerStat =
   | "takedown" | "tangle" | "greaterTakedown" | "greaterTangle"
   /** ATK, DEF and the shroud in fights with a Greater Boss, and its kill's Gold. */
   | "bossAttack" | "bossDefense" | "bossShroud" | "bossGold"
-  /** Flat: Cells more from each Greater Boss, before a badge's scale. */
+  /** Flat: Lore more from each Greater Boss, before a badge's scale. */
   | "bossCells"
   /** Each treasure chest's Gold. */
   | "chestGold"
   /** Flat: Silver found with each treasure chest opened, before Silver Bonus. */
   | "chestSilver"
-  /** Flat: the percent chance a treasure chest also holds a Greater Boss's Cells. */
+  /** Flat: the percent chance a treasure chest also holds a Greater Boss's Lore. */
   | "chestCells"
   /** Flat: percentage points more chance of a Supply or an Equipment Chest. */
   | "supplyChance" | "equipmentChance"
@@ -267,7 +267,7 @@ export type FoeTreeCard = (typeof FOE_TREE_CARDS)[number];
  * Material) and of an Equipment Chest's piece from each kill (Equipment),
  * the percent of max HP each Instakill boosts it by for the run (Instakill
  * Vigor), the percent of max HP Lifesteal may heal above it, Surprise
- * Attack's chance, Cells from each kill, the percents of its max HP
+ * Attack's chance, Lore from each kill, the percents of its max HP
  * (Takedown) and ATK (Tangle) a boss or Greater Boss loses as a fight with
  * it begins, and the percent chance a Fast enemy loses its first strike
  * (First Strike); and Charge Shot, percent more Charged Shot for the
@@ -457,7 +457,7 @@ export const CARD_POWERS: Partial<Record<CardId, readonly CardPower[]>> = {
     p("base", "ATK vs Bosses", { bossEnemyAttack: 5 }),
     p("common", "Crit % vs Bosses", { bossEnemyCritChance: 3 }),
     p("uncommon", "Crit Factor vs Bosses", { bossEnemyCritFactor: 4 }),
-    p("rare", "Boss Cells", { bossEnemyCells: 1 }),
+    p("rare", "Boss Lore", { bossEnemyCells: 1 }),
     p("epic", "Boss Rubies", { bossRubies: 0.2 }),
     p("legendary", "Equipment drop chance", { bossEnemyEquipment: 0.3 }),
     p("mythic", "Takedown", { bossEnemyTakedown: 3 }),
@@ -502,8 +502,8 @@ export const CARD_POWERS: Partial<Record<CardId, readonly CardPower[]>> = {
   torch: [
     p("base", "Torch Loot", { torchGold: 0.1, torchSilver: 0.1 }),
     p("common", "Greater Boss Gold", { bossGold: 2 }),
-    p("uncommon", "Greater Boss Cells", { bossCells: 1 }),
-    p("rare", "Chest Cells chance", { chestCells: 1 }),
+    p("uncommon", "Greater Boss Lore", { bossCells: 1 }),
+    p("rare", "Chest Lore chance", { chestCells: 1 }),
     p("epic", "Greater Boss Tangle", { greaterTangle: 3 }),
     p("legendary", "Greater Boss Takedown", { greaterTakedown: 3 }),
     p("mythic", "Revive chance", { reviveChance: 0.5 }),

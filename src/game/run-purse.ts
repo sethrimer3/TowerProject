@@ -47,7 +47,7 @@ export type EquipmentLoot = {
 
 /** What a treasure chest's own rolls add (`RunPurse.treasure`): how many
  * times over it pays (CHEST's Double and Triple), and whether it holds a
- * Greater Boss's Cells (TORCH's Chest Cells). */
+ * Greater Boss's Lore (TORCH's Chest Lore). */
 export type ChestRoll = { multiplier: number; cells: boolean };
 export const PLAIN_ROLL: ChestRoll = { multiplier: 1, cells: false };
 /** What a floor's environments multiply the Gold and Silver found on it by. */
@@ -294,7 +294,7 @@ export class RunPurse {
     return foe === 1 && relic === 1 && worn === 1 ? gold : snap(gold * foe * relic * worn);
   }
 
-  /** An enemy's Gold (by its strength), a Greater Boss's Cells and those the
+  /** An enemy's Gold (by its strength), a Greater Boss's Lore and those the
    * enemy cards' trees add, and what those trees' drops find toward
    * Equipment, once per physical kill: a Supply Chest's upgrade materials
    * by their Salvage chance (Instakill Salvage's too for an `instakill`),
@@ -302,7 +302,7 @@ export class RunPurse {
    * Equipment is open. `spotlight` is Overseer Gold Bonus's factor for a
    * kill in Overseer's beams (`Game.spotlightGold`), its Gold alone.
    * `drops` (the gifts' ×3 and ×5, `dropMultiplier`) multiplies all of it:
-   * the Gold, Cells and Rubies, and the chances of each Equipment drop. */
+   * the Gold, Lore and Rubies, and the chances of each Equipment drop. */
   enemyLoot(enemy: Enemy, x: number, y: number, scale = 1, instakill = false, spring?: { gold: number; cells: number }, spotlight = 1, drops = 1): { gold: number; cells: number; rubies: number; equipment: EquipmentLoot[] } {
     if (!this.loot(this.killKey(enemy, x, y))) return { gold: 0, cells: 0, rubies: 0, equipment: [] };
     // Effective or Dampen on the card that took the fight scales it; `gold`
@@ -310,7 +310,7 @@ export class RunPurse {
     const base = this.withCombo(this.killGold(enemy, instakill)), raised = snap(base * scale * drops * (spring?.gold ?? 1) * spotlight);
     const gold = this.gold(raised, this.payAt(x, y)), more = foeStat(this.tree, enemy, "Cells"), scaled = snap(scale * drops);
     const cells = enemy.strength === "greaterBoss" ? this.cells(scaled, more) : more ? this.bankCells(snap(more * scaled)) : 0;
-    // Lifespring's Cell Bonus: more of the Cells an enemy it touched drops, if it drops any.
+    // Lifespring's Lore Bonus: more of the Lore an enemy it touched drops, if it drops any.
     const extra = cells && spring?.cells ? this.bankCells(snap(cells * spring.cells)) : 0;
     return { gold, cells: snap(cells + extra), rubies: this.bossRubies(enemy, x, y, drops), equipment: this.killDrops(enemy, instakill, drops) };
   }
@@ -370,17 +370,17 @@ export class RunPurse {
     return found;
   }
 
-  /** A Greater Boss's Cells, banked in the save: a whole number from 1 to
+  /** A Greater Boss's Lore, banked in the save: a whole number from 1 to
    * the tower's number, evenly (tower I's always 1, drawing nothing), and
-   * TORCH's tree's Cells more and `more` (BOSS ENEMY's), then the scale of
+   * TORCH's tree's Lore more and `more` (BOSS ENEMY's), then the scale of
    * Effective or Dampen on the card that took the fight. */
   private cells(scale: number, more = 0) {
     const found = (this.tier > 1 ? 1 + Math.floor(this.rng() * this.tier) : 1) + this.tree.bossCells + more;
     return this.bankCells(scale === 1 ? found : snap(found * scale));
   }
 
-  /** Banks `found` Cells in the save, counted toward the run's finds, a
-   * Golden Scarab's Cells boost raising them while it runs. */
+  /** Banks `found` Lore in the save, counted toward the run's finds, a
+   * Golden Scarab's Lore boost raising them while it runs. */
   private bankCells(found: number) {
     const boost = boostFactor(this.save, "cells", this.now), cells = boost === 1 ? found : snap(found * boost);
     this.save.cells = snap(this.save.cells + cells);
@@ -418,7 +418,7 @@ export class RunPurse {
    * Standard piece, once Equipment is open. CHEST's Double and Triple
    * (`roll.multiplier`) multiply its Gold and materials, and give that many
    * pieces (the first in `equipment`, the rest in `more`); TORCH's Chest
-   * Cells (`roll.cells`) add a Greater Boss's Cells. */
+   * Lore (`roll.cells`) add a Greater Boss's Lore. */
   treasure(x: number, y: number, kind: ChestKind = "plain", roll: ChestRoll = PLAIN_ROLL): { gold: number; kind: ChestKind; equipment: EquipmentLoot | null; more: EquipmentLoot[]; cells: number } | null {
     if (!this.loot(this.lootKey(x, y))) return null;
     const rules = this.rules, floor = rules.equivalentFloor(rules.progressAt(this.run, y)), times = roll.multiplier;

@@ -459,7 +459,7 @@ A find that turns up on a floor every 15 minutes of real time (less with Golden 
 _Avoid_: beetle, bug
 
 **Boost**:
-A temporary speed-up of progress, never of the hero's strength, counting down in real time: a Golden Scarab's (Gold, XP, Card XP, Research Speed, Training Speed, Game Speed, End Rush, Equipment Drops, Gem Bank Refill, Rubies, Cells), shown with the Level-up Boost and the Gold ad's in the boost table. More of a boost running adds its time.
+A temporary speed-up of progress, never of the hero's strength, counting down in real time: a Golden Scarab's (Gold, XP, Card XP, Research Speed, Training Speed, Game Speed, End Rush, Equipment Drops, Gem Bank Refill, Rubies, Lore), shown with the Level-up Boost and the Gold ad's in the boost table. More of a boost running adds its time.
 _Avoid_: buff, power-up
 
 **Gold multiplier**:
@@ -607,12 +607,12 @@ _Avoid_: lab slot, researcher
 How much cheaper rushing gets for good: 1.5% for each item maxed in its tab (a research project completed for the Archives' Rush, a Training stat at its most for finishing a rank), the Gems divided by 1 plus it and rounded up.
 _Avoid_: rush discount
 
-**Cell**:
-A lasting currency, shown as a yellow triangle, that only Greater Bosses drop (more on later towers); it buys Speed Ups. The Archives show it, and their Speed Up buttons, only once the player profile has earned some.
-_Avoid_: energy, research points
+**Lore Fragment** (Lore):
+A lasting currency, shown as a clay tablet, that only Greater Bosses drop (more on later towers); it buys Speed Ups. The Archives show it, and their Speed Up buttons, only once the player profile has earned some.
+_Avoid_: Cell, Research Cell, energy, research points
 
 **Speed Up**:
-A while, bought with Cells, during which one archivist researches 1.5 to 4 times as fast; queued, it is bought again each time it ends while the Cells last. Not to be confused with Dash, which completes research at once for Gems.
+A while, bought with Lore, during which one archivist researches 1.5 to 4 times as fast; queued, it is bought again each time it ends while the Lore lasts. Not to be confused with Dash, which completes research at once for Gems.
 _Avoid_: boost (the training boost), haste
 
 **Research page**:
@@ -736,7 +736,7 @@ Research that has each boss killed (not a Greater Boss) give the hero a percent 
 _Avoid_: boss heal, boss flask
 
 **Lifespring Research**:
-The four Archives projects that raise what Lifespring's Effect Waves give: Lifespring Health (its Health Bonus's limit), Gold Bonus, Damage Amplifier and Cell Bonus.
+The four Archives projects that raise what Lifespring's Effect Waves give: Lifespring Health (its Health Bonus's limit), Gold Bonus, Damage Amplifier and Lore Bonus.
 
 **Aurum Bloom Research**:
 The two Archives projects that raise Aurum Bloom: Aurum Bloom Bonus (adding to its Bonus) and Aurum Bloom Chance (adding to its Golden Chance).

@@ -3339,7 +3339,7 @@ export class Game {
     this.message = `${this.message ? `${this.message} · ` : ""}Power Strike charged`;
   }
   /** A treasure chest's own rolls at (x, y), by its tile's fixed numbers:
-   * CHEST's Double and Triple (both: six times over), and TORCH's Chest Cells. */
+   * CHEST's Double and Triple (both: six times over), and TORCH's Chest Lore. */
   chestRoll(x: number, y: number) {
     const tree = this.powerBonus;
     const multiplier = (this.tileRolls(x, y, CHEST_DOUBLE_SALT, snap(tree.chestDouble + relicAmount(this.save, "chestDouble"))) ? 2 : 1)

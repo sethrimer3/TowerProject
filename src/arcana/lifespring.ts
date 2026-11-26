@@ -22,10 +22,10 @@ export type LifespringRun = { timer?: number; waves?: number; wait?: number; poo
 /** What Lifespring gives, as its research has raised it: Health Bonus's percent of max
  * HP an enemy a wave or the field touched pays when it falls and the factor it stops at, the field's
  * damage multiplied per wave hit (`amplify`), the factor on Gold and the
- * additional share of Cells an enemy hit pays, and the percent of DEF a wave takes off. */
+ * additional share of Lore an enemy hit pays, and the percent of DEF a wave takes off. */
 export type LifespringEffects = { healthPerKill: number; healthLimit: number; amplify: number; gold: number; cells: number; defense: number };
 /** Lifespring's effects with the Archives as `save.archives` has them: Lifespring
- * Health, Gold Bonus, Damage Amplifier and Cell Bonus each raise theirs
+ * Health, Gold Bonus, Damage Amplifier and Lore Bonus each raise theirs
  * (`RESEARCH_TARGETS`, in whole percent, hundredths or tenths, so the sums stay exact). */
 export const lifespringEffects = ({ archives }: { archives: ArchivesSave }): LifespringEffects => ({
   healthPerKill: 0.05,

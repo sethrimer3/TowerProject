@@ -162,7 +162,7 @@ test("an untouched enemy pays no Health Bonus", () => {
   assert.equal(g.run.lifespring?.health, undefined);
 });
 
-test("Gold and Cell Bonus raise a touched enemy's pay", () => {
+test("Gold and Lore Bonus raise a touched enemy's pay", () => {
   const g = arena([[2, 0]], 1);
   const pay = g.purse.enemyLoot({ ...brute, strength: "greaterBoss" }, 2, 0, 1, false, { gold: 3, cells: 1 });
   const plain = arena([[2, 0]], 1).purse.enemyLoot({ ...brute, strength: "greaterBoss" }, 2, 0);
@@ -242,7 +242,7 @@ test("the Breakthrough skill Lifespring Research opens the four Lifespring proje
   }
 });
 
-test("research raises what Lifespring gives: Gold ×1.5 untrained, up to ×12.5 Health, ×50 a wave, ×2.5 Gold and ×3 Cells", () => {
+test("research raises what Lifespring gives: Gold ×1.5 untrained, up to ×12.5 Health, ×50 a wave, ×2.5 Gold and ×3 Lore", () => {
   const s = defaults();
   assert.deepEqual(lifespringEffects(s), { healthPerKill: 0.05, healthLimit: 5, amplify: 5, gold: 1.5, cells: 0, defense: 0 });
   Object.assign(s.archives.levels, { lifespringHealth: 1, lifespringGold: 1, lifespringAmplify: 1, lifespringCells: 1 });

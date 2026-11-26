@@ -13,7 +13,7 @@ The stats show the height in their right-hand column (in the forest, the tower o
 Inside a run a tap on the currencies switches Gold and Silver to the rates the run finds them at, such as *12/min*, over the last minute of play: time the hand waits (paused, or with no card able to act) or a page or dialog covers the board doesn't count, so a pause leaves the rates as they were.
 **Arcanite** buys and upgrades [Arcana](arcana.md).
 The pages that spend currencies (Upgrades, Research, Deck, Gear, Missions and Events) show a single row at their top: Gold, Gems and Arcanite, each its icon and amount (amounts over 9,999 shortened), and a down chevron.
-The chevron opens a list of every currency held, a row each with its icon, name and amount (shortened the same way), which scrolls or swipes, and closes with the X at its top right: Gold, Gems, Rubies, Arcanite, Medals, VIP Points, Silver, Training Points, Inspiration and Breakthrough, then at the bottom Cells, Tournament Tickets and the Equipment upgrade materials, each listed once what earns it is open.
+The chevron opens a list of every currency held, a row each with its icon, name and amount (shortened the same way), which scrolls or swipes, and closes with the X at its top right: Gold, Gems, Rubies, Arcanite, Medals, VIP Points, Silver, Training Points, Inspiration and Breakthrough, then at the bottom Lore, Tournament Tickets and the Equipment upgrade materials, each listed once what earns it is open.
 The Upgrades page's Inspiration and Breakthrough tabs also read the points held, and the Events page's banner the Medals held, beside the time the event has left.
 Gold prices on buy buttons read in full up to 99,999 and shortened from 100,000 (123K, 4.56M); Silver prices on a run's training cards, and trainers' Gold prices on the Training page, are shortened from 10,000 (12.3K).
 Shortened amounts, wherever they appear, use K (thousand), M (million), B (billion), T (trillion), q (quadrillion), Q (quintillion), s (sextillion), S (septillion), O (octillion), N (nonillion) and D (decillion), always rounded down; past 999D they read as a power of ten.
@@ -128,7 +128,7 @@ Each gift is rolled: Common 48%, Uncommon 30%, Rare 14%, Epic 7%, Legendary 1% (
 
 Potions heal more, Shards give more ATK and DEF, and Keys give more of a key (1.01 at +1%).
 Provisions raise the Gear page's provisions: the Traveler's elixir heals past Max HP, the Vanguard Banner and Aegis charm raise ATK and DEF by more, each Gold Key gives more than one key, and Bombs hit harder.
-×3 and ×5 Drop Chance are each a chance that a kill drops three or five times its Gold, Silver, Cells and Rubies, and three or five times its chance of each Equipment drop; both at once drop ×15.
+×3 and ×5 Drop Chance are each a chance that a kill drops three or five times its Gold, Silver, Lore and Rubies, and three or five times its chance of each Equipment drop; both at once drop ×15.
 A Golden Floor chance from relics or gifts makes Golden Floors even before the Golden Floors skill, paying the Golden Floor Multiplier.
 The Relics page lists the gifts received, in its Gifts section.
 After its rarities, its gold **Divine** section holds the Divine Relics, unique gifts of the builders such as the [Chrono Anchor](first-steps.md#the-divine-portal); they give no bonus.

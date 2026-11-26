@@ -254,30 +254,30 @@ export class ArchivesPanel {
     return `<button class="archivist-rush${short ? " short" : ""}" data-rush="${slot}" aria-label="Rush: complete this research now for ${gemCount(gems)}" title="${short ? `Needs ${gemCount(gems)}` : `Complete now for ${gemCount(gems)}`}">Rush · ${gemIcon()} <b data-rush-gems="${slot}">${gems}</b></button>`;
   }
 
-  /** Whether the Cells and Speed Ups show: once any Cells have been found. */
+  /** Whether the Lore and Speed Ups show: once any Lore has been found. */
   private get cellsShown() {
     return this.ctx.game.save.profile.earned.cells > 0;
   }
 
-  /** The Cells held, beside the History button, once any have been found. */
+  /** The Lore held, beside the History button, once any have been found. */
   private cellsHtml() {
     if (!this.cellsShown) return "";
     const cells = whole(this.ctx.game.save.cells);
-    return `<span class="research-cells" title="Cells: ${cells.toLocaleString("en-US")}" aria-label="${cells.toLocaleString("en-US")} Cells">${cellIcon()}<b>${shortAmount(cells)}</b></span>`;
+    return `<span class="research-cells" title="Lore: ${cells.toLocaleString("en-US")}" aria-label="${cells.toLocaleString("en-US")} Lore">${cellIcon()}<b>${shortAmount(cells)}</b></span>`;
   }
 
   /** Archivist `slot`'s Speed Up in progress, its factor and time left in
-   * green, then the button opening the Speed Up dialog (once any Cells
+   * green, then the button opening the Speed Up dialog (once any Lore
    * have been found). */
   private speedUpHtml(slot: number) {
     const s = this.ctx.game.save.archives.slots[slot]?.speedUp, now = this.ctx.game.clock();
     const active = s ? `<span class="archivist-speed" title="Speed Up in progress">${s.factor}x <span data-speed-left="${slot}">${formatDuration(s.endsAt - now)}</span></span>` : "";
     if (!this.cellsShown) return active;
-    return `${active}<button class="archivist-speed-up" data-speed-up="${slot}" aria-label="Speed Up: use Cells to speed up this research" title="Use Cells to speed up research">Speed Up ${cellIcon()}</button>`;
+    return `${active}<button class="archivist-speed-up" data-speed-up="${slot}" aria-label="Speed Up: use Lore to speed up this research" title="Use Lore to speed up research">Speed Up ${cellIcon()}</button>`;
   }
 
   /** The Speed Up dialog for archivist `slot`: how long and how fast, the
-   * Cells held over what that costs, whether to buy it again as it ends,
+   * Lore held over what that costs, whether to buy it again as it ends,
    * and Speed Up. While one is in progress it shows that one, and only its
    * Queue box can change; queued, the options choose the Speed Up bought as
    * it ends, which Next Speed Up keeps (paid then). */
@@ -298,14 +298,14 @@ export class ArchivesPanel {
       const option = (kind: "hours" | "factor", value: number, label: string) =>
         `<button class="speed-up-option${choice[kind] === value ? " chosen" : ""}" data-${kind}="${value}" aria-pressed="${choice[kind] === value}" ${active && !queuing ? "disabled" : ""}>${label}</button>`;
       const confirm = queuing
-        ? `<button id="speed-up-confirm" ${unchanged ? "disabled" : ""} aria-label="Next Speed Up: ${choice.factor}x for ${choice.hours} hours, ${cells.toLocaleString("en-US")} Cells as this one ends">Next Speed Up · ${cellIcon()} <b>${shortAmount(cells, 1000)}</b></button>`
-        : `<button id="speed-up-confirm" ${active || short ? "disabled" : ""} aria-label="Speed Up for ${cells.toLocaleString("en-US")} Cells">Speed Up · ${cellIcon()} <b>${shortAmount(cells, 1000)}</b></button>`;
+        ? `<button id="speed-up-confirm" ${unchanged ? "disabled" : ""} aria-label="Next Speed Up: ${choice.factor}x for ${choice.hours} hours, ${cells.toLocaleString("en-US")} Lore as this one ends">Next Speed Up · ${cellIcon()} <b>${shortAmount(cells, 1000)}</b></button>`
+        : `<button id="speed-up-confirm" ${active || short ? "disabled" : ""} aria-label="Speed Up for ${cells.toLocaleString("en-US")} Lore">Speed Up · ${cellIcon()} <b>${shortAmount(cells, 1000)}</b></button>`;
       modal.innerHTML = `<div class="speed-up"><button id="speed-up-close" class="dialog-x" aria-label="Close" title="Close">${controlIcon("close")}</button>
         <h2>Speed Up</h2><p class="speed-up-what">${RESEARCH[job.research].name} · level ${job.level}</p><p>Use cells to speed up research</p>
         <div class="speed-up-options" role="group" aria-label="How long">${SPEED_UP_HOURS.map((h) => option("hours", h, `${h}h`)).join("")}</div>
         <div class="speed-up-options" role="group" aria-label="How fast">${SPEED_UP_FACTORS.map((f) => option("factor", f, `${f}x`)).join("")}</div>
         <p class="speed-up-choice">${queuing ? "Next: " : ""}${choice.factor}x ${choice.hours}h</p>
-        <p class="speed-up-cells${short ? " short" : ""}" aria-label="${held.toLocaleString("en-US")} Cells held, ${cells.toLocaleString("en-US")} needed">${shortAmount(held, 1000)}/${shortAmount(cells, 1000)} ${cellIcon()}</p>
+        <p class="speed-up-cells${short ? " short" : ""}" aria-label="${held.toLocaleString("en-US")} Lore held, ${cells.toLocaleString("en-US")} needed">${shortAmount(held, 1000)}/${shortAmount(cells, 1000)} ${cellIcon()}</p>
         <label class="speed-up-queue"><input type="checkbox" id="speed-up-queue" ${choice.queued ? "checked" : ""}> Queue Speed Up</label>
         <div class="dialog-actions"><button id="speed-up-close-button">Close</button>${confirm}</div>
         ${active ? `<p class="speed-up-busy">SPEED UP IN PROGRESS · ${active.factor}x ${active.hours}h</p>` : ""}</div>`;
@@ -373,7 +373,7 @@ export class ArchivesPanel {
       p("Archivists research projects whose effects last between climbs. Pick an idle archivist to choose its research; each level costs Gold and takes time.") +
       p("Research goes on while you play or are away. Each archivist works on one project at a time; Gems hire more.") +
       p(`Auto-continue (${redoIcon("redo-icon help-redo")}) starts the project's next level as soon as one completes, when the Gold is there. Research once begun can only be switched to another project, which gives its Gold back and keeps the time spent for later; Gems finish a level at once.`) +
-      (this.cellsShown ? p(`Speed Up (${cellIcon("cell-icon help-cell")}) spends Cells, which Greater Bosses drop (more on later towers), to make an archivist research faster for a while; Queue buys it again as it ends, while the Cells are there.`) : "") +
+      (this.cellsShown ? p(`Speed Up (${cellIcon("cell-icon help-cell")}) spends Lore, which Greater Bosses drop (more on later towers), to make an archivist research faster for a while; Queue buys it again as it ends, while the Lore is there.`) : "") +
       p("History lists every level completed."));
   }
 

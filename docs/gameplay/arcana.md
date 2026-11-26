@@ -173,7 +173,7 @@ It works in a trial too.
 
 The Breakthrough skill **Overseer Gold Bonus** (5 Breakthrough, right of Overseer Zap, after it) opens the Archives' **Overseer Gold Bonus** research.
 Enemies killed while they stand in Overseer's beams drop more Gold, whatever killed them: your strike, an arrow, a Thunderbolt or any other arcanum.
-Each of its 20 levels adds ×0.1, from ×1.1 at the first to ×3 at the last; it raises only their Gold, not their Silver or Cells.
+Each of its 20 levels adds ×0.1, from ×1.1 at the first to ×3 at the last; it raises only their Gold, not their Silver or Lore.
 An enemy counts if it stands in a beam as the turn begins, the same test as Overseer's Bonus, so it needs Overseer held and on.
 Once researched, Overseer's information says how much more Gold they drop.
 Both Overseer projects are listed in the Archives' **Arcana** section.
@@ -232,7 +232,7 @@ What the waves give, while Lifespring is on, by whatever means the enemy later f
 | Health Bonus | +0.05%, up to ×5 | Each enemy a wave or the field touched raises your max HP this run as it falls, once however often it was touched. Pressing the Max HP card in a run shows how far it has come. |
 | Damage Amplification | ×5 a wave | The field does this much more to an enemy for each wave that hit it: after two, ×10, so an enemy of 1,000 HP costs the pool 100. |
 | Gold Bonus | ×1.5 | The Gold of an enemy a wave or the field touched is multiplied. |
-| Cell Bonus | ×1 | The Cells of an enemy a wave or the field touched, if it drops any, are multiplied. |
+| Lore Bonus | ×1 | The Lore of an enemy a wave or the field touched, if it drops any, are multiplied. |
 | DEF Reduction | 0% | Each wave takes this percent off every enemy's DEF, even below 0. |
 
 **The field** forms 4 turns after the last wave: three spinning, overlapping, faint green rings round you that spread out as it forms and stay until the pool is spent, on every floor of the run.
@@ -264,7 +264,7 @@ Lifespring's information, in the Arcana menu and from its card in a run, has a R
 | Lifespring Health | Health Bonus up to ×5 | +25% on its limit | ×12.5 | 30 |
 | Lifespring Gold Bonus | ×1.5 | +×0.05 | ×2.5 | 20 |
 | Lifespring Damage Amplifier | ×5 a wave | +×1.5 a wave | ×50 a wave | 30 |
-| Lifespring Cell Bonus | ×1 | +×0.1 | ×3 | 20 |
+| Lifespring Lore Bonus | ×1 | +×0.1 | ×3 | 20 |
 
 Damage Amplifier counts in the Proving Grounds' trials too.
 
@@ -483,7 +483,7 @@ Its numbers show over each enemy it strikes, with its HP bar; Settings' Toggles 
 What it fells pays as any kill does.
 
 **Voidwell Gold Bonus:** an enemy killed while it stands in a vortex drops more Gold, however it was killed, bosses included, since it goes by where the enemy stands, not by the stun.
-It multiplies the other Gold bonuses, and raises only Gold, not Silver or Cells.
+It multiplies the other Gold bonuses, and raises only Gold, not Silver or Lore.
 
 **Extra Voidwell:** each activation opens a second vortex with the first, at the point opposite it across you, with the same size and turns.
 If the floor stops that point, as beside a wall or in a corner, the two open at the same distance from you as far apart as the floor allows, at least 30 degrees apart seen from you: along a wall, opposite each other along it; in a corner, at the two ends of the corner's arc. If even 30 degrees don't fit at your range, they open nearer you until they do.
@@ -501,7 +501,7 @@ It can defeat the boss and win the trial, and its damage counts toward Damage th
 **Overseer Zap** works as above, striking what stands in a beam as the turn begins.
 **Ricochet Shot** springs from your own hits there, since a trial has no arrows: each hit rolls its chance, and a ricochet strikes the closest others; with Ricochet Shock researched, each strike may shock its foe, and your hits and the arcana's on a shocked foe are multiplied as above.
 **Overseer** multiplies your hits on what stands in a beam, as the turn begins.
-**Lifespring** works as above on what stands in the arena, each wave counting for all of it, even what arrives later; a trial pays no kills, so its Health, Gold and Cell Bonuses do nothing there, and neither does DEF Reduction.
+**Lifespring** works as above on what stands in the arena, each wave counting for all of it, even what arrives later; a trial pays no kills, so its Health, Gold and Lore Bonuses do nothing there, and neither does DEF Reduction.
 **Time Dilation** works as above on everything in the field: its tally for a counter or bite goes on from one of your hits to the next, a scheduled step or hop is skipped the same way, and a boss's or part's effects count down slower while it stands in the field.
 At 75% a cooldown falls by 0.25 a turn, so a beam due in 10 turns takes 40, and any part of a turn left over counts toward the next.
 A boss's Regen isn't on a cooldown, so it isn't slowed, and an Obelisk's turn limit still counts every turn.

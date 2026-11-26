@@ -236,7 +236,7 @@ function lifespringTables(desk: AppContext["game"]["arcana"]) {
     ["Health Bonus", `+${healthPerKill}% max HP a kill, ${factor(stats.health)} of ${factor(healthLimit)}`],
     ["Damage Amplification", `${factor(amplify)} a wave`],
     ["Gold Bonus", factor(gold)],
-    ["Cell Bonus", factor(1 + cells)],
+    ["Lore Bonus", factor(1 + cells)],
     ["DEF Reduction", `${Number(defense.toFixed(2))}%`],
   ]);
 }

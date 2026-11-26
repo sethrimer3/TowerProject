@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-26", text: "Cells are now Lore Fragments, Lore for short, shown as a clay tablet." },
   { date: "2026-11-25", text: "Plainer help and tips across the game, with shorter sentences and no dashes in messages." },
   { date: "2026-11-24", text: "Master Sound's options sit indented beneath it, and the Gem bank chime is its own switch below them." },
   { date: "2026-11-24", text: "Golden Scarabs turn up on floors: tap one for a timed boost, shown with the others in a new corner table." },

@@ -6,7 +6,7 @@ import { snap } from "./exact.ts";
 // (ui/run-notes-dialog.ts), counted on every run whether or not it is
 // researched, so the notes are whole the moment it completes. What belongs
 // to the run (steps, keys, doors, pickups, Silver) is kept in the run
-// (`run.notes`); what it finds for good (materials, Cells, Gems, equipment,
+// (`run.notes`); what it finds for good (materials, Lore, Gems, equipment,
 // like the Gold in `runGold`) is kept beside it, in the mode's `runFinds`.
 
 /** The notes kept in the run. */

@@ -54,10 +54,10 @@ Its second table lists the attributes enemies there may carry, those that can't 
 Each attribute's name follows the mark its enemies wear on the board (Fast's double chevron, Ranged's arrow, Flying's wing, Armored's shield, Shielded's bubble); Aggroed has none.
 Its Attack Speed (Ranged and Flying) and Move Speed (Aggroed) are shots and steps every 10 turns, as the Archer's Attack Speed counts.
 Once any [Floor Environment](environments.md) has a chance, a last table lists each with its chance, marked in its This Floor column where the hero's floor has it; on a Golden Floor the first table's Gold counts its multiplier.
-They list the tower, the floor reached and the current floor, the real time since the run went inside, the steps taken, chests opened, enemies defeated and XP earned, the keys obtained by colour and the doors opened by kind, the Gold, Silver and Inspiration (in the Tower) found, the materials found, and the potions, ATK and DEF shards, Gems, Cells and equipment picked up, each group under its heading.
+They list the tower, the floor reached and the current floor, the real time since the run went inside, the steps taken, chests opened, enemies defeated and XP earned, the keys obtained by colour and the doors opened by kind, the Gold, Silver and Inspiration (in the Tower) found, the materials found, and the potions, ATK and DEF shards, Gems, Lore and equipment picked up, each group under its heading.
 They refresh as the run goes, and the X at their top right closes them.
 The copy button beside the X puts them in the clipboard as text, to paste elsewhere.
-They count what the run holds (steps, keys, doors, pickups and Silver) and what it found for good (Gold, materials, Cells, Gems and equipment).
+They count what the run holds (steps, keys, doors, pickups and Silver) and what it found for good (Gold, materials, Lore, Gems and equipment).
 Nor does it take back a provision used (an elixir, a Vanguard Banner, an Aegis charm): the use stays spent, the heal stays, and a boost keeps counting down its turns.
 The run's end dialog has a Run Notes button at the end of its totals, which opens them over it.
 The Settings page's Stats dialog has the same copy button.
@@ -104,7 +104,7 @@ Instant Combat likewise adds **Animate fights** (see [Fights](fights.md#how-a-fi
 The **Toggles** button opens a menu of what the board shows during a run, each turned off on its own (what each pays is paid all the same):
 **ATK changes**, **DEF changes** and **HP changes** (a shard or potion picked up, a siphon, max HP raised, a heal), **Keys found**, **Door payments** (the keys and HP a door takes), **Gold found**, **Silver found**, **XP gained** (a badge's XP), **Gold combo** (Goldback's "×N Gold" as it grows), **Damage on enemies** and **Item amounts** (once Damage Visual is claimed; see [Towers](towers-areas-goals.md)), **Fight damage numbers** (the damage, shroud, thorns and Lifesteal numbers each strike raises), **Enemy HP bars** (the bar over an enemy as it is struck) and, once Auto-Climb is owned, **Show path** (off at first: the golden line along the path of the card the hand chooses itself, as a pressed card's always shows; see [The hand](hand-and-cards.md#pressing-a-card)).
 Below them, the **Arcana** group, closed until you open it, holds the arcana's own toggles ([Arcana](arcana.md)).
-Materials, Cells, Gems and Free Training's levels always show.
+Materials, Lore, Gems and Free Training's levels always show.
 The **Dev Mode** toggle near the bottom shows the testing tools under it while it is on, and turning it off turns them off; it grants nothing itself.
 Its first, **Unlimited currency**, is the Dev mode these pages speak of: it fills the purse and shows it as ∞, and lets the hero walk by hand inside a run, but unlocks nothing.
 **Free purchases** is a lighter tool for testing: it unlocks nothing, but every purchase (skills, Training, provisions, research and archivists) goes through whatever you have and costs nothing, and research completes the moment it starts.

@@ -58,7 +58,7 @@ export const stellarGemIcon = (className = "gem-icon") => kitIcon("gem-stellar",
 /** Arcanite: a tall green crystal, worn wherever it is shown. */
 export const arcaniteIcon = (className = "arcanite-icon") =>
   kitIcon("shard", "", className);
-/** A Cell: a yellow triangle, the Archives' Speed Ups' currency. */
+/** A Lore Fragment: a clay tablet, the Archives' Speed Ups' currency. */
 export const cellIcon = (className = "cell-icon") =>
   kitIcon("cell", "", className);
 /** A Medal: a gold disc with a star, hung from a red ribbon. */

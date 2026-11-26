@@ -11,7 +11,7 @@ Player-facing rules: `docs/gameplay/boosts.md`.
   `save.boosts` (`BoostsSave`) holds each boost's end (wall clock ms); `addBoost` adds time on top of what is left (from now once it has run out).
   `boostFactor` and `boostPlus` read a boost at `now`, its strength from the Archives at that moment (`boostStrength`), so Golden Scarab Effect counts at once.
   `boostDuration` and `scarabCooldown` read Duration and Cooldown research.
-  `openBoosts` lists those a scarab may give now (`boostOpen`: research once the Archives are open, training once a trainer is hired, Game Speed while `moveSpeed` research plus Movement Speed +1 is under `MAX_MOVE_RATE`, End Rush with its skill, Equipment Drops once Equipment is open, Gem Bank Refill with Gem Card, Rubies and Cells once the profile has earned one, `profile.earned`), and `rollBoost` picks one evenly.
+  `openBoosts` lists those a scarab may give now (`boostOpen`: research once the Archives are open, training once a trainer is hired, Game Speed while `moveSpeed` research plus Movement Speed +1 is under `MAX_MOVE_RATE`, End Rush with its skill, Equipment Drops once Equipment is open, Gem Bank Refill with Gem Card, Rubies and Lore once the profile has earned one, `profile.earned`), and `rollBoost` picks one evenly.
   The training pace (`TrainingPace`, `trainingPace`, `trainingLeft`, `trainingDoneAt`, `trainingSpeedAt`, `samePace`) adds the Training Speed boost to the ad's ×2 and the Shop's rate; with no Training Speed boost running they are exactly `workLeft` and `doneAt` from `training-jobs.ts`.
 - `boosts/pace.ts`: rate windows (`Pace`: a steady rate, each window's factor until its end, overlapping windows multiplying), `workBetween`, `doneAfter` (its inverse) and `repaced`.
 - `boosts/scarabs.ts`: `save.scarab` (`ScarabDrop`), a timed find, and `scarabDraw`, the saved stream boosts are picked from (`rng`, seeded once from `stream("scarabs")`, so a reload never picks again).
@@ -40,7 +40,7 @@ Each boost is a factor of its own kind (AGENTS.md's bonus rule), multiplying the
 - Equipment Drops: `RunPurse.killDrops`'s `eye`.
 - Gem Bank Refill: `GemFinder.adTerms` divides the cooldown.
 - Rubies: `RunPurse.bankRubies` (bosses' and floors' Rubies), rounded to whole Rubies; an ad series prize's Rubies are a prize, not a find, and aren't raised.
-- Cells: `RunPurse.bankCells`.
+- Lore: `RunPurse.bankCells`.
 
 A Proving Grounds trial shares `save.boosts` with the base game and gets a scarab state that never lays one (`proving-grounds/session.ts`).
 The profile file keeps `scarab` and `boosts` in its currencies section, a scarab lying out and the floors reached dropped as a Gem's are.
@@ -51,5 +51,5 @@ The Breakthrough skill Golden Scarab Research (`goldenScarab`, 2 points, under G
 
 ## Tests
 
-`tests/boosts.test.ts`: values and countdowns, stacking time, the open list, the research, the Gold line multiplying the Level-up Boost, pace math, Training and Research Speed retiming, the finder in a run (first cooldown, placement, claim, cooldown), misses, XP, Card XP and Game Speed, Rubies and Cells, decoding and the saved stream.
+`tests/boosts.test.ts`: values and countdowns, stacking time, the open list, the research, the Gold line multiplying the Level-up Boost, pace math, Training and Research Speed retiming, the finder in a run (first cooldown, placement, claim, cooldown), misses, XP, Card XP and Game Speed, Rubies and Lore, decoding and the saved stream.
 `tests/gems.test.ts` covers the Gem's side of the shared timer.

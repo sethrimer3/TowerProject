@@ -4176,7 +4176,7 @@ dialog.dismiss-anywhere { cursor: pointer; }
 /* The Cells held and History share the heading's top-right corner. */
 .research-corner { position: absolute; right: 0; top: 0; display: flex; align-items: center; gap: 8px; }
 .research-cells { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; }
-.research-cells b { color: #ffe680; font-weight: 600; }
+.research-cells b { color: #e1bb78; font-weight: 600; }
 .research-history-open { min-height: 0; padding: 2px 10px; font-size: 11px; line-height: 1.4; }
 .cell-icon { width: 14px; height: 14px; flex-shrink: 0; vertical-align: -2px; }
 .help-cell { width: 13px; height: 13px; }

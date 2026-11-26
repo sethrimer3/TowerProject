@@ -15,7 +15,7 @@ A rank's boost is `trainedBoost` (loadout.ts) for Training and `researchBoost` (
 A card entry's `card.upTo` is `powersShownTo` (cards/levels.ts), as the Deck page's pop-up uses: the rank of the rarity after its own, or mythic's with Access to Everything.
 A door is a `door` icon (`CodexDoor`), a canvas `paintDoors` fills with `drawSquareDoor`'s coloured tile whatever the Square doors setting, since the default board's doors differ only by a small key mark; `beside` puts one next to a key.
 What the player hasn't reached shows as ??? with no name, brief, facts or link; Access to Everything (`seesAll`) opens every category and reveals every entry, saving nothing.
-An enemy strength or attribute counts as discovered once a tower that can roll it is open (`enemiesKnown` samples `enemyShare` and `traitOdds` over each open tower's floors); a Greater Boss once one has paid Cells, so its secret keeps.
+An enemy strength or attribute counts as discovered once a tower that can roll it is open (`enemiesKnown` samples `enemyShare` and `traitOdds` over each open tower's floors); a Greater Boss once one has paid Lore, so its secret keeps.
 Tower elements' blue, red and Heart doors show once a tower's record passes the floor they first appear on (docs/gameplay/floors.md), and Multi Doors with red, since it pictures a Triune Door.
 There is no Steel Doors entry, since generation places none.
 The torch's line about the Greater Boss waits for the `cardTorch` skill.

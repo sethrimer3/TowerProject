@@ -133,7 +133,7 @@ test("STAIRS' Stair Skip climbs two floors at its chance, on the Tower's stairs 
   assert.ok(hits > 140 && hits < 260, `about 5% of 4,000: ${hits}`);
 });
 
-test("the trees' Gold and Silver: Gold Bonus, Silver Bonus, a chest's Gold, ENEMY's kill Gold and TORCH's Cells", () => {
+test("the trees' Gold and Silver: Gold Bonus, Silver Bonus, a chest's Gold, ENEMY's kill Gold and TORCH's Lore", () => {
   const purse = (trees?: GivenPowers) => {
     const g = new Game(defaults());
     g.newRun({ seed: 7 });

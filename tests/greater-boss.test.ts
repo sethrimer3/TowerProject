@@ -94,7 +94,7 @@ test("a Greater Boss called where the stairs' guard fell still shows and pays it
   assert.match(tileInfo(g, x, y).body, /alt="Gold"/, "its pop-up shows it");
   const enemy = world.tile(x, y).enemy!;
   const purse = (g as unknown as { purse: RunPurse }).purse, paid = purse.enemyLoot(enemy, x, y);
-  assert.ok(paid.gold > 0 && paid.cells > 0, "killing it pays its Gold and Cells");
+  assert.ok(paid.gold > 0 && paid.cells > 0, "killing it pays its Gold and Lore");
   // A reload keeps it paid, so undo can't pay it twice.
   const loaded = new Game(decode(JSON.stringify(g.save)));
   assert.equal(loaded.enemyGold(x, y), 0);

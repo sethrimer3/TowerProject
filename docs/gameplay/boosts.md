@@ -29,7 +29,7 @@ A claimed scarab gives one boost, picked at random among those you have unlocked
 | Equipment Drops | Equipment and material drop chances ×1.5 | Equipment is open |
 | Gem Bank Refill | The ad Gem button's rewards bank twice as fast | Gem Card is owned |
 | Rubies | Rubies found (bosses' and STAIRS' floors') ×1.5, rounded | a Ruby has been earned |
-| Cells | Cells found ×1.5 | a Cell has been earned |
+| Lore | Lore found ×1.5 | a Lore Fragment has been earned |
 
 A boost lasts 12 minutes of real time, counting on while the game is closed and between climbs.
 Another scarab of a boost already running adds its time on top of what is left.

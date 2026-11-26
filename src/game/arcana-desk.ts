@@ -415,7 +415,7 @@ export class ArcanaDesk {
       damage: researched(this.save.archives, "voidwellDamage"), gold: researched(this.save.archives, "voidwellGold") };
   }
   /** An enemy Lifespring touched (an Effect Wave or the field) fell, by whatever
-   * means, while it is on: it pays Health Bonus, and what its Gold and Cells are
+   * means, while it is on: it pays Health Bonus, and what its Gold and Lore are
    * raised by is returned. */
   lifespringKill(enemy: Enemy) {
     const rule = enemy.sprung === undefined ? undefined : this.lifespringRule();

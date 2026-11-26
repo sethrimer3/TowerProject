@@ -33,7 +33,7 @@ export const BOOSTS: Record<BoostId, BoostDef> = {
   equipmentDrops: { name: "Equipment Drops", icon: "combat-chest-equipment", base: 1.5, what: "equipment drop chance" },
   gemBank: { name: "Gem Bank Refill", icon: "gem", base: 2, what: "Gem Bank refill speed" },
   rubies: { name: "Rubies", icon: "ruby", base: 1.5, what: "Rubies" },
-  cells: { name: "Cells", icon: "cell", base: 1.5, what: "Cells" },
+  cells: { name: "Lore Fragments", icon: "cell", base: 1.5, what: "Lore" },
 };
 
 /** A boost's value with Golden Scarab Effect at `effect` percent (100 with

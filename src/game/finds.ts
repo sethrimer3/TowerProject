@@ -39,7 +39,7 @@ export interface FindsHost extends DeskHost {
   /** What Voidwell Gold Bonus multiplies the Gold of a kill at `at` by: 1 outside a vortex. */
   voidwellGold(at: { x: number; y: number }): number;
   falconGold(at: { x: number; y: number }): number;
-  /** A treasure chest's own rolls at (x, y): CHEST's Double and Triple, TORCH's Chest Cells. */
+  /** A treasure chest's own rolls at (x, y): CHEST's Double and Triple, TORCH's Chest Lore. */
   chestRoll(x: number, y: number): ChestRoll;
   readonly missions: { record(type: MissionType, amount?: number, key?: string): void };
   readonly events: { record(type: EventMissionType, amount?: number, key?: string): void };
@@ -66,8 +66,8 @@ export class Finds {
   constructor(private readonly host: FindsHost) {}
 
   /** Pays a kill at `at` (a fight won, or an arrow's): counted, its XP,
-   * Silver, Gold, a Greater Boss's Cells, and what the enemy cards' trees
-   * find with it (Cells, drops toward Equipment, Instakill Vigor's max HP).
+   * Silver, Gold, a Greater Boss's Lore, and what the enemy cards' trees
+   * find with it (Lore, drops toward Equipment, Instakill Vigor's max HP).
    * Returns what it found, as the status line names it. */
   kill(enemy: Enemy, at: { x: number; y: number }, scale: number, instakill: boolean, crits?: number) {
     const { run, mode } = this.host, rules: ModeProfile = MODES[mode];
@@ -199,7 +199,7 @@ export class Finds {
       if (piece?.item) host.save[host.mode].runFinds.equipment++;
     }
     const cells = loot.cells ? [{ text: cellsText(loot.cells), art: { cell: true as const } }] : [];
-    // The Gold at the tile, its Silver, Cells and what a Supply or Equipment Chest holds below it, rising together.
+    // The Gold at the tile, its Silver, Lore and what a Supply or Equipment Chest holds below it, rising together.
     this.drops({ x, y }, [{ text: `+${wholeChange(loot.gold)} Gold`, art: { coin: "gold" } }, ...(silver ? [{ text: `+${wholeChange(silver)} Silver`, art: { coin: "silver" as const } }] : []), ...cells, ...found]);
     // Double and Triple flash their multiplier over the chest.
     if (roll.multiplier > 1) host.gain(x, y, `×${roll.multiplier}`, { multiplier: roll.multiplier }, { row: 0, with: true });
@@ -255,9 +255,9 @@ export class Finds {
   }
 }
 
-/** Cells found, as "+3 Cells" (to two decimals when a badge's scale left
+/** Lore found, as "+3 Lore" (to two decimals when a badge's scale left
  * a fraction). */
-const cellsText = (cells: number) => `+${keyCount(cells)} ${keyCount(cells) === "1" ? "Cell" : "Cells"}`;
+const cellsText = (cells: number) => `+${keyCount(cells)} Lore`;
 /** What a chest gave toward Equipment: the status line's words for each, and
  * the icon that rises off the board for it (a material with its count, or
  * the piece itself). */
