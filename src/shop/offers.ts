@@ -127,7 +127,7 @@ export const OFFERS: readonly ShopOffer[] = [
       "×3 training speed forever", "Champion Status and the Champion's Club", "VIP Points raise permanent bonuses",
       "+5% Offline Gold rate and Offline Gems", "×2 Offline time max", "+25% XP gain",
       "Unique legendary relic: Champion's Cape, +5% ATK and +5% DEF", "−20s Gem button cooldown",
-      "Daily Training Points", "See the next two Premium Offers", "10 Gifts",
+      "Daily Training Points", "See the next two Premium Offers",
     ],
     effectLines: true,
     tags: ["oneTime"],

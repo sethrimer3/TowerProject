@@ -101,7 +101,9 @@ Under the limited packs, **Premium Offers** sells one-time offers at $9.99, each
 What they give is kept by Erase All.
 Every real-money purchase also pays **VIP Points** (a brass crown), 16 for each dollar of its price: 80 for a $4.99 Gem pack or the half-price Ad-Disable, 160 for a $9.99 offer, 480 for a $29.99 one; each card shows its points beside what it grants.
 They are kept for good, Erase All included; nothing spends them.
-The Champion's Bundle's card lists each of its bonuses on a line of its own.
+Each card shows what it grants as icons, all on one row: the Gold multiplier, the relic, then the currencies.
+The Champion's Bundle's row also shows the Daily Training Points (no amount, since they come every day) and its 10 gifts.
+A premium or one-time offer lists its other bonuses after "Plus:", each on a line of its own.
 The Champion's Bundle can be bought once Permanent Ad-Disable and the Special Gold Bundle are both owned (until then its button is greyed out and says so).
 It makes you a **Champion**: a green *Champion Status* banner tops the Shop, VIP Points show (on the cards, in the banner and in the currencies list), the next two Premium Offers show instead of one, and you get ×2 the offline time paid (Offline Gold even without its skill), +25% XP, the legendary Champion's Cape (+5% ATK and DEF), 20 seconds off the Gem button's cooldown, 10 [gifts](#gifts) and **Daily Training Points** (1 a day on the Training page, 2, 3 or 5 when a Club tier's chance multiplies it, from 00:00 GMT).
 The **Champion's Club** button under the banner lists its tiers, each opened by VIP Points earned in all: Offline Gold and Offline Gems with the bundle, then chances to multiply the daily points, a shorter Gem button cooldown, more Gold, Silver, Golden Gems, a bigger Gem bank, more Gems a reward, Stellar Floors, Dash and End Rush tiles, Gem chance a floor and a chance a reward pays 100 Gems; each grows with every tier past its own, up to its cap, and counts even before what it adds to is open.

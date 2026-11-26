@@ -91,7 +91,7 @@ test("the Champion's Bundle gives 10 gifts once, and again after its gifts are c
   assert.equal(giftsSince(before, save.gifts.owned).reduce((n, g) => n + g.count, 0), 10);
   settlePerks(save);
   assert.equal(giftCount(save.gifts), 10, "never twice");
-  assert.ok(offer.effects.includes("10 Gifts"));
+  assert.ok(!offer.effects.includes("10 Gifts"), "its card shows the gifts as an icon instead");
   const reloaded = decode(JSON.stringify(save));
   assert.equal(giftCount(reloaded.gifts), 10, "a reload gives none more");
   const totals = giftTotals(save.gifts);
