@@ -1103,6 +1103,44 @@ The quiet lake west of Tower I's forest clearing, reached by its west path or le
 **Fisherman**:
 The traveller seated on the lake's wooden dock, who greets the hero on stepping onto the dock: “Come back later, traveller...”
 
+### The Catacombs
+
+**Catacombs**:
+An endless idle side area under the forest, one Catacomb a tower number, where the hero fights undead in real time, a turn a second, whatever screen shows.
+_Avoid_: crypt, dungeon, third mode
+
+**Hall**:
+One level of a Catacomb: a pinched corridor of up to six undead, a Lore tile in its middle, stairs down at its end, and now and then treasure rooms. Halls count from 1.
+_Avoid_: floor, room
+
+**Magician**:
+What the hero is called in the Catacombs, where only magic stats count.
+_Avoid_: mage, wizard
+
+**Magic stats** (MHP, MAtk, MDef):
+The Magician's and the undead's own life, attack and defense; the hero's HP, ATK, DEF and what raises them count for nothing there.
+_Avoid_: magical HP, spell power
+
+**Magic level**:
+The Magician's level, from MXP the undead pay; each level past the first gives one magic skill point, put into stat boxes and taken back at will.
+_Avoid_: mage level, magic XP level
+
+**Spirit**:
+A lasting currency in seven rarities, common to ancestral; each undead drops one of its own rarity.
+_Avoid_: souls, essence
+
+**Ingot**:
+A lasting currency in four metals, Brass, Iron, Steel and Nickel, found in a hall's treasure rooms.
+_Avoid_: bar, ore
+
+**Turn bank**:
+The seconds banked while the app was away, spent one a turn by haste to play the Catacombs faster.
+_Avoid_: offline turns, time credit
+
+**Haste**:
+The Catacombs' ×1, ×5, ×10 or ×100 choice; above ×1 each extra turn spends a banked second, falling back to ×1 when the bank runs out.
+_Avoid_: speed, fast-forward
+
 ### The Delve
 
 **Forest sign**:

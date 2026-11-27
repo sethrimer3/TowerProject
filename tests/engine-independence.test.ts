@@ -28,6 +28,8 @@ import { getTowerGateEnemy, type TowerEnemyProfile, type TowerEnemyStrength } fr
 import { cost, UPGRADES } from "../src/progression/upgrades.ts";
 import { WIDTH } from "../src/config.ts";
 import { CIRCUIT, pathOffset, wolfAngle, wolfOffset, type Roamer } from "../src/familiars/paths.ts";
+import { defaultCatacombs, enterCatacomb, mxpForLevel, rollSlots, runTurns, undeadStats, UNDEAD_IDS } from "../src/catacombs/index.ts";
+import { random } from "../src/random.ts";
 
 const json = (v: unknown) => JSON.stringify(v, (_k, x) => (x instanceof Map ? [...x.entries()] : x instanceof Uint8Array || x instanceof Int32Array ? [...x] : x));
 const digest = (v: unknown) => createHash("sha256").update(json(v)).digest("hex").slice(0, 16);
@@ -59,6 +61,16 @@ function outputs(): Record<string, string> {
   out.enemies = digest([0, 9, 55, 99, 100, 250, 480].flatMap((room) => strengths.flatMap((s) => profiles.map((p) => getTowerGateEnemy(room, s, p)))));
   out.prices = digest(UPGRADES.flatMap((u) => Array.from({ length: 40 }, (_, level) => cost(u.id, level))));
   for (const id of Object.keys(CIRCUIT) as Roamer[]) out[`familiar ${id}`] = digest(Array.from({ length: 720 }, (_, turns) => pathOffset(id, turns)));
+  for (const number of [1, 3, 9]) {
+    const rng = random(number * 31);
+    out[`catacomb halls ${number}`] = digest([1, 5, 25, 401, 1201, 2001].map((hall) => rollSlots(hall, number, rng)));
+    out[`catacomb stats ${number}`] = digest(UNDEAD_IDS.flatMap((id) => (["normal", "strong", "elite", "boss"] as const).map((s) => undeadStats(id, s, 1201, number))));
+    const c = defaultCatacombs();
+    c.rng = number;
+    enterCatacomb(c, number);
+    out[`catacomb run ${number}`] = digest({ gains: runTurns(c, 3000).gains, c });
+  }
+  out["catacomb levels"] = digest(Array.from({ length: 200 }, (_, l) => mxpForLevel(l)));
   out["familiar wolf"] = digest(Array.from({ length: 360 }, (_, cast) => wolfOffset(wolfAngle(7919, cast))));
   return out;
 }
@@ -118,6 +130,7 @@ test("saved and played-by generation calls no inexact Math function", () => {
 const GENERATION = [
   ...readdirSync(new URL("../src/tower/", import.meta.url)).map((f) => `tower/${f}`),
   ...readdirSync(new URL("../src/familiars/", import.meta.url)).map((f) => `familiars/${f}`),
+  ...readdirSync(new URL("../src/catacombs/", import.meta.url)).map((f) => `catacombs/${f}`),
   "delve/labyrinth.ts", "delve/patterns.ts", "delve/world.ts", "enemies/more-enemies.ts", "torches.ts", "board.ts", "random.ts", "exact.ts",
   "enemies/scaling.ts", "enemies/curves.ts", "enemies/fast.ts", "enemies/shielded.ts", "tiers.ts", "config.ts", "progression/upgrades.ts", "economy/kill-pay.ts", "progression/xp.ts", "economy/prices.ts", "progression/training.ts", "economy/provisions.ts",
 ];

@@ -108,6 +108,7 @@ Read the area's doc before changing code there or answering questions about it; 
 - `environments.md`: Floor Environments (`src/environments.ts`): Treasure, Golden and Stellar Floors, their rolls, their Gold and Silver, drawing and the enemy stats box's table.
 - `familiars.md`: Familiars (`src/familiars/`, `game/familiar-desk.ts`): the catalog and prices, paths, the turn, burn, linger, the tag and the Falcon's Gold, their tab, reveal and drawing.
 - `divine.md`: the first climb's Divine Portal (`src/divine.ts`), the builders' room on floor 999999 (`tower/divine-room.ts`), the Chrono Anchor, the End Climb lock and the Divine Relics.
+- `catacombs.md`: the Catacombs' engine (`src/catacombs/`): its undead and halls, turns, Magic levels, the clock and bank, the save; the plan is `docs/CATACOMBS.md`.
 - `codex.md`: the Codex (`src/codex/`, `ui/codex-page.ts`): its categories as data, briefs, discovery (`save.codex`), links and its tests.
 - `goldens.md`: which goldens a change moves, the browser goldens, recording them.
 - `testing.md`: browser test setup.
@@ -171,6 +172,7 @@ While iterating, run only the tests for the area you touched, then `npm test` on
 | Divine Portal and Relics (`divine.ts`, `tower/divine-room.ts`) | `tests/divine.test.ts tests/game-commands.test.ts tests/codex.test.ts tests/save.test.ts tests/sounds.test.ts` |
 | Board drawing, camera, lighting, decor art | `tests/render-calls.test.ts tests/camera.test.ts tests/lighting-passes.test.ts tests/art-modules.test.ts tests/decor.test.ts tests/themed-boards.test.ts` |
 | Outside and weather | `tests/outside*.test.ts tests/outdoor-art.test.ts tests/torch-light.test.ts` |
+| Catacombs (`src/catacombs/`) | `tests/catacombs-engine.test.ts tests/engine-independence.test.ts tests/random-streams.test.ts` |
 | Sound and ambience (`sound.ts`, `sound-files.ts`, `ambience.ts`, `render/board-sounds.ts`) | `tests/sounds.test.ts tests/outdoor-art.test.ts tests/settings.test.ts tests/save.test.ts` |
 
 ## Agent docs

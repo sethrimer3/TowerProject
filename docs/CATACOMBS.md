@@ -1,15 +1,16 @@
 # Catacombs
 
 The Catacombs' design and build plan: an endless, idle side mode under the forest where the hero, as a Magician, fights a stream of undead in real time for Lore, Spirit, Ingots and Magic levels.
-Nothing here is built yet.
-Each section is the spec the implementation follows; **Open questions** lists what the request left open, each with the default this plan uses until the designer decides.
+Step 1, the engine, is built (`src/catacombs/`, docs/agents/catacombs.md); the rest is still to come.
+Each section is the spec the implementation follows; **Decisions** lists what the request left open and what was settled.
 
-## Open questions (defaults in force until decided)
+## Decisions
+
+The designer chose floor 20, ancestral as the seventh rarity, the XP curve in 7, and kept every other default.
 
 1. **Unlock checkpoint.**
-   Tower VI's floor 10 Goal already pays a unique reward, Auto Pick Ranking (`TOWER_SIX` in `src/goals.ts`), so the request's fallback applies.
-   Default: Tower VI's floor **20** Goal (now 35 Gems) becomes the unlock `catacombs` ("Catacombs"); its premium reward stays 40 Gems.
-   Alternative: move Auto Pick Ranking to floor 20 and put the Catacombs on floor 10.
+   Tower VI's floor 10 Goal already pays a unique reward, Auto Pick Ranking (`TOWER_SIX` in `src/goals.ts`).
+   Decided: Tower VI's floor **20** Goal (now 35 Gems) becomes the unlock `catacombs` ("Catacombs"); its premium reward stays 40 Gems.
 2. **Where Reveal Catacombs sits in the Inspiration tree.**
    Default: its own node at the foot of the tree's middle column, `requires: []`, hidden until the Goal is claimed; placed with the `add-upgrade` skill.
 3. **What buying Reveal Catacombs does.**
@@ -21,8 +22,7 @@ Each section is the spec the implementation follows; **Open questions** lists wh
 6. **"The tower's gold bonus".**
    Default: the tier's Gold bonus only (`TIER_BONUS_TENTHS`: ×1, ×2, ×3.1, ×4.3 …, via `tierGold`), not every Gold multiplier; Lore stays fractional (`snap`), as `save.cells` already allows, and the HUD rounds down.
 7. **Magic XP curve.**
-   Default: its own curve, `mxpForLevel(L) = 5 × L × (L − 1)` (level 2 at 10 MXP, 10 at 450, 50 at 12,250), one magic skill point per level.
-   The Tower's `xpForLevel` (48 XP to level 2) would take a fresh Magician about eight minutes per level at first.
+   Decided: from level L to L + 1 takes 200 × 1.2^(L − 1) MXP, rounded (200, 240, 288, 346, 415 …; level 3 at 440 in all), one magic skill point per level.
 8. **What a magic skill point buys.**
    Default: three stat boxes to start, data-driven so more slot in later: **Force** (+2 MAtk a point), **Ward** (+1 MDef a point), **Vitality** (+100 MHP a point).
 9. **Strong, Elite and Boss drops.**
@@ -43,7 +43,7 @@ Each section is the spec the implementation follows; **Open questions** lists wh
 16. **Switching numbers mid-run.**
     Default: entering the mausoleum on a different tower number than the current Catacomb run's asks for confirmation once the run is past Hall 1 ("Leave Catacomb III's Hall 42 for Catacomb V's Hall 1?").
 17. **Spirit rarities.**
-    The seven are common, uncommon, rare, epic, legendary, mythic and divine; the shared `RarityId` (`src/shop/rarity.ts`) ends in *ancestral*, so Spirit keeps its own list, `SPIRIT_RARITIES`.
+    Decided: common, uncommon, rare, epic, legendary, mythic and ancestral, matching the shared `RarityId` (`src/shop/rarity.ts`); Spirit still keeps its own list, `SPIRIT_RARITIES`.
 18. **Board width.**
     The corridor's 17 tiles match the Tower's 17 columns, so a Hall is a 17 × 17 board (rows 0 to 16, the corridor rows 7 to 9).
 
@@ -133,7 +133,7 @@ The corridor is rows 7 to 9, columns 0 to 16, laid out left to right:
 | Ghoul | epic | 1,150 | 10 | 25 | 20 | 26 |
 | Vampire | legendary | 1,950 | 10 | 50 | 70 | 51 |
 | Lich | mythic | 3,500 | 10 | 150 | 150 | 81 |
-| Demon | divine | 25,000 | 10 | 300 | 400 | not yet (future content) |
+| Demon | ancestral | 25,000 | 10 | 300 | 400 | not yet (future content) |
 
 - An enemy's stats are its base × `tierStats(N)` (×1, ×5, ×20, ×60 …) × its strength × the deep-hall factors; MXP and Spirit don't scale with N or depth.
 - **Deep halls.** From the hall after each listed one, every enemy's MHP and MDef multiply again, compounding:
@@ -189,8 +189,9 @@ Each turn is exactly one of these, decided by the hero's next target in the hall
 `src/catacombs/` is pure and knows nothing of the DOM, `Game` or the clock:
 
 - `catalog.ts`: the enemy table, strengths, the deep-hall table, `spawnOdds(hall)`, `SPIRIT_RARITIES`, `INGOTS` (brass, iron, steel, nickel).
-- `hall.ts`: `buildHall(hall, number, rng)` → the slots and rooms, and `CatacombHall`, the `Board` that draws it.
-- `magic.ts`: `mxpForLevel`, `magicLevel`, skill point totals, `heroStats(save.catacombs)` → MHP, MAtk, MDef from the base 1,000 / 10 / 0 plus the stat boxes.
+- `hall.ts`: `hallCell`, `hallTargets` and `rollSlots(hall, number, rng)`; `CatacombHall`, the `Board` that draws a hall, comes with step 4.
+- `state.ts`: the save's shape, the saved spawn stream, starting and entering a run.
+- `magic.ts`: `mxpToNext`, `mxpForLevel`, `magicLevel`, skill point totals, `heroStats(save.catacombs)` → MHP, MAtk, MDef from the base 1,000 / 10 / 0 plus the stat boxes.
 - `turn.ts`: `catacombTurn(state) → TurnResult` (what happened, what was earned, for popups and sound), mutating only `save.catacombs`.
   `runTurns(state, n)` loops it and sums the gains, so many turns, many short runs among them, settle in one call.
 - `clock.ts`: `CatacombClock`, below.
@@ -242,7 +243,7 @@ type CatacombRun = {
 };
 ```
 
-- Spirit, Ingots and MXP go to `save.profile.earned` too (`LIFETIME_CURRENCIES`), and Lore through `earn(save, "cells", n)`.
+- Spirit, Ingots and MXP can go to `save.profile.earned` too (`LIFETIME_CURRENCIES`), and Lore through `earn(save, "cells", n)`.
 - `tests/fixtures/save-decode.golden.json` is re-recorded for the new field.
 
 ## Currencies
@@ -261,10 +262,11 @@ type CatacombRun = {
 
 Each step ships on its own with its tests, docs and DEVLOG line.
 
-1. **Engine.** `src/catacombs/` with `catalog`, `hall`, `magic`, `turn`, `clock`, `save`, and `stream("catacombs")`.
+1. **Engine** (done). `src/catacombs/` with `catalog`, `hall`, `magic`, `state`, `turn`, `clock`, `save`, and `stream("catacombs")`.
+   The decoder stands alone; `save.catacombs` joins the save in step 2.
    Tests (`tests/catacombs-*.test.ts`): hall layout and rooms by hall number; slots pinched; spawn odds over many halls with a pinned stream; the empty-hall Wisp; Strong, Elite and Boss precedence (25 over 10 over 5); deep-hall products at 400, 401, 1,201 and 2,001; ingot amounts; turn order (dash, round, pickup, descend); hero first strike; invincible enemy to defeat; stalemate restart in the same turn; restart keeps MXP, Spirit, Ingots and Lore; points moved apply next turn; clock real and hasted turns, bank exhaustion dropping to ×1; offline banking; `runTurns` summing several runs; decode round trip.
    Add the catacomb modules to `tests/engine-independence.test.ts` and the stream to `tests/random-streams.test.ts`.
-2. **Unlock.** The Goal, `revealGoal`, Reveal Catacombs, `catacombsOpen`; `tests/goals.test.ts`, `tests/skill-trees.test.ts`.
+2. **Unlock.** `save.catacombs` in the save (`defaults()`, `Save`, `decode()`, `PROFILE_SECTIONS`, the save golden); the Goal, `revealGoal`, Reveal Catacombs, `catacombsOpen`; `tests/goals.test.ts`, `tests/skill-trees.test.ts`.
 3. **Mausoleum and menu.** `OutsideWorld.mausoleum`, the tap, `#run-catacombs`; `tests/outside*.test.ts`; render golden (forest with it) and UI golden (menu) re-recorded.
 4. **Catacomb screen.** `CatacombView`, the hall drawing, the HUD swaps, Switch Back, pausing and resuming the run behind it, the enemy table, the bank and haste; render and UI goldens for a hall and the HUD; a Playwright flow (`tests/catacombs.mjs`): enter from the forest, watch a turn, Switch Back to a Tower run and see it resume, re-enter from the menu.
 5. **Stats menu.** The tabs row, the Stats boxes, the stats table.
@@ -280,3 +282,4 @@ Each step ships on its own with its tests, docs and DEVLOG line.
 - **Forge**: spend Ingots to upgrade the Blacksmith's forge (design to come).
 - **Academy**: spend Spirit on boosts outside the Catacombs.
 - **Abilities**: limited-use magic, unlocked at set points, used in the Catacombs.
+- **Player interaction**: randomly select enemies vulnerable to a tap, which does an extra free hit.
