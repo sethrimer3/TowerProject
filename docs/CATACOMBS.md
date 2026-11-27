@@ -1,7 +1,7 @@
 # Catacombs
 
 The Catacombs' design and build plan: an endless, idle side mode under the forest where the hero, as a Magician, fights a stream of undead in real time for Lore, Spirit, Ingots and Magic levels.
-Steps 1 to 3, the engine, the unlock and the way in, are built (`src/catacombs/`, docs/agents/catacombs.md); the rest is still to come.
+Steps 1 to 4, the engine, the unlock, the way in and the Catacomb screen, are built (`src/catacombs/`, docs/agents/catacombs.md); the rest is still to come.
 Each section is the spec the implementation follows; **Decisions** lists what the request left open and what was settled.
 
 ## Decisions
@@ -268,7 +268,7 @@ Each step ships on its own with its tests, docs and DEVLOG line.
    Add the catacomb modules to `tests/engine-independence.test.ts` and the stream to `tests/random-streams.test.ts`.
 2. **Unlock** (done). `save.catacombs` in the save (`defaults()`, `Save`, `decode()`, `PROFILE_SECTIONS`, the save golden); the Goal, `revealGoal`, Reveal Catacombs, `catacombsOpen`; `tests/goals.test.ts`, `tests/skill-trees.test.ts`.
 3. **Mausoleum and menu** (done; the Mausoleum drawn in pixels until its PNG, and entering shows a stand-in dialog until step 4). `OutsideWorld.mausoleum`, the tap, `#run-catacombs`; `tests/outside*.test.ts`; render golden (forest with it) and UI golden (menu) re-recorded.
-4. **Catacomb screen.** `CatacombView`, the hall drawing, the HUD swaps, Switch Back, pausing and resuming the run behind it, the enemy table, the bank and haste; render and UI goldens for a hall and the HUD; a Playwright flow (`tests/catacombs.mjs`): enter from the forest, watch a turn, Switch Back to a Tower run and see it resume, re-enter from the menu.
+4. **Catacomb screen** (done; the magic skill points sit in the portrait's corner, the level row having no room, and the bottom row stays empty until step 5). `CatacombView`, the hall drawing, the HUD swaps, Switch Back, pausing and resuming the run behind it, the enemy table, the bank and haste; render and UI goldens for a hall and the HUD; a Playwright flow (`tests/catacombs.mjs`): enter from the forest, watch a turn, Switch Back to a Tower run and see it resume, re-enter from the menu.
 5. **Stats menu.** The tabs row, the Stats boxes, the stats table.
 6. **Offline and currencies.** The Offline dialog's line, the currencies rows, the background clock on every page.
 7. **Docs.** `docs/agents/catacombs.md` (modules, rules, tests) with its line in AGENTS.md's topic list and test table; `docs/gameplay/catacombs.md` with its README row; `CONTEXT.md` terms (Catacomb, Hall, Magician, MHP, MAtk, MDef, MXP, Magic level, magic skill point, Spirit, Ingot, Mausoleum, Turn Bank, Haste); `docs/project/how-its-built.md`; Codex entries for the undead.

@@ -13,4 +13,13 @@ You keep everything you have earned either way.
 It shows the Catacomb your run is in and its hall, whatever tower you are in.
 It is not offered in the Proving Grounds.
 
-For now the Catacomb shows only its number and hall: the Magician waits at the entrance until the Catacomb screen opens in a later update.
+**The Catacomb screen.** Entering, or pressing the Catacomb button, opens the Catacomb your run is in.
+Your climb waits behind it, paused, and **Switch Back** (or Escape) returns to it, playing on from where it was.
+The Magician walks each hall left to right, a turn a second: a dash to the next undead, then a round of spells, the Magician first; then the Lore tablet in the middle, any Ingots in the treasure rooms, the rest of the undead, and the stairs down.
+A fall starts the run again at Hall 1 with full MHP; MXP, Lore, Spirit and Ingots are kept.
+The HUD shows the Magician's MHP, MAtk and MDef, the Magic level and its MXP, unspent magic skill points in the portrait's corner, Lore in place of Silver, the hall in place of the floor, and the Lore bonus in place of the Gold bonus.
+The enemy box shows a Wisp here; tap it for every undead the hall can hold, its chance, stats and rewards.
+The Catacombs play on while you are elsewhere in the game.
+
+**Banked time.** Time the game is closed is banked, a second at a time, and shown over the hall's top right with a speed choice: ×1, ×5, ×10 or ×100.
+Above ×1, each extra turn spends a banked second; when the bank runs out the speed drops back to ×1.

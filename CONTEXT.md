@@ -1133,6 +1133,14 @@ _Avoid_: souls, essence
 A lasting currency in four metals, Brass, Iron, Steel and Nickel, found in a hall's treasure rooms.
 _Avoid_: bar, ore
 
+**Catacomb screen**:
+The board's view of the Catacomb run under way, the climb behind it paused; Switch Back returns to the climb.
+_Avoid_: Catacomb mode, Catacomb page
+
+**Lore bonus**:
+What a Catacomb's Lore tile multiplies its Lore by: the Gold bonus of the tower of the same number.
+_Avoid_: Lore multiplier
+
 **Turn bank**:
 The seconds banked while the app was away, spent one a turn by haste to play the Catacombs faster.
 _Avoid_: offline turns, time credit

@@ -16,7 +16,7 @@
     "test:snapshots": "vite build --mode snapshot && node tests/snapshot-suites.mjs",
     "test:compare-runs": "node tests/compare-runs.mjs",
     "test:proving": "node tests/proving-grounds.mjs",
-    "test:browser": "node tests/browser.mjs && node tests/interactions.mjs && node tests/camera.mjs && node tests/skill-trees.mjs && node tests/outside.mjs && node tests/progression.mjs && node tests/mode-tabs.mjs && node tests/cinematic.mjs && node tests/codex.mjs",
+    "test:browser": "node tests/browser.mjs && node tests/interactions.mjs && node tests/camera.mjs && node tests/skill-trees.mjs && node tests/outside.mjs && node tests/progression.mjs && node tests/mode-tabs.mjs && node tests/cinematic.mjs && node tests/codex.mjs && node tests/catacombs.mjs",
     "sprites:atlas": "node tools/build-sprite-manifest.mjs && node tools/build-ui-atlas.mjs && node tools/build-world-atlas.mjs",
     "sprites:manifest": "node tools/build-sprite-manifest.mjs",
     "prebuild": "node tools/build-sprite-manifest.mjs && node tools/build-ui-atlas.mjs && node tools/build-world-atlas.mjs"

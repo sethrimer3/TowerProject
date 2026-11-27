@@ -10,6 +10,9 @@ export type FrameLoopHost = {
   tab(): Tab;
   /** A separate encounter may own the shared board for this frame. */
   boardFrame?(time: number): boolean;
+  /** Each frame, whatever page shows: the Catacombs take the turns their
+   * clock says are due (ui/catacomb-view.ts). */
+  background?(time: number): void;
   /** Redraws the skill tree's particles while the Upgrades page shows. */
   upgradesFrame(time: number): void;
   /** Moves the tab's countdowns on as each shows another second, and
@@ -171,6 +174,7 @@ export class FrameLoop {
   private parts(time: number) {
     const { host } = this, tab = host.tab();
     guard(() => this.pageWhite(performance.now()));
+    if (host.background) guard(() => host.background!(time));
     if (!document.hidden) {
       if (tab === "upgrades") guard(() => host.upgradesFrame(time));
       if (tab === "research") guard(() => host.researchFrame(time));

@@ -3,9 +3,9 @@
 The Catacombs' engine (`src/catacombs/`), an idle side area where the hero, as a Magician, fights undead a turn a second.
 The design and build plan is `docs/CATACOMBS.md`; this doc covers what is built.
 
-Built so far: step 1, the engine; step 2, the unlock and the save; step 3, the Mausoleum and the Catacomb button.
+Built so far: step 1, the engine; step 2, the unlock and the save; step 3, the Mausoleum and the Catacomb button; step 4, the Catacomb screen.
 The engine is pure and knows nothing of the DOM, `Game`, the board drawing or the clock: the game layer (step 3 on) passes it the wall clock, runs the turns it returns, and credits the Lore it reports.
-No game code takes turns yet: entering shows a stand-in dialog until the Catacomb screen (step 4).
+The screen (`ui/catacomb-view.ts`) runs the engine on the wall clock and credits the Lore it reports.
 
 ## Unlock and save
 
@@ -19,8 +19,21 @@ No game code takes turns yet: entering shows a stand-in dialog until the Catacom
   `drawMausoleum` draws it in pixels until its PNG is made; `Renderer` draws it after the Tournament Hall.
 - `Game.atMausoleum(x, y)` is what `BoardOverlay`'s tap tests (its sixth callback); `Game.reshapeForest()` rebuilds the forest when a building opens, which the Upgrades page calls on buying Reveal Catacombs.
 - `game/catacomb-desk.ts`: `CatacombDesk` (`game.catacombs`): `open`, `run`, `number`, `wouldLeave(number)` (the number and hall a run of another number past Hall 1 would leave) and `enter(number)` (refused while shut).
-- `ui/catacombs-entry.ts`: `enterFromMausoleum` enters the forest's `save.tower.tier`, confirming first when `wouldLeave` says so; `showCatacombs` is the stand-in for the Catacomb screen.
+- `ui/catacombs-entry.ts`: `enterFromMausoleum` enters the forest's `save.tower.tier`, confirming first when `wouldLeave` says so, then opens the Catacomb screen.
 - The menu's `#catacombs-button` (`ui/shell.ts`) shows once the Catacombs are open and a run exists (`renderRunMenu`); a Proving Grounds trial's cloned save has no Catacomb run (`TrialSession`), so it never shows there.
+
+## The Catacomb screen
+
+- `catacombs/player.ts`: `CatacombPlayer.step(save, wallNow, frameNow)` runs the turns `tick` says are due, at most `DRAWN_PER_SECOND` (15) times a second of frame time, so at ×100 a step takes six or seven turns and only the last is drawn; it credits their Lore to `save.cells` (`earn`) and returns the clock's verdict, the gains and the last turn's event.
+- `FrameLoopHost.background` runs every frame on every page (`frame-loop.ts`): `main.ts` passes `CatacombView.frame`, so the Catacombs play on behind any page, and a hidden tab's gap goes to the bank (`BANK_GAP_MS`).
+- `ui/catacomb-view.ts`: `CatacombView` opens on the run under way (the Mausoleum's tap, the menu's Catacomb button) and closes with Switch Back or Escape.
+  While open it owns the board through `FrameLoopHost.boardFrame` (after a trial, which comes first), so no Tower or Delve turn, route or fight runs behind it, and its capture listeners keep the board's taps and the game's keys from the run.
+  `html.catacombs` hides what the run shows and the Catacomb has no use for (`style.css`: the hand, Training bar, auto and speed, End Climb, the Shop, keys, Silver, shield, shroud, boosts, inspect and route boxes, the tabs' icons); `.catacomb-only` pieces show only then, made once on first open (`build`): Lore in the purse, the magic skill points in the portrait's top-right corner (the level row has no room for them beside the MXP bar), Switch Back under the hamburger where the run's Shop sits, the Lore icon in the Gold bonus, and the bank over the board's top right (`#catacomb-bank`: the clock, `bankTime`, the ×1 ×5 ×10 ×100 `select`, shown while a second is banked or haste is on).
+  `decorate`, called by `main.ts`'s `update` after the HUD renders and after each step, writes MHP, MAtk and MDef into the HP, ATK and DEF slots, MAGICIAN, the Magic level and MXP (the bar purple), the hall in the floor's place, the Lore bonus in the Gold bonus's, the Wisp's stats here in the base enemy box, the heading and a status line per turn (`turnLine`).
+  The board's heading is marked `catacombs`, so the run's heading is drawn again on Switch Back.
+- `ui/catacomb-odds.ts`: `catacombOddsHtml(hall, number)`, the base enemy box's table on the Catacomb screen: each type's chance a slot, its MHP, MAtk and MDef there, MXP and Spirit, and the ranked last slot's; it follows the hero to each new hall, and `refreshEnemyOddsBox` leaves it alone.
+- `render/catacomb-board.ts`: `CatacombBoard` draws the hall on `#world` at its own size: crypt stone from the Tower's tiles (`paintTile`, Tower III's look, addressed bottom up since `paintTile` reads north as y + 1), the stairs, torches, the Lore tablet and Ingot bars not yet taken, the undead in pixels (`UNDEAD_ART`, until their PNGs) with rank chevrons and an MHP bar, the hero tweened to each turn's tile, a dark falloff from the hero, and each strike's and pickup's number rising.
+  It reads the run and never changes it.
 
 ## Modules
 
@@ -53,5 +66,7 @@ No game code takes turns yet: entering shows a stand-in dialog until the Catacom
 ## Tests
 
 `tests/catacombs-engine.test.ts`: the corridor and its pinches, the rooms by hall and their reach, Ingot amounts, target order, strength precedence, the deep halls' products, enemy stats and rewards, spawn odds and the lone Wisp, the saved stream, entering, dash and rounds, Ingot pickups, an invincible enemy to a fall and the restart that keeps what was earned, the stalemate restart, Magic levels, moving points, `runTurns` across runs, the clock and haste, decoding, and the save and profile file keeping it (the run left out of the file).
+`tests/catacombs-player.test.ts` covers the wall-clock turns: none without a run, a turn a second stepped at most 15 times a second, Lore credited, haste spending the bank down to ×1, and a long gap banked.
+`tests/catacombs.mjs` (in `npm run test:browser`; no fixed clock, since the Catacombs play on the wall clock) enters from the menu during a climb, sees turns, hastes, opens and closes the undead table, and switches back by button and by Escape to the climb's HUD.
 `tests/catacombs-forest.test.ts` covers the Mausoleum (its tiles, yard, mode and flag), buying the skill raising it, entering by the forest's tower number, `wouldLeave`, and Access to Everything; `tests/forest-sprites.test.ts` keeps the foliage off it.
 `tests/skill-trees.test.ts` covers Reveal Catacombs: hidden and unbuyable until the Goal is claimed, then 40 Inspiration.

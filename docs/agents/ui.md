@@ -152,6 +152,7 @@ As with the render golden, regenerate it with `UPDATE_GOLDEN=1` on the unchanged
 Potion % and Find Potion training sit in the Utility group, last, after the Free Up rows (`TRAINING` in `progression/training.ts`), on the Training tab and the run's Utility cards alike.
 
 `proving-grounds-dialog.ts` opens the entrance menu from the fisherman’s ocean voyage, then takes over the main `#world` board with the shared HUD, hand and run-training bar; manual trials show the same card faces with red X overlays.
+The Catacomb screen owns the board the same way after a trial (`CatacombView`, catacombs.md), and `FrameLoopHost.background` runs its turns every frame on every page.
 `main.ts` supplies an isolated trial `Game` for HUD/training reads, and `FrameLoopHost.boardFrame` bypasses ordinary drawing and movement while it owns the board; see [proving-grounds.md](proving-grounds.md).
 The trial entrance lists one entry per boss, then shows three control buttons for its next unbeaten difficulty, multiplier, Trial Points reward and shared daily key balance; no numeric difficulty input remains.
 `archivesTick` calls its `tick` to refresh midnight refills without closing the menu or restarting an encounter.

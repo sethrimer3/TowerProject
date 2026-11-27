@@ -95,7 +95,7 @@ function content(game: Game) {
  * hero stands on can roll. It is no dialog: the game plays on behind it. A
  * press on its X or anywhere outside it puts it away; a second call does too. */
 export function toggleEnemyOddsBox(game: Game) {
-  const open = document.querySelector(".enemy-odds-layer");
+  const open = document.querySelector(".enemy-odds-layer:not(.catacomb-odds-layer)");
   if (open) return open.remove();
   const c = content(game);
   if (!c) return;
@@ -112,7 +112,8 @@ export function toggleEnemyOddsBox(game: Game) {
 /** Redraws the open box once the hero stands on a new floor (or a Greater
  * Boss appears), and puts it away once the run is over. */
 export function refreshEnemyOddsBox(game: Game) {
-  const box = document.querySelector<HTMLElement>(".enemy-odds-box");
+  // The Catacomb's table (ui/catacomb-odds.ts) keeps itself.
+  const box = document.querySelector<HTMLElement>(".enemy-odds-box:not(.catacomb-odds)");
   if (!box) return;
   const c = content(game);
   if (!c) return box.parentElement!.remove();

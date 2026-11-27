@@ -6047,3 +6047,29 @@ html:has(#settings.active .arcana-lab) #training-bar { display: none !important;
 .card-level-up-glow::after { content: ""; position: absolute; left: 50%; top: -8px; width: 3px; height: 3px; background: #eee0b7; box-shadow: -20px 14px #e1bb78, 20px 8px #eee0b7, -28px 40px #be8c48, 28px 34px #e1bb78; animation: card-level-sparks 3s steps(8, end) forwards; }
 @keyframes card-level-sparks { 0% { opacity: 0; } 15%, 35% { opacity: 1; } 70%, 100% { opacity: 0; transform: translateY(-12px); } }
 html.reduce-motion .card-level-up-glow::after { animation: card-level-glow 3s steps(12, end) forwards; }
+
+/* The Catacomb screen (ui/catacomb-view.ts): its own pieces show only while
+   it is open, and the run's pieces it has no use for step aside. */
+html:not(.catacombs) .catacomb-only { display: none !important; }
+html.catacombs :is(#auto, #auto-speed, #enter-run, #section-pick, #stuck-end-run, #end-run, #run-shop, #catacombs-button,
+  #hand, .hand-more, #run-drills, #training-bar, #drill-tip, #shield-readout, #shroud-stat, #combo-stat, #shrine-bar, #wings-ready, #overheal,
+  #run-earned, #best-reward, .silver-stat, #gold-bonus .gold-icon, #inspect-box, #route-box, #tile-highlight, #free-training-box, #boost-table,
+  #tier-prev, #tier-next, #forest-sign, #review-prompt, #gem-ad, #gold-ad,
+  #focus-stat, #ignore-stat, #target-stat, #bomb-stat, #heal-stat, #edge-stat, #guard-stat, #yellowKey-stat, #spark-stat, #skeleton-key) { display: none !important; }
+html.catacombs .keys { visibility: hidden; }
+html.catacombs nav button[data-tab] { visibility: hidden; }
+/* Switch Back: yellow where End Climb is red. */
+.mini-action.switch-back { color: #ffe08a; border-color: #d9b45a; background: #2a2210; }
+.mini-action.switch-back small { color: #ffe08a; }
+/* Unspent magic skill points: the training arrow, turned purple. */
+.magic-points { position: absolute; top: 1px; right: 2px; display: inline-flex; align-items: center; gap: 1px; color: #d7a8ff; font-size: 11px; line-height: 1; text-shadow: 0 1px 0 #000; }
+.magic-points .points-icon { width: 10px; height: 10px; }
+html.catacombs .xp-track i { background: linear-gradient(90deg, #6b3fb0, #c99aff); }
+.magic-points[hidden] { display: none !important; }
+.magic-points-icon { filter: hue-rotate(220deg) saturate(1.6); }
+/* The bank over the hall's top-right walls: the seconds banked and the haste. */
+.catacomb-bank { position: absolute; top: 6px; right: 6px; z-index: 3; display: flex; align-items: center; gap: 4px; padding: 3px 5px;
+  background: #0b0f16d9; border: 1px solid #9a7ad9; border-radius: 3px; color: #e6d6ff; font-size: 10px; line-height: 12px; white-space: nowrap; }
+.catacomb-bank[hidden] { display: none !important; }
+.catacomb-bank .clock-icon { width: 12px; height: 12px; }
+.catacomb-bank select { font: inherit; font-size: 10px; padding: 0 2px; background: #161026; color: #e6d6ff; border: 1px solid #6b55a0; }

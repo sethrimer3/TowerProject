@@ -1,5 +1,6 @@
 import { ProvingGroundsDialog } from "./ui/proving-grounds-dialog.ts";
-import { enterFromMausoleum, showCatacombs } from "./ui/catacombs-entry.ts";
+import { enterFromMausoleum } from "./ui/catacombs-entry.ts";
+import { CatacombView } from "./ui/catacomb-view.ts";
 import { USED_PROVISIONS } from "./economy/provisions.ts";
 import type { UpgradeId } from "./progression/upgrades.ts";
 import type { TreeId } from "./progression/skill-trees.ts";
@@ -165,7 +166,9 @@ const mail = new MailClient(game.mail, stubMail(() => game.save, () => game.cloc
 const mailDialog = new MailDialog(ctx, mail, refreshMail);
 // Tapping the forest's Blacksmith opens the Equipment screen, its Tournament Hall the Tournament page.
 const cardLevelUps = new CardLevelUps(game);
-const overlay = new BoardOverlay(game, renderer, openBlacksmith, () => navigate("tournament"), () => update(), () => enterFromMausoleum(ctx));
+const overlay = new BoardOverlay(game, renderer, openBlacksmith, () => navigate("tournament"), () => update(), () => enterFromMausoleum(ctx, () => catacombView.open()));
+/** The Catacomb screen, which owns the board while it shows. */
+const catacombView = new CatacombView(ctx, () => overlay.hide());
 const skillTree = new SkillTreePage(ctx);
 const research = new ResearchPage(ctx);
 const gear = new GearPage(ctx);
@@ -269,6 +272,7 @@ function update() {
   runTraining.render();
   if(!provingGrounds.active)renderBoardLesson(game, isBoard(tab), update, tab === "upgrades");
   provingGrounds.decorate();
+  catacombView.decorate();
   const finished = [...game.research.done.splice(0).map(researchToast), ...game.training.done.splice(0).map(trainingToast)];
   if (finished.length) play("trained");
   pageSounds();
@@ -585,7 +589,7 @@ el("relics-button").onclick = () => {
 // The Catacomb button, in the menu once a Catacomb run is under way.
 el("catacombs-button").onclick = () => {
   closeRunMenu();
-  showCatacombs(ctx);
+  catacombView.open();
 };
 // The Shrine Boons button, in the forest's menu once Shrines are researched.
 el("shrines-button").onclick = () => {
@@ -747,7 +751,10 @@ const loop = new FrameLoop({
   game,
   renderer,
   modal,
-  boardFrame: (time) => provingGrounds.frame(time),
+  boardFrame: (time) => provingGrounds.frame(time) || catacombView.draw(time),
+  background: (time) => {
+    catacombView.frame(time);
+  },
   tab: () => tab,
   upgradesFrame: (time) => skillTree.drawParticles(time),
   researchFrame: (time) => research.frame(time),

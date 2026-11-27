@@ -13,6 +13,7 @@ They pin the streams' start-up seeds (`__pinnedSeeds`) like the Node preload, wa
 The render suite encodes PNGs only for frames that changed (every frame when recording), and draws a scene a second time, to catch nondeterminism, only when recording or when one of its frames no longer matches.
 `ONLY=<key prefixes>` or `ONLY=failed` runs part of either suite (`tests/golden-filter.mjs`; see goldens.md).
 
+`tests/catacombs.mjs` (in `test:browser`) runs without a fixed clock, since the Catacombs take their turns on the wall clock.
 `npm run test:proving` uses the dev server to exercise both boss entries, the three-control picker, actual tile routes without arrow buttons, hybrid overrides and resume, automatic shared difficulty and one-time Trial Points equal to the cleared difficulty.
 It also checks cards-only input authority, reloads, daily key exhaustion/refill, isolated purchases and protection of paused ordinary runs, with picker previews at 320/390/1024 pixels in `test-results/proving-grounds/`.
 
