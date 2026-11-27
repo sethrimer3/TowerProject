@@ -130,12 +130,12 @@ export class NoticeDesk {
 
   /** The number the Deck tab's dot shows while it shows: the deck's cards
    * the Deck page hasn't shown since they were earned, and the cards ready
-   * to ascend, with the skill that lets them and the Rubies to pay for it. */
+   * to ascend, with the skill that lets them and the Rubies and Gems to pay for it. */
   deckCount(): number {
     const save = this.save, cards = deckCards(save.upgrades, save.goals);
     const ascends = (id: CardId) => {
       const next = nextAscension(save, id);
-      return !!next && save.upgrades[next.skill] > 0 && readyToAscend(save, id) && save.rubies >= next.rubies;
+      return !!next && save.upgrades[next.skill] > 0 && readyToAscend(save, id) && save.rubies >= next.rubies && save.gems >= next.gems;
     };
     return cards.filter((id) => !save.seen.cards.includes(id)).length + cards.filter(ascends).length;
   }

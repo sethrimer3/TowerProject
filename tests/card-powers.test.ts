@@ -42,23 +42,29 @@ test("a card's level makes its rarity, ten levels a rarity, and each power rises
   assert.deepEqual(powerBonus({ stairs: 15 }), { ...powerBonus(undefined), floorHeal: 15, silverBonus: 10, stairSkip: 10 });
 });
 
-test("a card stops at the last level of its rarity, ready to ascend once it holds the next level's XP, and ascending costs Rubies", () => {
+test("a card stops at the last level of its rarity, ready to ascend once it holds the next level's XP, and ascending costs Rubies and Gems", () => {
   const s = defaults();
   s.cardXp.door = xpTo(10);
   assert.deepEqual([levelIn(s, "door").level, cardMaxLevel(s.cardAscension, "door"), readyToAscend(s, "door")], [10, 10, false], "at 10, short of 11's XP");
   s.cardXp.door = xpTo(12) + 5;
   assert.deepEqual([levelIn(s, "door").level, readyToAscend(s, "door")], [10, true], "the XP keeps gathering past the cap");
-  assert.deepEqual(nextAscension(s, "door"), { rarity: "uncommon", rubies: 10, skill: "ascendUncommon" });
+  assert.deepEqual(nextAscension(s, "door"), { rarity: "uncommon", rubies: 10, gems: 100, skill: "ascendUncommon" });
   const g = new Game(s);
   assert.deepEqual(g.cards.ascend("door"), { refused: "locked" }, "not before Card Ascension - Uncommon");
   g.save.upgrades.ascendUncommon = 1;
   assert.deepEqual(g.cards.ascend("door"), { refused: "short" });
   g.save.rubies = 25;
+  g.save.gems = 99;
+  assert.deepEqual(g.cards.ascend("door"), { refused: "shortGems" });
+  assert.deepEqual([g.save.rubies, g.save.gems], [25, 99], "nothing paid when short");
+  g.save.gems = 130;
   assert.deepEqual(g.cards.ascend("door"), { rarity: "uncommon" });
+  assert.equal(g.save.gems, 30);
   assert.deepEqual([g.save.rubies, g.save.cardAscension.door, levelIn(g.save, "door").level], [15, 1, 12], "it climbs at once on the XP it held");
   assert.deepEqual(g.cardLevelUps.map((u) => u.level), [11, 12]);
   assert.deepEqual(g.cards.ascend("door"), { refused: "notReady" }, "not again until level 20");
   assert.deepEqual([2, 3, 4, 5].map((n) => nextAscension({ cardXp: {}, cardAscension: { door: n - 1 } }, "door")!.rubies), [100, 1_000, 10_000, 100_000]);
+  assert.deepEqual([2, 3, 4, 5].map((n) => nextAscension({ cardXp: {}, cardAscension: { door: n - 1 } }, "door")!.gems), [200, 300, 400, 500]);
   assert.equal(nextAscension({ cardXp: {}, cardAscension: { door: 5 } }, "door"), null, "none past mythic");
   const top = defaults();
   top.cardXp.door = MAX_CARD_XP;
@@ -73,7 +79,7 @@ test("Dev mode's free purchases ascend for nothing", () => {
   s.upgrades.ascendUncommon = 1;
   const g = new Game(s);
   assert.deepEqual(g.cards.ascend("key"), { rarity: "uncommon" });
-  assert.equal(g.save.rubies, 0);
+  assert.deepEqual([g.save.rubies, g.save.gems], [0, 0]);
 });
 
 test("a held card's level gained inside a run counts at once: its powers by enemy reach the hero", () => {
@@ -188,14 +194,18 @@ test("a card's ascensions count toward the Deck tab's dot only while it can pay,
   g.save.cardXp.door = xpTo(11);
   const seen = g.notices.deckCount();
   g.save.rubies = 10;
+  g.save.gems = 100;
   assert.equal(g.notices.deckCount(), seen, "not before Card Ascension - Uncommon");
   g.save.upgrades.ascendUncommon = 1;
   assert.equal(g.notices.deckCount(), seen + 1);
+  g.save.gems = 99;
+  assert.equal(g.notices.deckCount(), seen, "not while short of Gems");
 });
 
 test("each rarity's ascension waits on its own Card Ascension skill", () => {
   const g = new Game(defaults());
   g.save.rubies = 1_000_000;
+  g.save.gems = 1_500;
   const skills = ["ascendUncommon", "ascendRare", "ascendEpic", "ascendLegendary", "ascendMythic"] as const;
   for (const [i, skill] of skills.entries()) {
     g.save.cardXp.door = xpTo(10 * (i + 1) + 1);
@@ -203,5 +213,5 @@ test("each rarity's ascension waits on its own Card Ascension skill", () => {
     g.save.upgrades[skill] = 1;
     assert.equal("rarity" in g.cards.ascend("door"), true, skill);
   }
-  assert.equal(g.save.cardAscension.door, 5);
+  assert.deepEqual([g.save.cardAscension.door, g.save.gems], [5, 0], "100 + 200 + 300 + 400 + 500 Gems");
 });

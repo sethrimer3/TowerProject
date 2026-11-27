@@ -168,11 +168,12 @@ export class CodexPage {
     return `<li class="codex-entry${ready}"><details data-codex-entry="${key}"${this.expanded.has(key) ? " open" : ""}><summary class="codex-row">${head}</summary><div class="codex-details">${details}</div></details>${link}</li>`;
   }
 
-  /** A link's button: its words (an Ascend link with its Rubies), and while
+  /** A link's button: its words (an Ascend link with its Rubies and Gems), and while
    * it can't be followed now, why. */
   private linkHtml(l: CodexLink, key: string) {
-    const label = l.rubies === undefined ? escapeHtml(l.label) : `${escapeHtml(l.label)} · ${rubyIcon()} <b>${l.rubies.toLocaleString("en-US")}</b>`;
-    const aria = l.rubies === undefined ? l.label : `${l.label} for ${l.rubies.toLocaleString("en-US")} Rubies`;
+    const gems = l.gems === undefined ? "" : ` ${gemIcon()} <b>${l.gems.toLocaleString("en-US")}</b>`;
+    const label = l.rubies === undefined ? escapeHtml(l.label) : `${escapeHtml(l.label)} · ${rubyIcon()} <b>${l.rubies.toLocaleString("en-US")}</b>${gems}`;
+    const aria = l.rubies === undefined ? l.label : `${l.label} for ${l.rubies.toLocaleString("en-US")} Rubies${l.gems === undefined ? "" : ` and ${l.gems.toLocaleString("en-US")} Gems`}`;
     return `<span class="codex-link"><button type="button" class="${l.rubies === undefined ? "codex-go" : "codex-go deck-ascend"}" data-codex-link="${key}"${l.open ? "" : " disabled"} aria-label="${aria}">${label}</button>${l.note ? `<small class="hint">${l.note}</small>` : ""}</span>`;
   }
 

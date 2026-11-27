@@ -16,7 +16,7 @@ An entry with more to tell expands under a + (a − once open); one with a singl
 - **Tower Elements**: stairs, each colour of key beside its door's coloured tile, Wooden and Multi Doors, potions, shards, chests, torches, Gems, then Heart Doors.
   Blue, red and Heart Doors show once you've climbed to them, and Multi Doors with red.
   A Torch's link to the Greater Boss is told only once you own the Torch card.
-- **Card Deck**: every card in your deck with a line on what it's for; expand one for its level, XP, the XP to its next level and its powers, up to the next rarity's only, so higher ones stay a surprise (every rarity's with Access to Everything). A card ready to ascend is marked, with a button showing its Rubies that opens it on the Deck page.
+- **Card Deck**: every card in your deck with a line on what it's for; expand one for its level, XP, the XP to its next level and its powers, up to the next rarity's only, so higher ones stay a surprise (every rarity's with Access to Everything). A card ready to ascend is marked, with a button showing its Rubies and Gems that opens it on the Deck page.
 - **Card Badges**: each badge owned with its level, copies toward the next level and what it does now and at the next level, then those still to draw.
 - **Inspiration** and **Breakthrough**: every skill in the tree, grouped as Owned, Available (its price after its name), Locked (what reaching it costs after its name, it and every skill above it) and Hidden.
 - **Training**: how Training works (free training points from levels and weekly missions, training with Gold, training several ranks at once, rushing with Gems, auto-continue, stopping), then each Training row open to you, by group, each with its rank and what that adds (*Rank 3 (+33)*).

@@ -5961,7 +5961,9 @@ html:has(#settings.active .arcana-lab) #training-bar { display: none !important;
 .deck-ascend-note { margin: 6px 0 4px; font-size: 12px; }
 .deck-ascend { display: inline-flex; align-items: center; gap: 4px; margin-bottom: 4px; border: 2px solid #ff6f7d; }
 .deck-ascend.short { border-color: #6c7378; }
-.deck-ascend.short b { color: #ff6f6f; }
+.deck-ascend.short > b, .deck-ascend-gems.short b { color: #ff6f6f; }
+.deck-ascend-gems { display: inline-flex; align-items: center; gap: 4px; }
+.deck-ascend .gem-icon { width: 16px; height: 16px; }
 /* The Rubies held, over the Deck section. */
 .deck-rubies { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 14px; }
 .deck-rubies small { opacity: 0.75; }

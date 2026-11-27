@@ -155,13 +155,17 @@ export class DeckPage {
       "<p>Your hand's cards move you through a climb. The hand tries them left to right, and the first one that can act moves you.</p>"
       + "<p>A card gains XP each time it acts (Archer and Angel Wings each floor) and levels up as it gathers enough. Each level raises its <b>base power</b>, and every card's level shows its rarity: Base at 0, then Common, Uncommon, Rare, Epic, Legendary and Mythic, ten levels each.</p>"
       + "<p>Each rarity opens a new <b>power</b>, which grows with each of that rarity's ten levels. Powers count while the card is in either hand, from the moment it levels up, even in the middle of a climb.</p>"
-      + `<p>At level 10, 20, 30, 40 and 50 a card stops levelling: it keeps gathering XP, and once it has the XP for the next level it is <b>Ready to ascend</b>. Ascending costs ${rubyIcon()} Rubies, dropped by bosses and Greater Bosses, and raises the card to its next rarity, opening ten more levels and a new power. Each rarity's ascension first needs its <b>Card Ascension</b> skill from the Breakthrough tree.</p>`);
+      + `<p>At level 10, 20, 30, 40 and 50 a card stops levelling: it keeps gathering XP, and once it has the XP for the next level it is <b>Ready to ascend</b>. Ascending costs ${rubyIcon()} Rubies, dropped by bosses and Greater Bosses, and ${gemIcon()} Gems, and raises the card to its next rarity, opening ten more levels and a new power. Each rarity's ascension first needs its <b>Card Ascension</b> skill from the Breakthrough tree.</p>`);
   }
 
-  /** Ascends card `id` for its Rubies, then celebrates its new rarity. */
+  /** Ascends card `id` for its Rubies and Gems (asking for Gems when
+   * short), then celebrates its new rarity. */
   private ascend(id: CardId) {
     const { game } = this.ctx, got = game.cards.ascend(id);
-    if ("refused" in got) return;
+    if ("refused" in got) {
+      if (got.refused === "shortGems") askForGems(this.ctx, game.cards.next(id)!.gems);
+      return;
+    }
     this.ctx.save();
     this.ctx.update();
     this.render();
@@ -805,17 +809,19 @@ export class DeckPage {
     if (ascend) ascend.onclick = () => this.ascend(id);
   }
 
-  /** While card `id` waits to ascend, its Ascend button priced in Rubies,
-   * its outline greyed while the Rubies held fall short, with what
+  /** While card `id` waits to ascend, its Ascend button priced in Rubies
+   * and Gems, its outline greyed while the Rubies held fall short and its
+   * Gem price red while the Gems held do (a press then asks for Gems), with what
    * ascending does, or, until the skill that lets it ascend is owned, where
    * to find that skill; nothing otherwise. */
   private ascendHtml(id: CardId) {
     const { game } = this.ctx, next = game.cards.next(id);
     if (!next || !game.cards.ready(id)) return "";
-    const short = game.cards.refusal(id) === "short", name = CARD_RARITY_NAMES[next.rarity];
+    const refused = game.cards.refusal(id), short = refused === "short", name = CARD_RARITY_NAMES[next.rarity];
+    const rubies = next.rubies.toLocaleString("en-US"), gems = next.gems.toLocaleString("en-US");
     if (!game.cards.unlocked(id)) return `<p class="deck-ascend-note">Unlock <b>${UPGRADES.find((u) => u.id === next.skill)!.name}</b> in the Breakthrough tree to ascend this card.</p>`;
     return `<p class="deck-ascend-note">Ascend to unlock the next 10 levels with a new power.</p>`
-      + `<button type="button" class="deck-ascend${short ? " short" : ""}" data-ascend="${id}"${short ? ` aria-disabled="true"` : ""} title="${short ? `Ascending to ${name} takes ${next.rubies.toLocaleString("en-US")} Rubies` : `Ascend to ${name}`}" aria-label="Ascend to ${name} for ${next.rubies.toLocaleString("en-US")} Rubies">Ascend · ${rubyIcon()} <b>${next.rubies.toLocaleString("en-US")}</b></button>`;
+      + `<button type="button" class="deck-ascend${short ? " short" : ""}" data-ascend="${id}"${short ? ` aria-disabled="true"` : ""} title="${short ? `Ascending to ${name} takes ${rubies} Rubies` : refused === "shortGems" ? `Needs ${gems} Gems` : `Ascend to ${name}`}" aria-label="Ascend to ${name} for ${rubies} Rubies and ${gems} Gems">Ascend · ${rubyIcon()} <b>${rubies}</b> <span class="deck-ascend-gems${refused === "shortGems" ? " short" : ""}">${gemIcon()} <b>${gems}</b></span></button>`;
   }
 
   /** A swipe appends to the next empty slot; a full hand never swaps a card. */

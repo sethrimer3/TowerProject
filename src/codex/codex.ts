@@ -54,7 +54,7 @@ export type CodexTarget =
   | { page: "gear"; screen: "equipment" | "arcana" };
 /** A button to another page: its words, where it leads, and whether it can
  * be followed now (a forest-only page can't from inside a climb). */
-export type CodexLink = { label: string; to: CodexTarget; open: boolean; note?: string; rubies?: number };
+export type CodexLink = { label: string; to: CodexTarget; open: boolean; note?: string; rubies?: number; gems?: number };
 /** One entry: its icon, name and brief; `hidden` draws it as ???. `facts`
  * are its details as label and value rows, `lines` free lines, shown
  * when the entry is expanded (`expand`); `card` asks the page for that
@@ -287,7 +287,7 @@ function cards(src: CodexSource): CodexCategory {
     const entry: CodexEntry = { id, icon: { kind: "card", id }, name: CARDS[id].name, brief: CARD_BRIEFS[id], facts, card: { id, level: lvl.level, upTo: powersShownTo(s, id) } };
     if (ready && next) {
       entry.ready = true;
-      entry.link = forestLink(src, `Ascend to ${CARD_RARITY_NAMES[next.rarity]}`, { page: "deck", card: id }, { rubies: next.rubies });
+      entry.link = forestLink(src, `Ascend to ${CARD_RARITY_NAMES[next.rarity]}`, { page: "deck", card: id }, { rubies: next.rubies, gems: next.gems });
     }
     return entry;
   });

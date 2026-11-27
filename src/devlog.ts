@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-27", text: "Ascending a card now costs Gems as well as Rubies: 100 for Uncommon up to 500 for Mythic." },
   { date: "2026-11-27", text: "Catacombs: potions, Weaving, MHP Drops and Renewing Rush each give twice the MHP." },
   { date: "2026-11-27", text: "Catacombs: real spawn odds, five Magic skills, drops, tappable crosshairs and potions, and abilities bought with Spirit." },
   { date: "2026-11-27", text: "Cinematic mode and Battery saver show their own options indented beneath them." },

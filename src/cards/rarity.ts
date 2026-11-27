@@ -34,3 +34,6 @@ export const rarityAt = (level: number): CardRarity =>
 /** The Rubies ascending to each rarity costs (common needs none: every
  * card levels into it). */
 export const ASCEND_RUBIES: Partial<Record<CardRarity, number>> = { uncommon: 10, rare: 100, epic: 1_000, legendary: 10_000, mythic: 100_000 };
+/** The Gems ascending to each rarity costs beside its Rubies: 100 times the
+ * ascension's number (100 for uncommon up to 500 for mythic). */
+export const ASCEND_GEMS: Partial<Record<CardRarity, number>> = { uncommon: 100, rare: 200, epic: 300, legendary: 400, mythic: 500 };
