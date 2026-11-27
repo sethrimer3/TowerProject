@@ -32,7 +32,7 @@ Each skill takes up to its cap of points, and each point gives three things:
 | Skill | Each point | Cap |
 |---|---|---|
 | Might | +1 MAtk, +1% MAtk, +3% MCrit factor | 50 |
-| Weaving | +25 Max MHP, +1% MCrit chance, +0.2% Speed Drop chance | 50 |
+| Weaving | +50 Max MHP, +1% MCrit chance, +0.2% Speed Drop chance | 50 |
 | Resonance | +4% Spirit, +0.3% Loot Drop chance, +2 Armor Penetration | 25 |
 | Focus | +5% MXP, +0.3% MXP Drop chance, +3% Armor Penetration | 25 |
 | Fortune | +2% MCrit chance, +0.2% to every Drop chance, +0.5% Gold Crosshair chance | 25 |
@@ -46,7 +46,7 @@ Forge and Academy open in later updates.
 **Drops.** As a hall is made, each undead may roll Drops, shown as coloured pips on it, and beating it pays them all.
 An MXP Drop (purple) gives ×3 to ×5 MXP from that undead, and a Loot Drop (green) ×2 to ×5 Spirit.
 A Speed Drop (yellow) gives 10 to 110 attacks at double speed, which add up and are kept when you fall.
-An MHP Drop (red) gives back 15 to 50 MHP, never past your maximum.
+An MHP Drop (red) gives back 30 to 100 MHP, never past your maximum.
 Every Drop's chance starts at 0% and grows with Skills.
 
 **Crosshairs and potions.** While you watch, you can tap the hall for a little extra.
@@ -54,7 +54,7 @@ Each turn, an undead may gain a crosshair.
 Tap it (or the wall just above or below the undead) for a free hit, which can be an MCrit and spends no turn.
 A Gold Crosshair hits three times as hard; Fortune gives the chance of one.
 Each turn, a potion may also appear on a tile beside the corridor.
-Tap it for 5 MHP; it is lost if you leave the hall first.
+Tap it for 10 MHP; it is lost if you leave the hall first.
 
 **Spirit.** The Spirit menu spends Spirit on upgrades.
 Unlock Ability opens a new ability each level: Spell Surge for 10 Uncommon Spirit, Renewing Rush for 75 Rare and Arcane Barrage for 150 Epic.
@@ -68,7 +68,7 @@ The slim Auto button above it casts it by itself whenever it is ready.
 | Ability | For the next 5 attacks | Cooldown |
 |---|---|---|
 | Spell Surge | +20% MAtk and +100% MCrit damage | 60 turns |
-| Renewing Rush | +100% attack speed, and 25 MHP when cast | 120 turns |
+| Renewing Rush | +100% attack speed, and 50 MHP when cast | 120 turns |
 | Arcane Barrage | every undead in the hall also takes a hit at 20% MAtk | 90 turns |
 
 **Banked time.** Time the game is closed is banked, a second at a time, and the Welcome Back dialog says how many turns, and shown over the hall's top right with a speed choice: ×1, ×5, ×10 or ×100.

@@ -61,7 +61,7 @@ export const MAGIC_SKILL_IDS: readonly MagicSkillId[] = ["might", "weaving", "re
 /** Each skill: its name, the most points it takes, and what each point raises. */
 export const MAGIC_SKILLS: Record<MagicSkillId, { name: string; cap: number; effects: readonly { effect: MagicEffect; per: number }[] }> = {
   might: { name: "Might", cap: 50, effects: [{ effect: "matk", per: 1 }, { effect: "matkPercent", per: 1 }, { effect: "critFactor", per: 3 }] },
-  weaving: { name: "Weaving", cap: 50, effects: [{ effect: "mhp", per: 25 }, { effect: "critChance", per: 1 }, { effect: "speedDrop", per: 0.2 }] },
+  weaving: { name: "Weaving", cap: 50, effects: [{ effect: "mhp", per: 50 }, { effect: "critChance", per: 1 }, { effect: "speedDrop", per: 0.2 }] },
   resonance: { name: "Resonance", cap: 25, effects: [{ effect: "spiritGain", per: 4 }, { effect: "lootDrop", per: 0.3 }, { effect: "armorPen", per: 2 }] },
   focus: { name: "Focus", cap: 25, effects: [{ effect: "mxpGain", per: 5 }, { effect: "mxpDrop", per: 0.3 }, { effect: "armorPenPercent", per: 3 }] },
   fortune: { name: "Fortune", cap: 25, effects: [{ effect: "critChance", per: 2 }, { effect: "allDrops", per: 0.2 }, { effect: "goldCrosshair", per: 0.5 }] },

@@ -15,7 +15,7 @@ export const GOLD_CROSSHAIR_FACTOR = 3;
 /** Each turn a potion appears on a free side tile this often (percent). */
 export const POTION_CHANCE = 5;
 /** The MHP a potion restores, never past the maximum. */
-export const POTION_MHP = 5;
+export const POTION_MHP = 10;
 
 /** A tap's outcome, for the board's popups. */
 export type TapEvent =

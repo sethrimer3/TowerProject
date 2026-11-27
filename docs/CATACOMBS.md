@@ -280,7 +280,7 @@ Magic skills (Skills, in the Catacombs) are the Magician's attributes: each poin
 | Skill | Effect 1 | Effect 2 | Effect 3 | Cap |
 |---|---|---|---|---|
 | Might | MAtk +1 | MAtk +1% | MCrit factor +3% (3 pts) | 50 |
-| Weaving | Max MHP +25 | MCrit chance +1% | Speed Drop chance +0.20% (0.2 pts) | 50 |
+| Weaving | Max MHP +50 | MCrit chance +1% | Speed Drop chance +0.20% (0.2 pts) | 50 |
 | Resonance | Spirit gain +4% | Loot Drop chance +0.30% (0.3 pts) | Armor Penetration +2 | 25 |
 | Focus | MXP gain +5% | MXP Drop chance +0.30% (0.3 pts) | Armor Penetration +3% | 25 |
 | Fortune | MCrit chance +2% | All Drop chances +0.20% (0.2 pts) | Gold Crosshair chance +0.50% (0.5 pts) | 25 |
@@ -297,7 +297,7 @@ As a hall is made, each undead rolls each Drop at the Magician's chance (`rollDr
 | MXP Drop | ×3 to ×5 MXP from this undead |
 | Loot Drop | ×2 to ×5 Spirit from this undead |
 | Speed Drop | +10 to +110 attacks at ×2 attack speed (they stack, and are kept through a fall) |
-| MHP Drop | +15 to +50 MHP (never past the maximum) |
+| MHP Drop | +30 to +100 MHP (never past the maximum) |
 
 The stats table lists each Drop's chance and effect.
 
@@ -310,7 +310,7 @@ The active part of a run: something to tap while watching, worth most early on.
   A tap that beats the undead being fought sends the hero on to the next target next turn.
 - **Gold Crosshair.** A crosshair is gold at Fortune's Gold Crosshair chance; its hit is ×3 (`GOLD_CROSSHAIR_FACTOR`).
 - **Potion.** After each turn, at 5%, a potion appears on a random free side tile (`SIDE_TILES`: the corridor's rows 7 and 9, off the hero's path; the `potions` stream).
-  Tapped (`takePotion`), it restores 5 MHP, never past the maximum; one left when the hall is left is lost.
+  Tapped (`takePotion`), it restores 10 MHP, never past the maximum; one left when the hall is left is lost.
 
 ## Abilities
 
@@ -320,7 +320,7 @@ Each holds one charge; cast, its charge comes back after its cooldown in turns, 
 | Ability | Effect | Cooldown |
 |---|---|---|
 | Spell Surge | Next 5 attacks: +20% MAtk, +100% MCrit damage | 60 |
-| Renewing Rush | Next 5 attacks: +100% attack speed; +25 MHP on cast | 120 |
+| Renewing Rush | Next 5 attacks: +100% attack speed; +50 MHP on cast | 120 |
 | Arcane Barrage | Next 5 attacks: hits at 20% MAtk to every undead too | 90 |
 
 - Each unlocked ability's button sits over the menus, the turns until its charge (or *Ready*) under it, and a tooltip on hover or hold.

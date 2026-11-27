@@ -244,7 +244,7 @@ test("points move freely within those earned and each skill's cap, and apply on 
   assert.equal(movePoint(c, "focus", 1), false);
   assert.equal(movePoint(c, "focus", -1), false);
   const m = magician(c);
-  assert.deepEqual({ mhp: m.mhp, matk: m.matk, mdef: m.mdef }, { mhp: 1025, matk: 11.11, mdef: 0 });
+  assert.deepEqual({ mhp: m.mhp, matk: m.matk, mdef: m.mdef }, { mhp: 1050, matk: 11.11, mdef: 0 });
   // Weaving's 1% MCrit chance out, so the hit is plain.
   movePoint(c, "weaving", -1);
   c.run!.slots = [slot("wisp"), null, null, null, null, null];

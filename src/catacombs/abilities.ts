@@ -13,7 +13,7 @@ export type AbilityId = (typeof ABILITY_IDS)[number];
  * many attacks its buff lasts, and its tooltip. */
 export const ABILITIES: Record<AbilityId, { name: string; cooldown: number; attacks: number; brief: string }> = {
   surge: { name: "Spell Surge", cooldown: 60, attacks: 5, brief: "Next 5 attacks: +20% MAtk and +100% MCrit damage." },
-  rush: { name: "Renewing Rush", cooldown: 120, attacks: 5, brief: "Next 5 attacks: +100% attack speed. Restores 25 MHP on cast." },
+  rush: { name: "Renewing Rush", cooldown: 120, attacks: 5, brief: "Next 5 attacks: +100% attack speed. Restores 50 MHP on cast." },
   barrage: { name: "Arcane Barrage", cooldown: 90, attacks: 5, brief: "Next 5 attacks: every undead in the hall also takes a hit at 20% MAtk." },
 };
 /** The charges each ability holds (upgrades to raise it: Later). */
@@ -21,7 +21,7 @@ export const MAX_CHARGES = 1;
 /** Spell Surge's MAtk factor and what it adds to the MCrit factor. */
 export const SURGE_MATK = 1.2, SURGE_CRIT = 1;
 /** Renewing Rush's MHP on cast. */
-export const RUSH_MHP = 25;
+export const RUSH_MHP = 50;
 /** Arcane Barrage's hit, as a share of MAtk. */
 export const BARRAGE_SHARE = 0.2;
 

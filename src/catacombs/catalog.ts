@@ -141,7 +141,7 @@ export const loreOnTile = (number: number) => tierGold(number, LORE_PER_TILE);
 
 /** The drops an undead can roll as its hall is made, each shown as an icon
  * on it and paid as it is beaten: MXP ×3 to ×5, Spirit ×2 to ×5, 10 to 110
- * attacks at double speed, 15 to 50 MHP back (never past the maximum). Each
+ * attacks at double speed, 30 to 100 MHP back (never past the maximum). Each
  * amount is a whole number, every one in its range as likely. */
 export const DROP_IDS = ["mxp", "loot", "speed", "mhp"] as const;
 export type DropId = (typeof DROP_IDS)[number];
@@ -149,5 +149,5 @@ export const DROPS: Record<DropId, { name: string; lo: number; hi: number; effec
   mxp: { name: "MXP Drop", lo: 3, hi: 5, effect: "×3 to ×5 MXP from this undead" },
   loot: { name: "Loot Drop", lo: 2, hi: 5, effect: "×2 to ×5 Spirit from this undead" },
   speed: { name: "Speed Drop", lo: 10, hi: 110, effect: "+10 to +110 attacks at ×2 attack speed" },
-  mhp: { name: "MHP Drop", lo: 15, hi: 50, effect: "+15 to +50 MHP, never past the maximum" },
+  mhp: { name: "MHP Drop", lo: 30, hi: 100, effect: "+30 to +100 MHP, never past the maximum" },
 };

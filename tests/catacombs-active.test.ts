@@ -31,7 +31,7 @@ test("the Magician: each skill's three effects, Magic ATK +1 under Might's perce
   c.points = { might: 10, weaving: 4, resonance: 5, focus: 2, fortune: 3 };
   c.upgrades.matk = 5;
   assert.deepEqual(magician(c), {
-    mhp: 1100, matk: 27.5, mdef: 0, critChance: 10, critFactor: 1.8, armorPen: 10, armorPenPercent: 6,
+    mhp: 1200, matk: 27.5, mdef: 0, critChance: 10, critFactor: 1.8, armorPen: 10, armorPenPercent: 6,
     spiritGain: 1.2, mxpGain: 1.1, drops: { mxp: 1.2, loot: 2.1, speed: 1.4, mhp: 0.6 }, goldCrosshair: 1.5,
   });
 });
@@ -55,7 +55,7 @@ test("drops roll as a hall is made, each amount whole within its range, and none
   assert.ok(rolled > 20, `rolled ${rolled}`);
   assert.deepEqual([...seen.mxp].sort(), [3, 4, 5]);
   assert.equal(rollDrops([slot("wisp")], { mxp: 0, loot: 0, speed: 0, mhp: 0 }, () => { throw new Error("no draw at 0%"); })[0]!.drops, undefined);
-  assert.deepEqual(rollDrops([slot("wisp")], { mxp: 100, loot: 0, speed: 0, mhp: 100 }, () => 0.999)[0]!.drops, { mxp: 5, mhp: 50 });
+  assert.deepEqual(rollDrops([slot("wisp")], { mxp: 100, loot: 0, speed: 0, mhp: 100 }, () => 0.999)[0]!.drops, { mxp: 5, mhp: 100 });
 });
 
 test("a beaten undead pays its drops: MXP and Spirit factors, attacks at double speed, MHP up to the maximum", () => {
@@ -142,16 +142,16 @@ test("a crosshair that beats the undead being fought sends the hero on next turn
   assert.deepEqual(catacombTurn(c), { kind: "dash", x: 3, y: 8 });
 });
 
-test("potions lie on free side tiles, restore 5 MHP when tapped, and are lost with the hall", () => {
+test("potions lie on free side tiles, restore 10 MHP when tapped, and are lost with the hall", () => {
   const c = fresh(11);
   for (let k = 0; k < 2000 && c.run!.potions.length < 3; k++) rollTaps(c);
   assert.equal(c.run!.potions.length, 3);
   for (const [x, y] of c.run!.potions) assert.ok(SIDE_TILES.some(([sx, sy]) => sx === x && sy === y), `${x},${y}`);
   assert.equal(new Set(c.run!.potions.map((p) => p.join())).size, 3);
   const [x, y] = c.run!.potions[0]!;
-  c.run!.hero.mhp = 990;
+  c.run!.hero.mhp = 980;
   assert.deepEqual(takePotion(c, x, y), { kind: "potion", x, y, mhp: POTION_MHP });
-  assert.equal(c.run!.hero.mhp, 990 + POTION_MHP);
+  assert.equal(c.run!.hero.mhp, 980 + POTION_MHP);
   assert.equal(c.run!.potions.length, 2);
   assert.equal(takePotion(c, 8, 8), null);
   c.run!.hero.mhp = 999;
@@ -201,12 +201,12 @@ test("Spell Surge: +20% MAtk and +100% MCrit damage for 5 attacks", () => {
   assert.equal((catacombTurn(c) as { heroHit: number }).heroHit, 10, "back to plain: 10 × 1.5 − 5");
 });
 
-test("Renewing Rush: 25 MHP on cast, never past the maximum, and a strike more for 5 attacks", () => {
+test("Renewing Rush: 50 MHP on cast, never past the maximum, and a strike more for 5 attacks", () => {
   const c = fresh();
   c.upgrades.unlock = 2;
   c.run!.hero.mhp = 900;
   castAbility(c, "rush");
-  assert.equal(c.run!.hero.mhp, 925);
+  assert.equal(c.run!.hero.mhp, 950);
   besideOne(c, slot("ghost"));
   assert.equal((catacombTurn(c) as { strikes: number }).strikes, 2);
   c.abilities.rush.charges = 1;
