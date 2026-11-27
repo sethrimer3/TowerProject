@@ -73,4 +73,5 @@ The player-facing rules, in full, one topic a page:
 | [Events](docs/EVENTS.md) | Fortnightly events, Medals and relics |
 | [Tournament](docs/TOURNAMENT.md) | The Tournament's plan |
 | [Mail](docs/MAIL.md) | Mail's plan |
+| [Catacombs](docs/CATACOMBS.md) | The Catacombs' plan: an idle undead side mode |
 | [UI sprites](docs/art/ui-sprites.md), [UI atlas](docs/art/ui-atlas.md), [Sprite batches](docs/art/remaining-sprite-batches.md) | The sprite kit, its atlas and the art still to make |

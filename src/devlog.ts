@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-27", text: "Design notes for an upcoming area under the forest." },
   { date: "2026-11-26", text: "Shop cards show the Champion's daily Training Points and gifts as icons, other bonuses listed after Plus." },
   { date: "2026-11-26", text: "Cells are now Lore Fragments, Lore for short, shown as a clay tablet." },
   { date: "2026-11-25", text: "Plainer help and tips across the game, with shorter sentences and no dashes in messages." },
