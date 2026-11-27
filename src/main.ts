@@ -1,4 +1,5 @@
 import { ProvingGroundsDialog } from "./ui/proving-grounds-dialog.ts";
+import { enterFromMausoleum, showCatacombs } from "./ui/catacombs-entry.ts";
 import { USED_PROVISIONS } from "./economy/provisions.ts";
 import type { UpgradeId } from "./progression/upgrades.ts";
 import type { TreeId } from "./progression/skill-trees.ts";
@@ -164,7 +165,7 @@ const mail = new MailClient(game.mail, stubMail(() => game.save, () => game.cloc
 const mailDialog = new MailDialog(ctx, mail, refreshMail);
 // Tapping the forest's Blacksmith opens the Equipment screen, its Tournament Hall the Tournament page.
 const cardLevelUps = new CardLevelUps(game);
-const overlay = new BoardOverlay(game, renderer, openBlacksmith, () => navigate("tournament"), () => update());
+const overlay = new BoardOverlay(game, renderer, openBlacksmith, () => navigate("tournament"), () => update(), () => enterFromMausoleum(ctx));
 const skillTree = new SkillTreePage(ctx);
 const research = new ResearchPage(ctx);
 const gear = new GearPage(ctx);
@@ -580,6 +581,11 @@ el("events-button").onclick = () => {
 el("relics-button").onclick = () => {
   closeRunMenu();
   navigate("relics");
+};
+// The Catacomb button, in the menu once a Catacomb run is under way.
+el("catacombs-button").onclick = () => {
+  closeRunMenu();
+  showCatacombs(ctx);
 };
 // The Shrine Boons button, in the forest's menu once Shrines are researched.
 el("shrines-button").onclick = () => {

@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-27", text: "Reveal Catacombs raises a Mausoleum in the Tower's forest, and the menu gains a Catacomb button." },
   { date: "2026-11-27", text: "Tower VI's floor 20 Goal now reveals Reveal Catacombs, a 40 Inspiration skill for an area still to come." },
   { date: "2026-11-27", text: "Groundwork for the Catacombs: the undead, their halls and the turns fought there, not yet open." },
   { date: "2026-11-27", text: "Design notes for an upcoming area under the forest." },

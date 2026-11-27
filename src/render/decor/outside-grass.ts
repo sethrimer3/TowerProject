@@ -102,7 +102,7 @@ export class OutsideGrass {
     seed: number, center: number, weather: Weather, now: number, dt: number, hx: number, hy: number, reduceMotion: boolean,
     layer: "back" | "front" = "back") {
     // A road laid to a new building, or toward a newly opened tier, takes the grass off its tiles.
-    const roads = roadsOf(world), key = `${seed}:${center}:${roads ? [roads.blacksmith, roads.hall, roads.prev, roads.next].map(Number).join("") : ""}`;
+    const roads = roadsOf(world), key = `${seed}:${center}:${roads ? [roads.blacksmith, roads.hall, roads.prev, roads.next, !!roads.mausoleum].map(Number).join("") : ""}`;
     if (key !== this.planKey) { this.plans.clear(); this.stir.clear(); this.planKey = key; }
     const t = now / 1000;
     const back = layer === "back";

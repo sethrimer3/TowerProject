@@ -11,7 +11,7 @@ import type { Tile, Torch } from "../entities.ts";
 import { TIER_BONUS_TENTHS, tierNumeral } from "../tiers.ts";
 import { LEAGUE_INFO } from "../tournament/leagues.ts";
 import { factorText } from "../economy/gold-multipliers.ts";
-import { BLACKSMITH, drawBlacksmith, drawEntrance, drawTournamentHall, ENTRANCE_ZOOM_MS, OutsideWorld, OUTSIDE_SIZE, outsideWeather, roadsOf } from "../outside.ts";
+import { BLACKSMITH, drawBlacksmith, drawEntrance, drawMausoleum, drawTournamentHall, ENTRANCE_ZOOM_MS, OutsideWorld, OUTSIDE_SIZE, outsideWeather, roadsOf } from "../outside.ts";
 import { DecorLayer, type DecorFrame, type MirroredSprites } from "./decor/decor-render.ts";
 import { torchShadowCaster } from "./entity-lighting.ts";
 import { OutsideGrass } from "./decor/outside-grass.ts";
@@ -600,6 +600,7 @@ export class Renderer {
     if (g.world instanceof OutsideWorld && g.world.blacksmith) drawBlacksmith(c, g.world.entranceX, f.look.styledSprites,
       f.now, g.save.settings.spriteAnimations && !f.look.reduceMotion);
     if (g.world instanceof OutsideWorld && g.world.hall) drawTournamentHall(c, g.world.entranceX, f.look.styledSprites);
+    if (g.world instanceof OutsideWorld && g.world.mausoleum) drawMausoleum(c, g.world.entranceX);
     c.restore();
   }
   private drawRoute(f: FrameContext) {

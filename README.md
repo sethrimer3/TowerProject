@@ -45,6 +45,7 @@ The player-facing rules, in full, one topic a page:
 | [The Codex](docs/gameplay/codex.md) | The in-game reference and its categories |
 | [Arcana](docs/gameplay/arcana.md) | Arcanite's spells: buying and upgrading, each spell, in trials |
 | [Familiars](docs/gameplay/familiars.md) | Medal-hatched beasts that help in climbs |
+| [The Catacombs](docs/gameplay/catacombs.md) | Revealing them, the Mausoleum and the Catacomb button |
 | [Sound](docs/gameplay/sound.md) | Sound effects, ambience, music and the Sounds settings |
 
 ## Project docs

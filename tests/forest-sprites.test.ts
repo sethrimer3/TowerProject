@@ -19,8 +19,8 @@ test("forest art has native multi-tile crowns and huge cropped entrance bases", 
 
 test("seeded forest layers keep roads, signs, entrances and building yards clear without changing tiles", () => {
   const seen = new Set<string>();
-  for (const mode of ["tower", "delve"] as const) for (let flags = 0; flags < 16; flags++) for (const seed of [1, 503, 507]) {
-    const world = new OutsideWorld(seed, mode, !!(flags & 1), !!(flags & 2), !!(flags & 4), !!(flags & 8));
+  for (const mode of ["tower", "delve"] as const) for (let flags = 0; flags < 32; flags++) for (const seed of [1, 503, 507]) {
+    const world = new OutsideWorld(seed, mode, !!(flags & 1), !!(flags & 2), !!(flags & 4), !!(flags & 8), !!(flags & 16));
     const tiles = () => Array.from({ length: 400 }, (_, i) => world.tile(i % 20, Math.floor(i / 20)));
     const before = tiles(), objects = planForest(world);
     assert.deepEqual(tiles(), before, "art planning cannot change the walkable map");
@@ -34,7 +34,7 @@ test("seeded forest layers keep roads, signs, entrances and building yards clear
       for (let y = Math.ceil(-(p.y + p.height - 1) / 24); y <= Math.ceil(-p.y / 24); y++)
         for (let x = Math.floor(p.x / 24); x <= Math.floor((p.x + p.width - 1) / 24); x++) {
           assert.equal(onPath({ x, y, center: world.entranceX, seed, roads: roadsOf(world) }), false, "full canopy clears every road");
-          assert.equal(world.isBlacksmith(x, y) || world.isTournamentHall(x, y), false, "buildings retain visible hitboxes");
+          assert.equal(world.isBlacksmith(x, y) || world.isTournamentHall(x, y) || world.isMausoleum(x, y), false, "buildings retain visible hitboxes");
           assert.equal(world.atExit(x, y), false, "mode-swap sign remains clear");
           assert.equal(world.isProvingGrounds(x, y), false, "trial square remains visible");
           assert.ok(x !== world.entranceX || y !== ENTRANCE_Y, "entrance remains clear");

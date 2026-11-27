@@ -31,8 +31,10 @@ export type ForestSpot = { x: number; y: number; seed: number; center: number; r
 /** The roads the clearing's crossroads has laid: to the buildings in it,
  * each built once what opens it is (Equipment's Blacksmith, the
  * Tournament's Hall), and out to the forest's edge toward the previous and
- * next opened tier (`prev`, `next`), the way the forest's tier arrows lead. */
-export type Roads = { blacksmith: boolean; hall: boolean; prev: boolean; next: boolean };
+ * next opened tier (`prev`, `next`), the way the forest's tier arrows lead.
+ * No road leads to the Mausoleum (`mausoleum`), which is tapped, but its
+ * yard still takes the trees and grass off its tiles. */
+export type Roads = { blacksmith: boolean; hall: boolean; prev: boolean; next: boolean; mausoleum?: boolean };
 
 /** The dirt path up to the entrance, widening every fifth row; its
  * crossroads (the row the hero starts on) goes on to a building's door
@@ -62,13 +64,21 @@ export const TOURNAMENT_HALL = { dx: 4, width: 3, y: 8, height: 3 } as const;
 const HALL_YARD = { dx: TOURNAMENT_HALL.dx - 1, width: TOURNAMENT_HALL.width + 2, y: TOURNAMENT_HALL.y - 1, height: TOURNAMENT_HALL.height + 1 };
 /** Whether (x, y) is one of the Tournament Hall's tiles, by the entrance column. */
 export const onTournamentHall = (center: number, x: number, y: number) => within(TOURNAMENT_HALL, center, x, y);
+/** Where the Mausoleum stands once the Catacombs are open (catacombs/open.ts):
+ * in the clearing's lower-right corner, by the entrance column, in a yard of
+ * its own (`MAUSOLEUM_YARD`), like the Blacksmith and the Tournament Hall.
+ * Only the Tower's forest has it. */
+export const MAUSOLEUM = { dx: 7, width: 3, y: 1, height: 3 } as const;
+const MAUSOLEUM_YARD = { dx: MAUSOLEUM.dx - 1, width: MAUSOLEUM.width + 2, y: MAUSOLEUM.y - 1, height: MAUSOLEUM.height + 1 };
+/** Whether (x, y) is one of the Mausoleum's tiles, by the entrance column. */
+export const onMausoleum = (center: number, x: number, y: number) => within(MAUSOLEUM, center, x, y);
 /** The Tower's arched doorway, by the entrance column: the entrance tile
  * and the tiles either side, up to the top of the arch. */
 export const TOWER_ARCH = { dx: -1, width: 3, y: ENTRANCE_Y, height: 5 } as const;
 
 /** The roads `world` has laid (none unless it is the clearing). */
 export const roadsOf = (world: unknown): Roads | undefined =>
-  world instanceof OutsideWorld ? { blacksmith: world.blacksmith, hall: world.hall, prev: world.prevRoad, next: world.nextRoad } : undefined;
+  world instanceof OutsideWorld ? { blacksmith: world.blacksmith, hall: world.hall, prev: world.prevRoad, next: world.nextRoad, mausoleum: world.mausoleum } : undefined;
 
 export class OutsideWorld implements Board {
   width: number;
@@ -77,8 +87,10 @@ export class OutsideWorld implements Board {
   /** `blacksmith`: Equipment is open, so its Blacksmith stands in the
    * clearing; `hall`: the Tournament is, so its Hall does; `prevRoad`,
    * `nextRoad`: a tier before or after this one is open, so the crossroads
-   * runs on through the trees to the left or right edge. */
-  constructor(public seed: number, public mode: Mode, public blacksmith = false, public hall = false, public prevRoad = false, public nextRoad = false) {
+   * runs on through the trees to the left or right edge; `mausoleum`: the
+   * Catacombs are, so the Mausoleum stands (the Tower's forest only). */
+  constructor(public seed: number, public mode: Mode, public blacksmith = false, public hall = false, public prevRoad = false, public nextRoad = false, public mausoleum = false) {
+    this.mausoleum = mausoleum && mode === "tower";
     // The Tower dungeon is 17 columns wide; its visible clearing needs all 20.
     this.width = Math.max(OUTSIDE_SIZE, MODES[mode].width);
     this.entranceX = MODES[mode].entranceX;
@@ -91,6 +103,7 @@ export class OutsideWorld implements Board {
     if (x === this.entranceX && y === ENTRANCE_Y) return { kind: "stairs" };
     if (this.blacksmith && within(YARD, this.entranceX, x, y)) return { kind: onBlacksmith(this.entranceX, x, y) ? "wall" : "floor" };
     if (this.hall && within(HALL_YARD, this.entranceX, x, y)) return { kind: onTournamentHall(this.entranceX, x, y) ? "wall" : "floor" };
+    if (this.mausoleum && within(MAUSOLEUM_YARD, this.entranceX, x, y)) return { kind: onMausoleum(this.entranceX, x, y) ? "wall" : "floor" };
     return this.wooded(x, y) ? { kind: "wall" } : { kind: "floor" };
   }
   isProvingGrounds(_x: number, _y: number) {
@@ -103,6 +116,10 @@ export class OutsideWorld implements Board {
   /** Whether (x, y) is the Tournament Hall, which a tap opens. */
   isTournamentHall(x: number, y: number) {
     return this.hall && onTournamentHall(this.entranceX, x, y);
+  }
+  /** Whether (x, y) is the Mausoleum, which a tap enters the Catacombs by. */
+  isMausoleum(x: number, y: number) {
+    return this.mausoleum && onMausoleum(this.entranceX, x, y);
   }
   /** Whether (x, y) is in the Tower's arch, which a tap walks the hero
    * through, to the entrance. */
@@ -185,6 +202,30 @@ export function drawBlacksmith(c: CanvasRenderingContext2D, center: number, _sty
 export function drawTournamentHall(c: CanvasRenderingContext2D, center: number, _styled = true) {
   drawKit(c, "hall", (center + TOURNAMENT_HALL.dx) * 24,
     (OUTSIDE_SIZE - TOURNAMENT_HALL.y - TOURNAMENT_HALL.height) * 24, TOURNAMENT_HALL.width * 24, TOURNAMENT_HALL.height * 24);
+}
+
+/** The Mausoleum: a pale stone tomb with a pediment, two columns and a dark
+ * doorway, drawn in pixels until its PNG is made (docs/CATACOMBS.md's Art). */
+export function drawMausoleum(c: CanvasRenderingContext2D, center: number) {
+  const x = (center + MAUSOLEUM.dx) * 24, y = (OUTSIDE_SIZE - MAUSOLEUM.y - MAUSOLEUM.height) * 24;
+  c.save(); c.translate(x, y);
+  const px = (color: string, rx: number, ry: number, w: number, h: number) => { c.fillStyle = color; c.fillRect(rx, ry, w, h); };
+  // Shadow, plinth and body.
+  px("#00000055", 6, 66, 62, 4);
+  px("#5d5a63", 6, 60, 60, 8); px("#8e8a96", 6, 60, 60, 2);
+  px("#9b97a3", 10, 26, 52, 34); px("#b9b5c1", 10, 26, 52, 2); px("#6f6b78", 60, 26, 2, 34);
+  // Pediment, stepped, with a cross at its peak.
+  for (let i = 0; i < 6; i++) px(i % 2 ? "#a7a3af" : "#b9b5c1", 6 + i * 5, 24 - i * 3, 60 - i * 10, 3);
+  px("#cfcbd6", 6, 24, 60, 2);
+  px("#d9d5df", 35, 0, 2, 10); px("#d9d5df", 32, 3, 8, 2);
+  // Columns either side of the doorway.
+  for (const cx of [14, 52]) { px("#d1cdd8", cx, 30, 6, 30); px("#7c7884", cx + 5, 30, 1, 30); px("#e4e0ea", cx - 1, 28, 8, 2); px("#e4e0ea", cx - 1, 58, 8, 2); }
+  // The doorway, dark, arched, with a faint violet glow from below.
+  px("#1a1520", 26, 36, 20, 24); px("#1a1520", 28, 33, 16, 3); px("#1a1520", 30, 31, 12, 2);
+  px("#5b3d7a", 28, 56, 16, 4); px("#7d55a8", 32, 58, 8, 2);
+  // Moss creeping up the plinth.
+  px("#4f6b3a", 8, 58, 6, 2); px("#4f6b3a", 58, 58, 8, 2); px("#5f7d45", 10, 56, 3, 2);
+  c.restore();
 }
 
 export function drawProvingGrounds(c: CanvasRenderingContext2D, center: number) {

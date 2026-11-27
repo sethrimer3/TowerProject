@@ -10,7 +10,7 @@ import type { UsedProvision } from "../economy/provisions.ts";
 const PURSE = `<div class="purse" aria-label="Currencies"><span class="gem-stat" title="Gems: kept between climbs">${gemIcon()} <b id="gems"></b></span><span class="arcanite-stat" title="Arcanite: kept between climbs">${arcaniteIcon()} <b id="arcanite"></b></span><span class="medal-stat" title="Medals: kept between climbs" hidden>${medalIcon()} <b id="medals"></b></span><span class="gold-stat" title="Gold: kept between climbs">${goldIcon()} <b id="gold"></b></span><span class="silver-stat" title="Silver: found in a climb, spent only inside it">${kitIcon("silver", "¤", "silver-icon")} <b id="run-silver"></b></span><span id="combo-stat" class="combo-stat" title="Dash Combo: +20% ATK per Combo, up to +1000% at Combo 50, in fights chained within two turns" hidden>${uiSprite("attack")} <b id="combo"></b></span></div>`;
 /** The actions column's hamburger and the menu it opens (run-menu.ts),
  * its buttons in cell order: Settings, the Codex, Research, the Tournament's, Missions,
- * Events', Relics, Shrine Boons, Mail and End Run, those that don't apply hidden (the
+ * Events', Relics, Shrine Boons, Mail, the Catacomb and End Run, those that don't apply hidden (the
  * Tournament's and Events' stand in the column in the forest); and inside
  * a run the Shop under the hamburger. */
 const ACTIONS_MENU = `<div id="run-menu" class="run-menu"><div class="run-menu-frame" aria-hidden="true"></div><div id="run-menu-items" class="run-menu-items" inert>` +
@@ -23,6 +23,7 @@ const ACTIONS_MENU = `<div id="run-menu" class="run-menu"><div class="run-menu-f
   `<button id="relics-button" class="mini-action relics-button" aria-label="Relics" title="Relics" hidden><span class="mini-icon">${relicIcon("epic")}</span><small>RELICS</small></button>` +
   `<button id="shrines-button" class="mini-action shrines-button" aria-label="Shrine Boons" title="Shrine Boons" hidden><span class="mini-icon">${shrineIcon()}</span><small>BOONS</small></button>` +
   `<button id="mail-button" class="mini-action mail-button" aria-label="Mail" title="Mail" hidden><span class="mini-icon">${mailIcon()}</span><small>MAIL</small></button>` +
+  `<button id="catacombs-button" class="mini-action catacombs-button" aria-label="Catacomb" title="Catacomb: the run under way" hidden><span class="mini-icon">${kitIcon("torch", "", "catacombs-icon")}</span><small>CATACOMB</small></button>` +
   `<button id="end-run" class="mini-action danger run-menu-end" aria-label="End current climb" title="End Climb"><small>END CLIMB</small></button></div>` +
   `<button id="run-menu-toggle" class="mini-action" aria-label="Menu" aria-expanded="false" aria-controls="run-menu-items" title="Menu"><span class="mini-icon">${kitIcon("ui-menu", "", "menu-icon")}${kitIcon("ui-menu-close", "", "menu-icon menu-close-icon")}</span><small>MENU</small></button>` +
   `<button id="run-shop" class="mini-action" aria-label="Shop" title="Shop" hidden><span class="mini-icon">${CART_ICON}</span><small>SHOP</small></button></div>`;

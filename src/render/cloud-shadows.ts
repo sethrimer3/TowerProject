@@ -135,7 +135,7 @@ export class CloudShadows {
     return result;
   }
   draw(f: FrameContext, world: OutsideWorld, decoration: boolean, foliage: boolean, seconds: number, heroVisible: boolean) {
-    const key = [world.seed, world.mode, world.width, world.entranceX, world.blacksmith, world.hall, world.prevRoad, world.nextRoad, decoration, foliage, spriteRevision()].join(":");
+    const key = [world.seed, world.mode, world.width, world.entranceX, world.blacksmith, world.hall, world.prevRoad, world.nextRoad, world.mausoleum, decoration, foliage, spriteRevision()].join(":");
     if (key !== this.key) {
       this.key = key; this.frameKey = ""; this.silhouettes.clear();
       const heights = this.heights = new ForestHeightMap(world.width);

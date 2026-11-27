@@ -15,8 +15,8 @@ export type PageGame = Readonly<Pick<Game, "mode" | "run" | "world" | "save" | "
   Pick<
     Game,
     | "acceptDefeat" | "stuckReport" | "cardText" | "retry" | "retryHeight" | "eraseAll" | "replaceSave" | "finish" | "setDevMode" | "setAccessAll"
-    | "claimGoal" | "warp" | "clock" | "toDelveForest" | "finishArchivesLesson" | "finishTrainingLesson"
-    | "training" | "skills" | "shop" | "ads" | "themes" | "research" | "deck" | "cards" | "badges" | "gear" | "equipment" | "tournament" | "mail" | "missions" | "events" | "familiars" | "shrine" | "notices"
+    | "claimGoal" | "warp" | "clock" | "toDelveForest" | "finishArchivesLesson" | "finishTrainingLesson" | "reshapeForest"
+    | "training" | "skills" | "shop" | "ads" | "themes" | "research" | "deck" | "cards" | "badges" | "gear" | "equipment" | "tournament" | "mail" | "missions" | "events" | "familiars" | "shrine" | "notices" | "catacombs"
   >;
 
 /** What pages and dialogs need from the app around them. */

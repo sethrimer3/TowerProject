@@ -269,6 +269,8 @@ export class SkillTreePage {
     if (!canBuy) return;
     const game = this.ctx.game;
     game.skills.buy(id);
+    // Reveal Catacombs raises the Mausoleum in the forest at once.
+    if (id === "catacombs") game.reshapeForest();
     const bought = game.save.upgrades[id] > level;
     if (bought) this.celebrate(id, level);
     this.ctx.update();

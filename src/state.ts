@@ -136,6 +136,8 @@ import { ghostRush } from "./volley.ts";
 import { RARITY_TIERS, type EquipRarity } from "./equipment/balance.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS, itemDef, type EquipMaterialId } from "./equipment/catalog.ts";
 import { readyForestRuns, startingHero } from "./game/hero-sync.ts";
+import { CatacombDesk } from "./game/catacomb-desk.ts";
+import { catacombsOpen } from "./catacombs/open.ts";
 import { warpLootSilver } from "./economy/warp-loot.ts";
 import { CardActivation } from "./game/card-activation.ts";
 import { Finds, rubiesText } from "./game/finds.ts";
@@ -441,6 +443,8 @@ export class Game {
   readonly shop = new ShopDesk(this, this.training, this.events);
   /** The skill trees' command: buying a skill. */
   readonly skills = new SkillDesk(this);
+  /** The Catacombs' commands: entering one (game/catacomb-desk.ts). */
+  readonly catacombs = new CatacombDesk(this);
   /** The Themes page's commands. */
   readonly themes = new ThemeDesk(this);
   /** The Deck page's card badges: drawing them with Gems and attaching
@@ -779,7 +783,7 @@ export class Game {
   private forestWorld(seed: number) {
     const { tier } = this.slice, all = seesAll(this.save);
     if (this.atLake) return new LakeWorld(seed);
-    return new OutsideWorld(seed, this.mode, this.save.equipment.unlocked || all, goalUnlocked(this.save, "tournament") || all, this.mode === "tower" || tier > 1, tier < tiersReachable(this.save, this.mode));
+    return new OutsideWorld(seed, this.mode, this.save.equipment.unlocked || all, goalUnlocked(this.save, "tournament") || all, this.mode === "tower" || tier > 1, tier < tiersReachable(this.save, this.mode), catacombsOpen(this.save));
   }
   /** Map edits saved under an older layout can't be applied to the new one:
    * they are dropped, and progress, stats and inventory are kept. */
@@ -3665,6 +3669,16 @@ export class Game {
    * Equipment screen when tapped. */
   atBlacksmith(x: number, y: number) {
     return this.run.outside && this.world instanceof OutsideWorld && this.world.isBlacksmith(x, y);
+  }
+  /** Whether (x, y) is the forest's Mausoleum, which enters the Catacombs
+   * when tapped (`catacombs.enter`). */
+  atMausoleum(x: number, y: number) {
+    return this.run.outside && this.world instanceof OutsideWorld && this.world.isMausoleum(x, y);
+  }
+  /** Rebuilds the forest when what stands in it has changed (a skill bought
+   * that opens a building); a run inside is left alone. */
+  reshapeForest() {
+    if (this.run.outside) this.world = this.buildWorld();
   }
   /** Whether (x, y) is the forest's Tournament Hall, which opens the
    * Tournament page when tapped. */

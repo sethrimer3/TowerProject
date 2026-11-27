@@ -52,7 +52,7 @@ export class BoardOverlay {
   /** `blacksmith` opens the Equipment screen (the forest's Blacksmith
    * tapped), `hall` the Tournament page (its Hall tapped), and `update`
    * refreshes the HUD (a tapped Gem landed in the purse). */
-  constructor(private game: Game, private renderer: Renderer, private blacksmith: () => void = () => {}, private hall: () => void = () => {}, private update: () => void = () => {}) {}
+  constructor(private game: Game, private renderer: Renderer, private blacksmith: () => void = () => {}, private hall: () => void = () => {}, private update: () => void = () => {}, private mausoleum: () => void = () => {}) {}
 
   /** Each Golden Scarab claimed since the last call flies from its tile
    * to its boost's row in the boost table, showing the boost's icon, its
@@ -94,6 +94,11 @@ export class BoardOverlay {
     if (this.game.atTournamentHall(x, y)) {
       this.hide();
       this.hall();
+      return;
+    }
+    if (this.game.atMausoleum(x, y)) {
+      this.hide();
+      this.mausoleum();
       return;
     }
     // The Divine Portal and the Divine Relic's chest say what they are and

@@ -53,6 +53,8 @@ export function renderRunMenu(game: Game) {
   el("run-menu").classList.toggle("forest", !inside);
   el("end-run").hidden = !inside || locked;
   el("run-research").hidden = !inside || !researchOpen(game.save);
+  // The Catacomb button, everywhere once a Catacomb run is under way (none in a trial).
+  el("catacombs-button").hidden = !game.catacombs.open || !game.catacombs.run;
   const tournament = el("tournament-button"), events = el("events-button");
   if (inside) {
     if (tournament.nextElementSibling !== el("missions-button")) el("missions-button").before(tournament);

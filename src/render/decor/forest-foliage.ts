@@ -1,4 +1,4 @@
-import { OUTSIDE_SIZE, ENTRANCE_Y, OutsideWorld, onPath, roadsOf, BLACKSMITH, TOURNAMENT_HALL } from "../../outside.ts";
+import { OUTSIDE_SIZE, ENTRANCE_Y, OutsideWorld, onPath, roadsOf, BLACKSMITH, MAUSOLEUM, TOURNAMENT_HALL } from "../../outside.ts";
 import { tileRandom } from "../../random.ts";
 import type { BoardView } from "../render-frame.ts";
 import { FOREST_CANOPIES, FOREST_SPRITES, drawForestSprite, type ForestSprite } from "../../sprites/forest.ts";
@@ -16,7 +16,7 @@ export function forestProtected(world: OutsideWorld, x: number, y: number) {
   if (onPath({ x, y, center, seed: world.seed, roads: roadsOf(world) })) return true;
   if (Math.abs(x - center) <= (y <= 1 ? 2 : 1) && y <= ENTRANCE_Y) return true;
   if (y >= ENTRANCE_Y && Math.abs(x - center) <= (world.mode === "tower" ? 4 : 7)) return true;
-  const buildings = [[world.blacksmith, BLACKSMITH], [world.hall, TOURNAMENT_HALL]] as const;
+  const buildings = [[world.blacksmith, BLACKSMITH], [world.hall, TOURNAMENT_HALL], [world.mausoleum, MAUSOLEUM]] as const;
   return buildings.some(([open, r]) => {
     if (!open) return false;
     return x >= center + r.dx - 1 && x <= center + r.dx + r.width && y >= r.y - 1 && y <= r.y + r.height;
@@ -72,7 +72,7 @@ export class ForestFoliage {
   private key = "";
   private plan: ForestObject[] = [];
   draw(c: CanvasRenderingContext2D, view: BoardView, world: OutsideWorld, decoration: boolean) {
-    const key = [world.seed, world.mode, world.width, world.entranceX, world.blacksmith, world.hall, world.prevRoad, world.nextRoad].join(":");
+    const key = [world.seed, world.mode, world.width, world.entranceX, world.blacksmith, world.hall, world.prevRoad, world.nextRoad, world.mausoleum].join(":");
     if (key !== this.key) { this.key = key; this.plan = planForest(world); }
     c.save();
     c.translate(-view.left * view.s, (view.n - 1 + view.bottom) * view.s);

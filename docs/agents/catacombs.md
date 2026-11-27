@@ -3,15 +3,24 @@
 The Catacombs' engine (`src/catacombs/`), an idle side area where the hero, as a Magician, fights undead a turn a second.
 The design and build plan is `docs/CATACOMBS.md`; this doc covers what is built.
 
-Built so far: step 1, the engine, and step 2, the unlock and the save.
+Built so far: step 1, the engine; step 2, the unlock and the save; step 3, the Mausoleum and the Catacomb button.
 The engine is pure and knows nothing of the DOM, `Game`, the board drawing or the clock: the game layer (step 3 on) passes it the wall clock, runs the turns it returns, and credits the Lore it reports.
-No game code runs it yet.
+No game code takes turns yet: entering shows a stand-in dialog until the Catacomb screen (step 4).
 
 ## Unlock and save
 
 - Tower VI's floor 20 Goal, Catacombs (`GoalUnlock` `catacombs`), reveals the Inspiration skill Reveal Catacombs (`catacombs`, 40 Inspiration; the node's `revealGoal`, progression.md).
-- `open.ts`: `catacombsOpen(save)`, the skill owned or Access to Everything on; nothing reads it until the mausoleum (step 3).
+- `open.ts`: `catacombsOpen(save)`, the skill owned or Access to Everything on.
 - `save.catacombs` is a `CatacombSave`: `defaultCatacombs()` in `defaults()`, `decodeCatacombs` in `decode()`; the profile file keeps it in `towers` with its run cleared (`exportProfile`).
+
+## The way in
+
+- `OutsideWorld`'s seventh flag, `mausoleum` (set by `Game.forestWorld` from `catacombsOpen`; the Tower's forest only), raises the Mausoleum at `MAUSOLEUM` (`outside.ts`: by the entrance column, `dx` 7, rows 1 to 3, a 3 × 3 block of walls) in a yard one tile wider that the trees and grass leave clear (`forestProtected`, `Roads.mausoleum` in the grass's cache key, the cloud shadows' key).
+  `drawMausoleum` draws it in pixels until its PNG is made; `Renderer` draws it after the Tournament Hall.
+- `Game.atMausoleum(x, y)` is what `BoardOverlay`'s tap tests (its sixth callback); `Game.reshapeForest()` rebuilds the forest when a building opens, which the Upgrades page calls on buying Reveal Catacombs.
+- `game/catacomb-desk.ts`: `CatacombDesk` (`game.catacombs`): `open`, `run`, `number`, `wouldLeave(number)` (the number and hall a run of another number past Hall 1 would leave) and `enter(number)` (refused while shut).
+- `ui/catacombs-entry.ts`: `enterFromMausoleum` enters the forest's `save.tower.tier`, confirming first when `wouldLeave` says so; `showCatacombs` is the stand-in for the Catacomb screen.
+- The menu's `#catacombs-button` (`ui/shell.ts`) shows once the Catacombs are open and a run exists (`renderRunMenu`); a Proving Grounds trial's cloned save has no Catacomb run (`TrialSession`), so it never shows there.
 
 ## Modules
 
@@ -44,4 +53,5 @@ No game code runs it yet.
 ## Tests
 
 `tests/catacombs-engine.test.ts`: the corridor and its pinches, the rooms by hall and their reach, Ingot amounts, target order, strength precedence, the deep halls' products, enemy stats and rewards, spawn odds and the lone Wisp, the saved stream, entering, dash and rounds, Ingot pickups, an invincible enemy to a fall and the restart that keeps what was earned, the stalemate restart, Magic levels, moving points, `runTurns` across runs, the clock and haste, decoding, and the save and profile file keeping it (the run left out of the file).
+`tests/catacombs-forest.test.ts` covers the Mausoleum (its tiles, yard, mode and flag), buying the skill raising it, entering by the forest's tower number, `wouldLeave`, and Access to Everything; `tests/forest-sprites.test.ts` keeps the foliage off it.
 `tests/skill-trees.test.ts` covers Reveal Catacombs: hidden and unbuyable until the Goal is claimed, then 40 Inspiration.

@@ -20,6 +20,8 @@ export class TrialSession {
     delete save.arcana.owned.aurumBloom;
     // Familiars stay out of trials, which have their own combat.
     save.familiars={};
+    // Nor do the Catacombs: no run, so no Catacomb button.
+    save.catacombs.run=null;
     save.arcana.offer=[];
     if(ownedArcana(save.arcana).length)state.arcana ??= {run:defaultArcanaRun(),beamTurns:0};
     save.tower.runArcana=state.arcana?.run??defaultArcanaRun();
