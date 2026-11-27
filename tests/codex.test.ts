@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { defaults, decode } from "../src/save/save.ts";
 import { codexCategories, costToReach, enemiesKnown, GENERAL_TOPICS, type CodexSource } from "../src/codex/codex.ts";
 import { decodeCodex, defaultCodex, noteDiscoveries } from "../src/codex/discovery.ts";
-import { CARD_BRIEFS, ARCANUM_BRIEFS, FAMILIAR_BRIEFS, STRENGTH_BRIEFS, TRAIT_BRIEFS } from "../src/codex/briefs.ts";
+import { CARD_BRIEFS, ARCANUM_BRIEFS, FAMILIAR_BRIEFS, STRENGTH_BRIEFS, TRAIT_BRIEFS, UNDEAD_BRIEFS } from "../src/codex/briefs.ts";
 import { readdirSync, readFileSync } from "node:fs";
 import { cost, UPGRADES } from "../src/progression/upgrades.ts";
 import { researchBoost, type ResearchId } from "../src/progression/archives.ts";
@@ -41,7 +41,7 @@ test("a hidden entry tells nothing about what it hides", () => {
 });
 
 test("briefs stay brief", () => {
-  for (const [id, brief] of Object.entries({ ...CARD_BRIEFS, ...ARCANUM_BRIEFS, ...FAMILIAR_BRIEFS, ...STRENGTH_BRIEFS, ...TRAIT_BRIEFS }))
+  for (const [id, brief] of Object.entries({ ...CARD_BRIEFS, ...ARCANUM_BRIEFS, ...FAMILIAR_BRIEFS, ...STRENGTH_BRIEFS, ...TRAIT_BRIEFS, ...UNDEAD_BRIEFS }))
     assert.ok(brief.length <= 70, `${id}: ${brief.length} characters`);
 });
 
@@ -227,4 +227,24 @@ test("the Codex's save decodes defensively and round-trips", () => {
   const save = defaults();
   save.codex = { arcana: ["overseer"], uniques: ["soulReaper"] };
   assert.deepEqual(decode(JSON.stringify(save)).codex, save.codex);
+});
+
+test("the Catacombs open with Reveal Catacombs, each undead shown once a hall it can stand in is reached", () => {
+  const category = (src: CodexSource) => codexCategories(src).find((c) => c.id === "catacombs")!;
+  const undead = (src: CodexSource) => category(src).sections.find((x) => x.id === "undead")!.entries;
+  assert.equal(category(source()).open, false);
+  const src = source();
+  src.save.upgrades.catacombs = 1;
+  assert.equal(category(src).open, true);
+  assert.ok(undead(src).every((e) => e.hidden), "no hall reached yet");
+  src.save.catacombs.best = { 1: 3, 2: 12 };
+  assert.deepEqual(undead(src).map((e) => e.hidden ? "???" : e.name), ["Wisp", "Ghost", "Skeleton", "???", "???", "???", "???"]);
+  const skeleton = undead(src)[2]!;
+  assert.deepEqual(skeleton.facts, [["Rarity", "Rare"], ["MHP", "550"], ["MAtk", "10"], ["MDef", "12"], ["MXP", "7"], ["First hall", "11"]]);
+  // Spirit and Ingots join the Currencies once the Catacombs are open.
+  src.save.catacombs.spirit.rare = 4;
+  const held = codexCategories(src).find((c) => c.id === "currencies")!.sections[0]!.entries;
+  assert.equal(held.find((e) => e.id === "spirit-rare")!.status, "(Have 4)");
+  assert.ok(held.some((e) => e.id === "ingot-nickel" && !e.hidden));
+  assert.ok(codexCategories(source()).find((c) => c.id === "currencies")!.sections[0]!.entries.filter((e) => e.id.startsWith("spirit-")).every((e) => e.hidden));
 });

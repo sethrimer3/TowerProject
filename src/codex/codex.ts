@@ -32,14 +32,16 @@ import { RESEARCH, RESEARCH_IDS, describe, researchBoost, researchLevel, researc
 import { firstLevelOf } from "../cards/rarity.ts";
 import { FAMILIARS, FAMILIAR_IDS, statAt, statValue } from "../familiars/catalog.ts";
 import { isChampion } from "../shop/champion.ts";
-import { ARCANUM_BRIEFS, CARD_BRIEFS, FAMILIAR_BRIEFS, PROFILE_BRIEFS, STRENGTH_BRIEFS, TRAIT_BRIEFS } from "./briefs.ts";
+import { ARCANUM_BRIEFS, CARD_BRIEFS, FAMILIAR_BRIEFS, PROFILE_BRIEFS, STRENGTH_BRIEFS, TRAIT_BRIEFS, UNDEAD_BRIEFS } from "./briefs.ts";
+import { catacombsOpen } from "../catacombs/open.ts";
+import { INGOTS, SPIRIT_RARITIES, UNDEAD, UNDEAD_IDS } from "../catacombs/catalog.ts";
 import type { EnemyStrength } from "../entities.ts";
 
 /** The doors the Codex pictures, each as its coloured tile. */
 export type CodexDoor = "yellow" | "blue" | "red" | "wood" | "triune" | "heart";
 /** What an entry's icon is, for the page to draw: a kind and its id. */
 export type CodexIcon =
-  | { kind: "kit" | "ui" | "item" | "currency" | "mark" | "card" | "badge" | "skill" | "arcanum" | "equip" | "equipCategory" | "material" | "strength" | "trait" | "training" | "boon" | "research" | "trial" | "environment" | "familiar"; id: string }
+  | { kind: "kit" | "ui" | "item" | "currency" | "mark" | "card" | "badge" | "skill" | "arcanum" | "equip" | "equipCategory" | "material" | "strength" | "trait" | "training" | "boon" | "research" | "trial" | "environment" | "familiar" | "undead"; id: string }
   | { kind: "door"; id: CodexDoor }
   | null;
 /** Where a link leads: a page, and what to open on it. */
@@ -83,7 +85,7 @@ export type CodexEntry = {
 export type CodexSection = { id: string; title: string; entries: CodexEntry[]; hint?: string; collapsed?: boolean; table?: boolean; prose?: readonly string[] };
 export type CodexCategoryId =
   | "general" | "story" | "currencies" | "elements" | "cards" | "badges" | "inspiration" | "breakthrough" | "training"
-  | "arcana" | "familiars" | "equipment" | "enemies" | "combat" | "shrines" | "environments" | "archives";
+  | "arcana" | "familiars" | "equipment" | "enemies" | "combat" | "shrines" | "environments" | "catacombs" | "archives";
 export type CodexCategory = { id: CodexCategoryId; name: string; icon: CodexIcon; open: boolean; summary: string; links: CodexLink[]; sections: CodexSection[] };
 
 /** What the Codex reads: the save, whether a climb is under way (forest-only
@@ -99,6 +101,7 @@ export type CodexSource = {
 };
 
 const HIDDEN = "???";
+const capitalized = (s: string) => s[0]!.toUpperCase() + s.slice(1);
 const n = (v: number) => Math.round(v).toLocaleString("en-US");
 const hidden = (id: string, icon: CodexIcon = null): CodexEntry => ({ id, icon, name: HIDDEN, brief: "", hidden: true });
 /** Entries shown as themselves when `known`, as ??? otherwise (all with Access to Everything). */
@@ -222,7 +225,9 @@ function currencies(src: CodexSource): CodexCategory {
     row(s.profile.earned.rubies > 0 || s.upgrades.breakthrough > 0, "rubies", "Rubies", "Dropped by bosses. Ascend your cards to higher rarities.", s.rubies),
     row(s.profile.earned.arcanite > 0 || s.arcanite > 0, "arcanite", "Arcanite", "Rare crystals that buy and strengthen Arcana.", s.arcanite),
     row(s.profile.earned.medals > 0 || src.events, "medals", "Medals", "Paid by missions. Spent in Event stores.", s.medals),
-    row(s.profile.earned.cells > 0, "cells", "Lore Fragments", "Dropped by Greater Bosses. Speed up research.", s.cells),
+    row(s.profile.earned.cells > 0, "cells", "Lore Fragments", "Dropped by Greater Bosses and found in the Catacombs. Speed up research.", s.cells),
+    ...SPIRIT_RARITIES.map((r) => row(catacombsOpen(s), `spirit-${r}`, `${capitalized(r)} Spirit`, "Dropped by the Catacombs' undead, by rarity.", s.catacombs.spirit[r])),
+    ...INGOTS.map((i) => row(catacombsOpen(s), `ingot-${i}`, `${capitalized(i)} Ingots`, "Found in the Catacombs' treasure rooms.", s.catacombs.ingots[i])),
     row(src.tournament, "tickets", "Tournament Tickets", "Enter tournaments in the Delve.", s.tournament.tickets),
     row(s.equipment.unlocked, "equip-tickets", "Equipment Tickets", "Each pays for one equipment pull.", s.equipment.tickets),
     row(isChampion(s), "vip", "VIP Points", "Earned with every Shop purchase.", s.vip),
@@ -622,6 +627,34 @@ function environments(src: CodexSource): CodexCategory {
     summary: "Some floors have an environment, a rule for the whole floor that changes what it holds or pays.", sections: [{ id: "environments", title: "Environments", entries }] };
 }
 
+// —— Catacombs ————————————————————————————————————————————————————————
+
+/** How the Catacombs work, in a line each. */
+const CATACOMBS_HOW: CodexEntry[] = [
+  { id: "halls", icon: { kind: "kit", id: "stairs" }, name: "Halls", brief: "Each hall is a corridor of undead, a Lore tablet and stairs down." },
+  { id: "magic", icon: { kind: "kit", id: "sword" }, name: "Magic stats", brief: "Only MHP, MAtk and MDef count. Spend magic skill points on them." },
+  { id: "turns", icon: { kind: "kit", id: "hourglass" }, name: "Turns and the bank", brief: "A turn a second. Time away is banked, and haste spends it." },
+  { id: "treasure", icon: { kind: "kit", id: "torch" }, name: "Treasure rooms", brief: "Every 5th hall and more hold Ingots, worth more each time." },
+];
+
+/** The Catacombs (docs/CATACOMBS.md): how they work, and each undead,
+ * shown once a hall it can appear on has been reached in any Catacomb. */
+function catacombs(src: CodexSource): CodexCategory {
+  const s = src.save, c = s.catacombs, all = seesAll(s), open = catacombsOpen(s);
+  const deepest = Math.max(0, ...Object.values(c.best));
+  const entries = UNDEAD_IDS.map((id): CodexEntry => {
+    const u = UNDEAD[id], known = u.from !== null && deepest >= u.from;
+    if (!known && !all) return hidden(id);
+    return { id, icon: { kind: "undead", id }, name: u.name, brief: UNDEAD_BRIEFS[id], facts: [
+      ["Rarity", capitalized(u.rarity)], ["MHP", n(u.mhp)], ["MAtk", n(u.matk)], ["MDef", n(u.mdef)], ["MXP", n(u.mxp)],
+      ["First hall", u.from === null ? "Not yet" : n(u.from)],
+    ] };
+  });
+  return { id: "catacombs", name: "Catacombs", icon: { kind: "kit", id: "torch" }, open: open || all, links: [],
+    summary: "An endless crypt under the forest. The Magician fights undead there, even while you play elsewhere. Stats are Catacomb I's: each higher number multiplies them.",
+    sections: [{ id: "how", title: "How it works", entries: CATACOMBS_HOW }, { id: "undead", title: "Undead", entries }] };
+}
+
 // —— Archives —————————————————————————————————————————————————————————
 
 function archives(src: CodexSource): CodexCategory {
@@ -650,6 +683,6 @@ function archives(src: CodexSource): CodexCategory {
 export function codexCategories(src: CodexSource): CodexCategory[] {
   return [
     general(src), story(src), currencies(src), elements(src), cards(src), badges(src), skillTree(src, "inspiration"), skillTree(src, "breakthrough"),
-    training(src), arcana(src), familiars(src), equipment(src), enemies(src), combat(src), shrines(src), environments(src), archives(src),
+    training(src), arcana(src), familiars(src), equipment(src), enemies(src), combat(src), shrines(src), environments(src), catacombs(src), archives(src),
   ];
 }

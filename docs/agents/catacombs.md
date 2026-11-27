@@ -3,7 +3,7 @@
 The Catacombs' engine (`src/catacombs/`), an idle side area where the hero, as a Magician, fights undead a turn a second.
 The design and build plan is `docs/CATACOMBS.md`; this doc covers what is built.
 
-Built so far: step 1, the engine; step 2, the unlock and the save; step 3, the Mausoleum and the Catacomb button; step 4, the Catacomb screen; step 5, its Stats menu; step 6, the time away and the currencies table.
+Built so far: step 1, the engine; step 2, the unlock and the save; step 3, the Mausoleum and the Catacomb button; step 4, the Catacomb screen; step 5, its Stats menu; step 6, the time away and the currencies table; step 7, the Codex.
 The engine is pure and knows nothing of the DOM, `Game`, the board drawing or the clock: the game layer (step 3 on) passes it the wall clock, runs the turns it returns, and credits the Lore it reports.
 The screen (`ui/catacomb-view.ts`) runs the engine on the wall clock and credits the Lore it reports.
 
@@ -78,6 +78,7 @@ The screen (`ui/catacomb-view.ts`) runs the engine on the wall clock and credits
 ## Tests
 
 `tests/catacombs-engine.test.ts`: the corridor and its pinches, the rooms by hall and their reach, Ingot amounts, target order, strength precedence, the deep halls' products, enemy stats and rewards, spawn odds and the lone Wisp, the saved stream, entering, dash and rounds, Ingot pickups, an invincible enemy to a fall and the restart that keeps what was earned, the stalemate restart, Magic levels, moving points, `runTurns` across runs, the clock and haste, decoding, and the save and profile file keeping it (the run left out of the file).
+`tests/codex.test.ts` covers the Codex's Catacombs category (codex.md).
 `tests/catacombs-offline.test.ts` covers `bankGap`, banking on start-up (only with a run, once, never while shut), the dialog's line and the currencies rows.
 `tests/catacombs-menus.test.ts` covers the Stats boxes (lines, buttons and their disabled states), the panels and the stats table's rows.
 `tests/catacombs-player.test.ts` covers the wall-clock turns: none without a run, a turn a second stepped at most 15 times a second, Lore credited, haste spending the bank down to ×1, and a long gap banked.

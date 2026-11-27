@@ -1,6 +1,7 @@
 # The Catacombs
 
-The Catacombs are an idle area still being built ([plan](../CATACOMBS.md)).
+The Catacombs are an idle area under the forest, where your hero, as the Magician, fights undead a turn a second ([plan](../CATACOMBS.md)).
+The Codex's Catacombs tab lists each undead once you reach a hall it can appear in.
 Tower VI's floor 20 Goal, **Catacombs**, reveals the Inspiration skill **Reveal Catacombs** (40 Inspiration).
 
 **The Mausoleum.** Once Reveal Catacombs is owned, a stone Mausoleum stands in the lower-right corner of the Tower's forest.

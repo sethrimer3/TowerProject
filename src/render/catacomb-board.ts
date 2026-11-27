@@ -43,6 +43,21 @@ function paintIngot(c: CanvasRenderingContext2D, ingot: IngotId) {
   c.fillStyle = light; c.fillRect(7, 8, 11, 2); c.fillRect(7, 11, 2, 1);
 }
 
+/** An undead's picture as an image, for the Codex: its pixel art on a 24 × 24 canvas. */
+const undeadIcons = new Map<UndeadId, string>();
+export function undeadIconUrl(id: UndeadId) {
+  let url = undeadIcons.get(id);
+  if (!url) {
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 24;
+    const art = UNDEAD_ART[id];
+    sprite(canvas.getContext("2d")!, art.rows, art.colors, 2, 12, 12);
+    url = canvas.toDataURL();
+    undeadIcons.set(id, url);
+  }
+  return url;
+}
+
 /** A strike's number rising off a tile. */
 type Popup = { x: number; y: number; text: string; color: string; at: number };
 

@@ -3,6 +3,7 @@ import type { ArcanumId } from "../arcana/arcana.ts";
 import type { EnemyProfile, EnemyStrength } from "../entities.ts";
 import type { Trait } from "../enemies/odds.ts";
 import type { FamiliarId } from "../familiars/catalog.ts";
+import type { UndeadId } from "../catacombs/catalog.ts";
 
 /** The Codex's one-line briefs: what a thing is or is for, in the player's
  * words, never its numbers in full (the pages that sell or use it say
@@ -84,4 +85,15 @@ export const PROFILE_BRIEFS: Record<EnemyProfile, { name: string; brief: string 
   attackHeavy: { name: "Brutes", brief: "Hit hard, but fall quickly." },
   balanced: { name: "Fighters", brief: "Even HP, ATK and DEF." },
   defenseHeavy: { name: "Guardians", brief: "Tough to wear down, but hit softly." },
+};
+
+/** The Catacombs' undead (catacombs/catalog.ts). */
+export const UNDEAD_BRIEFS: Record<UndeadId, string> = {
+  wisp: "A drifting flame. The weakest and most common undead.",
+  ghost: "A wailing shade that shrugs off weak spells.",
+  skeleton: "Old bones that need real spell power to crack.",
+  ghoul: "A hunched corpse-eater with a hide like stone.",
+  vampire: "A pale noble, hard to hurt and slow to fall.",
+  lich: "An undead sorcerer wrapped in layer on layer of ward.",
+  demon: "Something from below the deepest halls.",
 };

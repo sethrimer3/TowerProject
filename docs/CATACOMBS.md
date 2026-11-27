@@ -1,7 +1,7 @@
 # Catacombs
 
 The Catacombs' design and build plan: an endless, idle side mode under the forest where the hero, as a Magician, fights a stream of undead in real time for Lore, Spirit, Ingots and Magic levels.
-Steps 1 to 6, the engine, the unlock, the way in, the Catacomb screen, its Stats menu and the time away, are built (`src/catacombs/`, docs/agents/catacombs.md); the rest is still to come.
+It is built (`src/catacombs/`, docs/agents/catacombs.md); **Later** lists the designer's TODOs and **Follow-ups** what the build left.
 Each section is the spec the implementation follows; **Decisions** lists what the request left open and what was settled.
 
 ## Decisions
@@ -63,7 +63,7 @@ The designer chose floor 20, ancestral as the seventh rarity, the XP curve in 7,
   `Roads` and `onPath` are unchanged: the mausoleum is tapped, not walked to.
   A tap enters **Catacomb N**, N the tier the forest shows (`save.tower.tier`): the same number views the run under way; another number starts a new run at Hall 1 there (question 16).
 - **The menu button.**
-  `ACTIONS_MENU` (`ui/shell.ts`) gains `#run-catacombs` ("CATACOMB"); `renderRunMenu` shows it once the Catacombs are open and a Catacomb run exists, in the forest and inside, never on the Catacomb screen (question 15).
+  `ACTIONS_MENU` (`ui/shell.ts`) gains `#catacombs-button` ("CATACOMB"); `renderRunMenu` shows it once the Catacombs are open and a Catacomb run exists, in the forest and inside, never on the Catacomb screen (question 15).
   Pressed, it opens the Catacomb screen on the run under way, whatever number it is.
 - **Before the first entry** there is no Catacomb run: the button is hidden and nothing banks.
 
@@ -72,7 +72,7 @@ The designer chose floor 20, ancestral as the seventh rarity, the XP curve in 7,
 The Catacomb screen is a view over the board, not a third `Mode`: `Game.mode` stays `tower` or `delve`, and the run behind it is paused.
 
 - `CatacombView` (`src/ui/catacomb-view.ts`) owns `#world` while open, through `FrameLoopHost.boardFrame` returning true, as a trial does, so no Tower or Delve turn, route or Automove runs behind it: that is the pause.
-  It remembers what was showing (the page, the board, the mode, play or pause) and **Switch Back** restores exactly that; play resumes there.
+  It opens only from the board (the Mausoleum, the menu), and **Switch Back** (or Escape) hands the board back to the run, which plays on as it was.
 - Everything off the board that ticks in real time (trainers, research, Gem timers, Scarabs) carries on as it does behind any page.
 - `html.catacombs` scopes every HUD swap below, so leaving drops them all at once.
 
@@ -82,19 +82,19 @@ The Catacomb screen is a view over the board, not a third `Mode`: `Game.mode` st
 |---|---|
 | Silver (purse, top left) | Lore (clay tablet), the Lore Fragments held |
 | HP, ATK, DEF and their extras (shield, regen, shroud, crit, sparks, wings) | MHP, MAtk, MDef only |
-| Level and XP bar | Magic level and MXP bar, then the unspent magic skill points and a purple training arrow (`pointsIcon` recoloured: `magic-points.png`) |
+| Level and XP bar | Magic level and a purple MXP bar; the unspent magic skill points with a purple training arrow (`pointsIcon` recoloured) in the portrait's top-right corner |
 | Wayfarer / Pathfinder / Archer | MAGICIAN |
 | TOWER VI · FLOOR 37 | CATACOMB VI · HALL 37 |
-| Gold bonus | Lore bonus (question 6); pressed, it says where the factor comes from |
+| Gold bonus | Lore bonus (question 6); its tooltip says where the factor comes from |
 | Base enemy (ATK, DEF, HP) | The Wisp at this number and hall (MAtk, MDef, MHP); pressed, the hall's enemy table |
-| Inspiration earned, best reward | Best hall reached in this number |
+| Inspiration earned, best reward | hidden; the hall's tooltip gives the deepest hall in this number |
 | Auto, play/pause, speed | none: the Catacombs keep their own clock |
-| Red END CLIMB | Yellow SWITCH BACK (`.mini-action.switch-back`, never `danger`) |
+| Red END CLIMB (in the menu) | Yellow SWITCH BACK under the hamburger, where the run's Shop sits (`.mini-action.switch-back`, never `danger`) |
 | Hand and Training bar | Stats · Spirit · Forge · Academy |
 | Provisions, Familiars, Arcana, Equipment, Shrine | hidden |
 
-- The **enemy table** (`ui/catacomb-odds-box.ts`, modelled on `enemy-odds-box.ts`) lists each type that can appear in the current hall: its chance per slot, MHP, MAtk, MDef, MXP and Spirit rarity, with a row for the hall's Strong, Elite or Boss when it has one.
-- The **bank** sits over the board's top-right wall tiles while banked seconds are above zero: a clock icon, the seconds (`1h 12m 05s` past a minute) and a dropdown, ×1 ×5 ×10 ×100 (`select#catacomb-haste`).
+- The **enemy table** (`ui/catacomb-odds.ts`, styled as `enemy-odds-box.ts`'s) lists each type that can appear in the current hall: its chance per slot, MHP, MAtk, MDef, MXP and Spirit rarity, with a row for the hall's Strong, Elite or Boss when it has one.
+- The **bank** sits over the board's top-right wall tiles while a second is banked or haste is on: a clock icon, the time (`45s`, `12m 05s`, `3h 12m`) and a dropdown, ×1 ×5 ×10 ×100 (`select#catacomb-haste`).
 - A **stats table** button left of the Stats row opens every Catacomb stat in one table (MHP, MAtk, MDef, Magic level, MXP to next, points spent and free, Lore bonus, current hall, best hall, number), dismissed by a tap anywhere.
 
 ## A hall
@@ -212,14 +212,14 @@ Each turn is exactly one of these, decided by the hero's next target in the hall
 
 A row of four tabs replaces the hand and Training bar on the Catacomb screen: **Stats**, **Spirit**, **Forge**, **Academy**.
 
-- **Stats** (built now): a row of stat boxes, each its name and the points in it.
+- **Stats**: a row of stat boxes, each its name and the points in it.
   Tapped, a box widens to show rectangular − and + buttons and, beside them, a line for each stat it raises, per point and in total (*MAtk +2 a point · +34*).
   Points move freely at any time, never below 0 in a box or past the points earned.
 - **Spirit**, **Forge** and **Academy** show their names and a line saying they open later; their TODOs are below.
 
 ## Save
 
-`save.catacombs` (new; `defaults()`, `Save` in `save/shape.ts`, `decodeCatacombs` from `decode()`, a `VERSION_STEPS` step, and a `PROFILE_SECTIONS` entry so the profile file keeps it, the run left out like the others):
+`save.catacombs` (new; `defaults()`, `Save` in `save/shape.ts`, `decodeCatacombs` from `decode()`, and the profile file's `towers` section, the run left out like the others; no version step, since a save without it decodes to the defaults):
 
 ```ts
 type CatacombSave = {
@@ -236,43 +236,45 @@ type CatacombSave = {
 type CatacombRun = {
   hall: number;
   hero: { x: number; y: number; mhp: number };
-  slots: ({ type: EnemyType; strength: "normal" | "strong" | "elite" | "boss"; mhp: number } | null)[]; // E1–E6
-  taken: string[];            // the hall's pickups taken ("8,8", "8,4" …)
-  target: number;             // index into the hall's target order
+  slots: ({ id: UndeadId; strength: "normal" | "strong" | "elite" | "boss"; mhp: number } | null)[]; // E1–E6, emptied as beaten
+  target: number;             // index into the hall's targets (living undead and pickups); every earlier one is done
   fell?: true;                // a restart is next
 };
 ```
 
-- Spirit, Ingots and MXP can go to `save.profile.earned` too (`LIFETIME_CURRENCIES`), and Lore through `earn(save, "cells", n)`.
+- Lore is credited through `earn(save, "cells", n)`; Spirit, Ingots and MXP are not lifetime tallies yet.
 - `tests/fixtures/save-decode.golden.json` is re-recorded for the new field.
 
 ## Currencies
 
-- The currencies dialog (`currencyRows`) gains the seven Spirits and four Ingots, each once earned (all in Dev mode), after Lore.
-- New icons: seven Spirit wisps tinted by rarity, four ingot bars.
+- The currencies dialog (`currencyRows`) and the Codex's Currencies gain the seven Spirits and four Ingots after Lore, once the Catacombs are open (all in Dev mode).
+- Icons: seven Spirit wisps tinted by rarity, four ingot bars, drawn in CSS until their PNGs.
 - They aren't Shop currencies, so `CurrencyId` is unchanged.
 
 ## Art and sound
 
 - New PNGs: the mausoleum (72 × 72), crypt floor, wall and stairs-down tiles, the seven undead, Lore and four ingot pickups, Spirit and ingot icons, the purple training arrow, the bank's clock; registered through `npm run sprites:manifest` and the atlases.
-- Until the art lands, placeholders: Tower tiles darkened, existing enemy sprites tinted pale blue.
-- Cues reuse the fight, pickup and stairs sounds, played only for drawn turns and only on the Catacomb screen.
+- Until the art lands, placeholders: Tower III's tiles under a dark falloff, the Mausoleum and undead in code-drawn pixels, the Lore tablet from the kit.
+- Sound is still to come (Follow-ups): cues reusing the fight, pickup and stairs sounds, for drawn turns on the Catacomb screen.
 
-## Build order
+## Build log
 
-Each step ships on its own with its tests, docs and DEVLOG line.
+All seven steps are built, each with its tests, docs and DEVLOG line; docs/agents/catacombs.md describes the code.
 
-1. **Engine** (done). `src/catacombs/` with `catalog`, `hall`, `magic`, `state`, `turn`, `clock`, `save`, and `stream("catacombs")`.
-   The decoder stands alone; `save.catacombs` joins the save in step 2.
-   Tests (`tests/catacombs-*.test.ts`): hall layout and rooms by hall number; slots pinched; spawn odds over many halls with a pinned stream; the empty-hall Wisp; Strong, Elite and Boss precedence (25 over 10 over 5); deep-hall products at 400, 401, 1,201 and 2,001; ingot amounts; turn order (dash, round, pickup, descend); hero first strike; invincible enemy to defeat; stalemate restart in the same turn; restart keeps MXP, Spirit, Ingots and Lore; points moved apply next turn; clock real and hasted turns, bank exhaustion dropping to ×1; offline banking; `runTurns` summing several runs; decode round trip.
-   Add the catacomb modules to `tests/engine-independence.test.ts` and the stream to `tests/random-streams.test.ts`.
-2. **Unlock** (done). `save.catacombs` in the save (`defaults()`, `Save`, `decode()`, `PROFILE_SECTIONS`, the save golden); the Goal, `revealGoal`, Reveal Catacombs, `catacombsOpen`; `tests/goals.test.ts`, `tests/skill-trees.test.ts`.
-3. **Mausoleum and menu** (done; the Mausoleum drawn in pixels until its PNG, and entering shows a stand-in dialog until step 4). `OutsideWorld.mausoleum`, the tap, `#run-catacombs`; `tests/outside*.test.ts`; render golden (forest with it) and UI golden (menu) re-recorded.
-4. **Catacomb screen** (done; the magic skill points sit in the portrait's corner, the level row having no room, and the bottom row stays empty until step 5).
-   Step 5 (done): the row of Stats, Spirit, Forge and Academy; Stats spends points, the others say what they will do. `CatacombView`, the hall drawing, the HUD swaps, Switch Back, pausing and resuming the run behind it, the enemy table, the bank and haste; render and UI goldens for a hall and the HUD; a Playwright flow (`tests/catacombs.mjs`): enter from the forest, watch a turn, Switch Back to a Tower run and see it resume, re-enter from the menu.
-5. **Stats menu.** The tabs row, the Stats boxes, the stats table.
-6. **Offline and currencies** (done; the background clock came with step 4, and Spirit and Ingot icons are drawn in CSS until their PNGs). The Offline dialog's line, the currencies rows, the background clock on every page.
-7. **Docs.** `docs/agents/catacombs.md` (modules, rules, tests) with its line in AGENTS.md's topic list and test table; `docs/gameplay/catacombs.md` with its README row; `CONTEXT.md` terms (Catacomb, Hall, Magician, MHP, MAtk, MDef, MXP, Magic level, magic skill point, Spirit, Ingot, Mausoleum, Turn Bank, Haste); `docs/project/how-its-built.md`; Codex entries for the undead.
+1. **Engine.** `src/catacombs/`: `catalog`, `hall`, `magic`, `state`, `turn`, `clock`, `save`, and the saved spawn stream on `stream("catacombs")`; `tests/catacombs-engine.test.ts`, and the engine joins `tests/engine-independence.test.ts`.
+2. **Unlock.** Tower VI's floor 20 Goal, the node's `revealGoal`, Reveal Catacombs, `catacombsOpen`, and `save.catacombs` in the save and the profile file; the save-decode golden and five Dev-mode UI snapshots re-recorded.
+3. **Mausoleum and menu.** `OutsideWorld.mausoleum`, its tap, `CatacombDesk`, and the menu's `#catacombs-button`; `tests/catacombs-forest.test.ts`; every UI snapshot re-recorded for the hidden button; the render golden unmoved.
+4. **Catacomb screen.** `CatacombView`, `CatacombPlayer`, `CatacombBoard`, the HUD swaps, Switch Back and Escape, the undead table, the bank and haste, and the background clock on every page; `tests/catacombs-player.test.ts` and `tests/catacombs.mjs` (in `npm run test:browser`).
+   The magic skill points sit in the portrait's corner, since the level row has no room beside the MXP bar.
+5. **Stats menu.** The Stats, Spirit, Forge and Academy row, the Stats boxes and the stats table; `tests/catacombs-menus.test.ts`.
+6. **Offline and currencies.** Start-up banking reported in the Offline dialog, and Spirit and Ingots in the currencies table; `tests/catacombs-offline.test.ts`.
+7. **Docs and Codex.** The Codex's Catacombs category (how it works, and each undead once a hall it can stand in is reached) and Spirit and Ingots in its Currencies; `tests/codex.test.ts`.
+
+## Follow-ups
+
+- **Art.** PNGs for the Mausoleum, the seven undead, Spirit and Ingot icons, the purple training arrow and the Catacomb button (now the Mausoleum and undead in code-drawn pixels, the icons in CSS, the button the torch); see Art and sound.
+- **Sound.** The Catacomb screen is silent: fight, pickup and stairs cues for drawn turns.
+- **Codex discovery.** An undead counts as seen once a hall it can stand in is reached; once Spirit can be spent, keep sightings in `save.codex` instead.
 
 ## Later (designer TODOs)
 

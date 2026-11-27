@@ -26,6 +26,7 @@ A link to a page only the forest opens (Deck, Upgrades, Gear, Goals, Relics, Shr
 The Story category (`story` in codex.ts) tells the tale a chapter a section: a section's `prose` (its paragraphs) draws as a collapsible passage instead of entries (`codex-story`, `.codex-prose`).
 Its Intro (`STORY_INTRO`) shows, and the tab opens, once the first Tower climb has ended (`tutorials.chamber`), or with Access to Everything; its tab wears the Chrono Anchor (docs/agents/divine.md).
 
+The Catacombs category (`catacombs` in codex.ts) opens with the Catacombs (`catacombsOpen`): how they work, and each undead (`UNDEAD_BRIEFS`, its base stats as facts, an `undead` icon drawn from its pixel art, `undeadIconUrl`) once any Catacomb's deepest hall reaches its first; the Currencies list Spirit and Ingots then too.
 The Familiars category opens with Events (or a familiar hatched) and shows each with its brief (`FAMILIAR_BRIEFS`), a hatched one its levels.
 
 **Adding to it.**
@@ -34,5 +35,5 @@ A new category is a function in codex.ts listed in `codexCategories`, with an id
 Briefs say what a thing is or is for in a line, never its numbers in full.
 
 **Tests.**
-`tests/codex.test.ts` covers which categories a new profile opens, Access to Everything, hidden entries, brief length, links inside a climb, `costToReach`, skill grouping, ascension links, enemy discovery, `noteDiscoveries` and decoding.
+`tests/codex.test.ts` covers the Catacombs category, which categories a new profile opens, Access to Everything, hidden entries, brief length, links inside a climb, `costToReach`, skill grouping, ascension links, enemy discovery, `noteDiscoveries` and decoding.
 `node tests/codex.mjs` (dev server, or `TEST_URL`) opens the page in the browser at phone width, checks locked tabs, the Free Daily Gems link landing on its Shop offer, Access to Everything and overflow, with screenshots in `test-results/codex/`.

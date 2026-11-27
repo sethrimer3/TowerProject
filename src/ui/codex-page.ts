@@ -1,4 +1,7 @@
 import type { AppContext } from "./app.ts";
+import { INGOTS, SPIRIT_RARITIES, type UndeadId } from "../catacombs/catalog.ts";
+import { undeadIconUrl } from "../render/catacomb-board.ts";
+import { ingotIcon, spiritIcon } from "./dom.ts";
 import { codexCategories, type CodexCategory, type CodexDoor, type CodexCategoryId, type CodexEntry, type CodexIcon, type CodexLink, type CodexSection, type CodexTarget } from "../codex/codex.ts";
 import { noteDiscoveries } from "../codex/discovery.ts";
 import { controlIcon } from "./control-icon.ts";
@@ -28,6 +31,8 @@ const CURRENCY_ICONS: Record<string, () => string> = {
   gold: goldIcon, gems: () => gemIcon(), silver: () => uiSprite("gold", "ui-sprite silver-sprite"), training: () => pointsIcon("ui-sprite"),
   inspiration: () => uiSprite("inspiration"), breakthrough: () => uiSprite("breakthrough"), rubies: () => rubyIcon(), arcanite: () => arcaniteIcon(),
   medals: () => medalIcon(), cells: () => cellIcon(), tickets: () => ticketIcon(), "equip-tickets": () => equipTicketIcon(), vip: () => vipIcon(),
+  ...Object.fromEntries(SPIRIT_RARITIES.map((r) => [`spirit-${r}`, () => spiritIcon(r)])),
+  ...Object.fromEntries(INGOTS.map((i) => [`ingot-${i}`, () => ingotIcon(i)])),
 };
 /** Each trial boss's stand-in picture. */
 const TRIAL_ART: Record<string, string> = { "light-elemental": "crystal", keymaster: "key-yellow", "magic-tower": "tower", obelisk: "golem" };
@@ -85,6 +90,7 @@ function iconHtml(icon: CodexIcon): string {
     case "familiar": return pngIcon(`familiar-${id}-icon`, "codex-kit");
     case "trial": return kitIcon(TRIAL_ART[id] ?? "trophy", "", "codex-kit");
     case "environment": return ENVIRONMENT_ICONS[id]?.() ?? "";
+    case "undead": return `<img class="codex-kit codex-undead" src="${undeadIconUrl(id as UndeadId)}" alt="" aria-hidden="true">`;
   }
 }
 
