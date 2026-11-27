@@ -9,9 +9,10 @@ import { sprite } from "../sprites/pixel-sprite.ts";
 import { drawKit } from "../sprites/kit.ts";
 import { HALL_SIZE, hallCell, type HallCell } from "../catacombs/hall.ts";
 import { hallTargets, SLOT_XS, CORRIDOR_ROW } from "../catacombs/hall.ts";
-import { undeadStats, type IngotId, type UndeadId } from "../catacombs/catalog.ts";
+import { DROP_IDS, undeadStats, type DropId, type IngotId, type UndeadId } from "../catacombs/catalog.ts";
 import type { CatacombRun } from "../catacombs/state.ts";
 import type { TurnEvent } from "../catacombs/turn.ts";
+import type { TapEvent } from "../catacombs/taps.ts";
 
 const N = HALL_SIZE, S = 24;
 /** How long the hero takes to cross to a turn's tile (ms), and a strike's popup to rise and fade. */
@@ -43,6 +44,37 @@ function paintIngot(c: CanvasRenderingContext2D, ingot: IngotId) {
   c.fillStyle = light; c.fillRect(7, 8, 11, 2); c.fillRect(7, 11, 2, 1);
 }
 
+/** Each drop's pip on an undead: MXP purple, Loot Spirit green, Speed yellow, MHP red. */
+const DROP_COLORS: Record<DropId, string> = { mxp: "#c84aff", loot: "#5fd27a", speed: "#ffe14a", mhp: "#ff4a4a" };
+const CRIT_COLOR = "#ffd23a", GOLD_COLOR = "#ffc93a";
+
+/** A crosshair over an undead, pulsing: red-white, or gold. */
+function paintCrosshair(c: CanvasRenderingContext2D, gold: boolean, now: number, reduceMotion: boolean) {
+  const r = 8 + (reduceMotion ? 0 : Math.round(Math.sin(now / 160)));
+  c.strokeStyle = "#000000aa";
+  c.lineWidth = 3;
+  c.beginPath(); c.arc(12, 12, r, 0, Math.PI * 2); c.stroke();
+  c.strokeStyle = gold ? GOLD_COLOR : "#ff5a5a";
+  c.lineWidth = 1.5;
+  c.beginPath(); c.arc(12, 12, r, 0, Math.PI * 2); c.stroke();
+  c.fillStyle = gold ? GOLD_COLOR : "#ffffff";
+  c.fillRect(11, 12 - r - 3, 2, 5); c.fillRect(11, 12 + r - 2, 2, 5);
+  c.fillRect(12 - r - 3, 11, 5, 2); c.fillRect(12 + r - 2, 11, 5, 2);
+}
+
+/** A small red potion: a cork, a glass neck, a round flask. */
+function paintPotion(c: CanvasRenderingContext2D, now: number, reduceMotion: boolean) {
+  const bob = reduceMotion ? 0 : Math.round(Math.sin(now / 250));
+  c.save(); c.translate(0, bob);
+  c.fillStyle = "#00000066"; c.fillRect(7, 19, 10, 2);
+  c.fillStyle = "#8a5a2a"; c.fillRect(10, 5, 4, 2);
+  c.fillStyle = "#cfe3f0"; c.fillRect(10, 7, 4, 3);
+  c.fillStyle = "#cfe3f0"; c.fillRect(7, 10, 10, 9);
+  c.fillStyle = "#e23a4a"; c.fillRect(8, 12, 8, 6);
+  c.fillStyle = "#ff9aa4"; c.fillRect(9, 12, 2, 2);
+  c.restore();
+}
+
 /** An undead's picture as an image, for the Codex: its pixel art on a 24 × 24 canvas. */
 const undeadIcons = new Map<UndeadId, string>();
 export function undeadIconUrl(id: UndeadId) {
@@ -71,6 +103,15 @@ export class CatacombBoard {
 
   constructor(private canvas: HTMLCanvasElement) {}
 
+  /** A tap just made: a crosshair's hit, or a potion's MHP. */
+  tapped(event: TapEvent, now: number) {
+    if (event.kind === "crosshair") {
+      this.popups.push({ x: SLOT_XS[event.slot]!, y: CORRIDOR_ROW, text: `-${short(event.hit)}`, color: event.gold ? GOLD_COLOR : event.crit ? CRIT_COLOR : "#ffffff", at: now });
+      this.hitAt = now;
+      this.hitSlot = event.slot;
+    } else this.popups.push({ x: event.x, y: event.y, text: `+${short(event.mhp)}`, color: "#ff8a94", at: now });
+  }
+
   /** A turn just taken: the hero's move to tween and the strike's popups. */
   turn(run: CatacombRun, event: TurnEvent | null, now: number, reduceMotion: boolean) {
     const at = { x: run.hero.x, y: run.hero.y };
@@ -82,7 +123,8 @@ export class CatacombBoard {
     }
     if (event?.kind === "round") {
       const x = SLOT_XS[event.slot]!;
-      this.popups.push({ x, y: CORRIDOR_ROW, text: event.heroHit ? `-${short(event.heroHit)}` : "0", color: event.heroHit ? "#ffffff" : "#8a8a8a", at: now });
+      this.popups.push({ x, y: CORRIDOR_ROW, text: event.heroHit ? `-${short(event.heroHit)}` : "0", color: !event.heroHit ? "#8a8a8a" : event.crit ? CRIT_COLOR : "#ffffff", at: now });
+      for (const b of event.barrage ?? []) this.popups.push({ x: SLOT_XS[b.slot]!, y: CORRIDOR_ROW, text: `-${short(b.hit)}`, color: "#9ad8ff", at: now });
       if (event.enemyHit) this.popups.push({ x: run.hero.x, y: run.hero.y, text: `-${short(event.enemyHit)}`, color: "#ff6060", at: now });
       this.hitAt = now;
       this.hitSlot = event.slot;
@@ -119,7 +161,9 @@ export class CatacombBoard {
       else if (k === "lore" && left.has(`${x},${row}`)) at(row, x, () => drawKit(c, "cell", 3, 3, 18, 18));
       else if ((k === "brass" || k === "iron" || k === "steel" || k === "nickel") && left.has(`${x},${row}`)) at(row, x, () => paintIngot(c, k));
     }
-    // The undead, with their rank chevrons and what MHP they have left.
+    // Potions on the side tiles.
+    for (const [x, row] of run.potions) at(row, x, () => paintPotion(c, now, reduceMotion));
+    // The undead, with their rank chevrons, their drops' pips, what MHP they have left and their crosshairs.
     run.slots.forEach((slot, i) => {
       if (!slot) return;
       const x = SLOT_XS[i]!, full = undeadStats(slot.id, slot.strength, hall, number).mhp;
@@ -131,6 +175,11 @@ export class CatacombBoard {
         if (slot.strength !== "normal") rankChevrons(c, slot.strength, "#ffd85a", "#000000", 1, 1);
         c.fillStyle = "#000000aa"; c.fillRect(3, 21, 18, 3);
         c.fillStyle = "#c84aff"; c.fillRect(4, 22, Math.max(1, Math.round(16 * Math.min(1, slot.mhp / full))), 1);
+        DROP_IDS.filter((d) => slot.drops?.[d]).forEach((d, k) => {
+          c.fillStyle = "#000000"; c.fillRect(19, 1 + k * 5, 5, 5);
+          c.fillStyle = DROP_COLORS[d]; c.fillRect(20, 2 + k * 5, 3, 3);
+        });
+        if (slot.mark) paintCrosshair(c, slot.mark === "gold", now, reduceMotion);
       });
     });
     // The hero, crossing to its tile.

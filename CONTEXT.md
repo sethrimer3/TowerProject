@@ -1122,11 +1122,43 @@ The Magician's and the undead's own life, attack and defense; the hero's HP, ATK
 _Avoid_: magical HP, spell power
 
 **Magic level**:
-The Magician's level, from MXP the undead pay; each level past the first gives one magic skill point, put into stat boxes and taken back at will.
+The Magician's level, from MXP the undead pay; each level past the first gives one magic skill point, put into Magic skills and taken back at will.
 _Avoid_: mage level, magic XP level
 
+**Magic skill** (Skill, in the Catacombs):
+One of the Magician's attributes (Might, Weaving, Resonance, Focus, Fortune), each raising three effects a point up to its cap; unrelated to the skill trees.
+_Avoid_: stat box, talent
+
+**MCrit**:
+A Magician's critical strike: MCrit chance to land, its MAtk times the MCrit factor (×1.5 to start) before MDef.
+_Avoid_: magic crit, spell crit
+
+**Armor Penetration**:
+The share and then the flat amount of an undead's MDef the Magician's strikes ignore.
+_Avoid_: pierce, armor break
+
+**Drop** (MXP, Loot, Speed, MHP Drop):
+A bonus an undead rolls as its hall is made, shown as a pip on it and paid when it is beaten.
+_Avoid_: loot roll, bonus drop
+
+**Crosshair**:
+A mark that appears on an undead now and then; tapped, the undead takes a free hit without a turn passing. A **Gold Crosshair** hits three times as hard.
+_Avoid_: target, weak spot
+
+**Potion**:
+A flask that appears on a hall's side tile now and then; tapped, it restores MHP; it is lost when the hall is left.
+_Avoid_: health pickup, flask
+
+**Ability**:
+One of the Magician's three limited-use spells (Spell Surge, Renewing Rush, Arcane Barrage), unlocked with Spirit, each a charge that comes back a cooldown of turns after it is cast, its buff lasting the next few attacks.
+_Avoid_: spell, skill, power
+
+**Spirit upgrade**:
+A purchase in the Catacomb screen's Spirit menu, each level priced in one rarity of Spirit.
+_Avoid_: Spirit card, Spirit shop
+
 **Spirit**:
-A lasting currency in seven rarities, common to ancestral; each undead drops one of its own rarity.
+A lasting currency in seven rarities, common to ancestral; each undead drops one of its own rarity, and Spirit upgrades spend it.
 _Avoid_: souls, essence
 
 **Ingot**:

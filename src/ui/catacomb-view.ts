@@ -12,7 +12,9 @@ import { CatacombBoard } from "../render/catacomb-board.ts";
 import { CatacombPlayer, type CatacombStep } from "../catacombs/player.ts";
 import { setHaste } from "../catacombs/clock.ts";
 import { HASTES, type Haste } from "../catacombs/state.ts";
-import { heroStats, magicLevel, mxpForLevel, pointsEarned, pointsSpent } from "../catacombs/magic.ts";
+import { magician, magicLevel, mxpForLevel, pointsEarned, pointsSpent } from "../catacombs/magic.ts";
+import { tapCrosshair, takePotion, type TapEvent } from "../catacombs/taps.ts";
+import { CORRIDOR_ROW, HALL_SIZE, SLOT_XS } from "../catacombs/hall.ts";
 import { loreBonus, UNDEAD, undeadStats } from "../catacombs/catalog.ts";
 import type { TurnEvent } from "../catacombs/turn.ts";
 import { tierNumeral } from "../tiers.ts";
@@ -25,13 +27,21 @@ export function bankTime(seconds: number) {
   return h ? `${h.toLocaleString("en-US")}h ${String(m).padStart(2, "0")}m` : m ? `${m}m ${String(r).padStart(2, "0")}s` : `${r}s`;
 }
 
+/** What the status line says of a tap. */
+export function tapLine(event: TapEvent, slotName: string) {
+  if (event.kind === "potion") return `A potion: +${event.mhp.toLocaleString("en-US")} MHP.`;
+  const what = event.gold ? "A gold crosshair" : "A crosshair";
+  return event.killed ? `${what} banishes the ${slotName}.` : `${what} strikes the ${slotName}${event.crit ? ", critically" : ""}.`;
+}
+
 /** What the status line says of a turn. */
 export function turnLine(event: TurnEvent | null, slotName: (slot: number) => string) {
   if (!event) return "The Magician gathers strength.";
   switch (event.kind) {
     case "dash": return "The Magician dashes on.";
     case "round": return event.killed ? `The ${slotName(event.slot)} is banished.`
-      : event.heroHit === 0 ? `The ${slotName(event.slot)} shrugs off the spell.` : `The Magician strikes the ${slotName(event.slot)}.`;
+      : event.heroHit === 0 ? `The ${slotName(event.slot)} shrugs off the spell.`
+      : event.barrage ? "An Arcane Barrage strikes every undead." : event.crit ? `A critical spell strikes the ${slotName(event.slot)}.` : `The Magician strikes the ${slotName(event.slot)}.`;
     case "pickup": return event.target.kind === "lore" ? "Lore found." : `${event.target.ingot[0]!.toUpperCase()}${event.target.ingot.slice(1)} found.`;
     case "descend": return `Down to Hall ${event.hall.toLocaleString("en-US")}.`;
     case "fall": case "restart": return event.kind === "restart" && event.stalemate ? "Neither side can harm the other. Back to Hall 1." : "The Magician falls, and wakes at Hall 1.";
@@ -50,7 +60,12 @@ export class CatacombView {
     // While open, the board's taps and the game's keys are the Catacomb's: none reach the run behind it.
     const canvas = el("world");
     for (const type of ["pointerdown", "pointerup", "click"] as const)
-      canvas.addEventListener(type, (e) => { if (this.active) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+      canvas.addEventListener(type, (e) => {
+        if (!this.active) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        if (type === "pointerdown") this.tap(e as PointerEvent);
+      }, true);
     window.addEventListener("keydown", (e) => {
       if (!this.active || ctx.modal.open || (e.target as Element | null)?.closest?.("input,select,textarea")) return;
       e.stopImmediatePropagation();
@@ -107,6 +122,22 @@ export class CatacombView {
     return true;
   }
 
+  /** A tap on the hall: a crosshair (on its undead, or the wall above or
+   * below it) takes its free hit; a potion is drunk. No turn passes. */
+  private tap(e: PointerEvent) {
+    const run = this.c.run, box = el("world").getBoundingClientRect();
+    if (!run || !box.width || !box.height) return;
+    const x = Math.floor(((e.clientX - box.left) / box.width) * HALL_SIZE), y = Math.floor(((e.clientY - box.top) / box.height) * HALL_SIZE);
+    const slot = (SLOT_XS as readonly number[]).indexOf(x);
+    const name = slot >= 0 ? UNDEAD[run.slots[slot]?.id ?? "wisp"].name : "";
+    const event = slot >= 0 && Math.abs(y - CORRIDOR_ROW) <= 1 ? tapCrosshair(this.c, slot) : takePotion(this.c, x, y);
+    if (!event) return;
+    this.board.tapped(event, performance.now());
+    this.decorate();
+    text("message", tapLine(event, name));
+    this.ctx.save();
+  }
+
   private stepped(step: CatacombStep, now: number) {
     const turns = step.due.real + step.due.hasted;
     if (turns > 0) {
@@ -146,7 +177,7 @@ export class CatacombView {
   decorate() {
     const run = this.c.run;
     if (!this.active || !run) return;
-    const c = this.c, save = this.ctx.game.save, hero = heroStats(c.points), number = c.number;
+    const c = this.c, save = this.ctx.game.save, hero = magician(c), number = c.number;
     text("catacomb-lore", shortAmount(whole(save.cells)));
     // MHP, MAtk and MDef in the HP, ATK and DEF slots.
     text("hp", `${shortAmount(whole(run.hero.mhp))} / ${shortAmount(hero.mhp)}`);

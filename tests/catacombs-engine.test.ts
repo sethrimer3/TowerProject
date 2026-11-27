@@ -5,16 +5,17 @@ import assert from "node:assert/strict";
 import { random, withStream } from "../src/random.ts";
 import { decode, defaults } from "../src/save/save.ts";
 import { exportProfile, importProfile } from "../src/profile-file.ts";
+import { seedAll } from "./catacombs-seed.ts";
 import {
   BANK_GAP_MS, catacombTurn, CORRIDOR_ROW, decodeCatacombs, deepFactors, defaultCatacombs, enterCatacomb, hallCell, hallStrength,
-  hallTargets, heroStats, ingotAmount, loreOnTile, magicLevel, movePoint, mxpForLevel, mxpToNext, newCarry, noGains, pointsEarned,
-  rollSlots, runTurns, setHaste, SLOT_XS, spawnOdds, startRun, tick, undeadRewards, undeadStats, offlineSeconds,
+  hallTargets, magician, ingotAmount, loreOnTile, magicLevel, movePoint, mxpForLevel, mxpToNext, newCarry, noPoints, pointsEarned,
+  rollSlots, runTurns, setHaste, SLOT_XS, spawnOdds, startRun, tick, undeadRewards, undeadStats, offlineSeconds, UNDEAD,
   type CatacombSave, type Slot,
 } from "../src/catacombs/index.ts";
 
 const fresh = (number = 1, seed = 7): CatacombSave => {
   const c = defaultCatacombs();
-  c.rng = seed;
+  seedAll(c, seed);
   enterCatacomb(c, number);
   return c;
 };
@@ -97,13 +98,42 @@ test("an enemy's stats: base × the number's factor × strength × the deep hall
   assert.deepEqual(undeadRewards("ghost", "elite"), { mxp: 12, rarity: "uncommon", spirit: 4 });
 });
 
-test("spawns: Wisp 30% and Ghost 15% a slot for now, a lone Wisp when none roll", () => {
-  assert.deepEqual(spawnOdds(1).map((o) => o.id), ["wisp", "ghost"]);
+test("spawn odds follow the designer's table by hall, each type from its first hall", () => {
+  assert.deepEqual(spawnOdds(1), [{ id: "wisp", percent: 28.57 }, { id: "ghost", percent: 14.29 }]);
+  assert.deepEqual(spawnOdds(10).map((o) => o.id), ["wisp", "ghost"]);
+  assert.deepEqual(spawnOdds(11).map((o) => o.percent), [25.4, 12.7, 11.11]);
+  assert.deepEqual(spawnOdds(24).map((o) => o.percent), [25.52, 10.94, 12.5]);
+  assert.deepEqual(spawnOdds(25).map((o) => o.id), ["wisp", "ghost", "skeleton", "ghoul"]);
+  assert.deepEqual(spawnOdds(49).map((o) => o.id), ["wisp", "ghost", "skeleton", "ghoul", "vampire"]);
+  assert.equal(spawnOdds(80).map((o) => o.id).at(-1), "lich");
+  assert.equal(spawnOdds(199).map((o) => o.id).at(-1), "lich");
+  assert.equal(spawnOdds(200).map((o) => o.percent).at(-1), 2);
+  assert.deepEqual(spawnOdds(5000).map((o) => o.percent), [13.5, 8.1, 9.72, 11.67, 14, 9.33, 6.67]);
+  // Each type's first hall is where the table first gives it odds.
+  for (const o of spawnOdds(600)) {
+    const from = UNDEAD[o.id].from!;
+    assert.ok(spawnOdds(from).some((p) => p.id === o.id) && !spawnOdds(from - 1).some((p) => p.id === o.id), o.id);
+  }
+});
+
+test("set halls stand as the table says, lowest rarity first, the last at the hall's strength, drawing nothing", () => {
+  const none = () => { throw new Error("a set hall draws"); };
+  const ids = (hall: number) => rollSlots(hall, 1, none).map((s) => s!.id);
+  assert.deepEqual(ids(45), Array(6).fill("wisp"));
+  assert.deepEqual(ids(140), ["ghost", "ghost", "ghost", "ghost", "ghost", "vampire"]);
+  assert.deepEqual(ids(195), ["wisp", "ghost", "ghost", "skeleton", "skeleton", "lich"]);
+  assert.deepEqual(ids(395), ["ghost", "skeleton", "ghoul", "vampire", "lich", "demon"]);
+  assert.deepEqual(ids(595), Array(6).fill("demon"));
+  assert.deepEqual(rollSlots(100, 1, none).map((s) => s!.strength), ["normal", "normal", "normal", "normal", "normal", "boss"]);
+  assert.equal(rollSlots(140, 1, none)[5]!.strength, "elite");
+});
+
+test("spawns roll each slot at the hall's odds, a lone Wisp when none roll", () => {
   const counts = { wisp: 0, ghost: 0, empty: 0 }, rng = random(99);
   const n = 4000;
   for (let i = 0; i < n; i++) for (const s of rollSlots(1, 1, rng).slice(0, 5)) counts[s ? s.id as "wisp" | "ghost" : "empty"]++;
-  assert.ok(Math.abs(counts.wisp / (n * 5) - 0.3) < 0.02, `wisp ${counts.wisp}`);
-  assert.ok(Math.abs(counts.ghost / (n * 5) - 0.15) < 0.02, `ghost ${counts.ghost}`);
+  assert.ok(Math.abs(counts.wisp / (n * 5) - 0.2857) < 0.02, `wisp ${counts.wisp}`);
+  assert.ok(Math.abs(counts.ghost / (n * 5) - 0.1429) < 0.02, `ghost ${counts.ghost}`);
   // Every hall has an enemy; a ranked hall's last slot is always one of its strength.
   for (let i = 0; i < 500; i++) {
     assert.ok(rollSlots(1, 1, rng).some((s) => s));
@@ -116,7 +146,7 @@ test("spawns: Wisp 30% and Ghost 15% a slot for now, a lone Wisp when none roll"
 test("the saved spawn stream carries on where it stopped and is seeded once", () => {
   const a = fresh(1, 123), b = fresh(1, 123);
   assert.deepEqual(a.run, b.run);
-  assert.notEqual(a.rng, 123);
+  assert.notEqual(a.rng.spawns, 123);
   const c = defaultCatacombs();
   withStream("catacombs", random(5), () => enterCatacomb(c, 1));
   const d = defaultCatacombs();
@@ -137,8 +167,9 @@ test("a turn dashes, then fights rounds with the hero striking first", () => {
   c.run!.slots = [slot("wisp"), null, null, null, null, null];
   assert.deepEqual(catacombTurn(c), { kind: "dash", x: 1, y: 8 });
   // 10 MAtk into a Wisp's 100 MHP: ten rounds, the last unanswered.
-  for (let i = 0; i < 9; i++) assert.deepEqual(catacombTurn(c), { kind: "round", slot: 0, heroHit: 10, enemyHit: 10, killed: false });
-  assert.deepEqual(catacombTurn(c), { kind: "round", slot: 0, heroHit: 10, enemyHit: 0, killed: true });
+  const round = { kind: "round", slot: 0, heroHit: 10, crit: false, strikes: 1 };
+  for (let i = 0; i < 9; i++) assert.deepEqual(catacombTurn(c), { ...round, enemyHit: 10, killed: false });
+  assert.deepEqual(catacombTurn(c), { ...round, enemyHit: 0, killed: true });
   assert.equal(c.run!.hero.mhp, 910);
   assert.equal(c.mxp, 1);
   assert.equal(c.spirit.common, 1);
@@ -178,14 +209,17 @@ test("an invincible enemy fights on until the hero falls, then a restart keeps w
 });
 
 test("when neither side can hurt the other the run restarts that same turn", () => {
-  const c = fresh();
-  c.points.ward = 10;
-  c.mxp = mxpForLevel(11);
-  c.run!.hall = 30;
-  c.run!.slots = [slot("skeleton", "normal", 30), null, null, null, null, null];
-  catacombTurn(c);
-  assert.deepEqual(catacombTurn(c), { kind: "restart", stalemate: true });
-  assert.equal(c.run!.hall, 1);
+  // Nothing raises MDef yet, so an undead without MAtk stands in.
+  const matk = UNDEAD.skeleton.matk;
+  UNDEAD.skeleton.matk = 0;
+  try {
+    const c = fresh();
+    c.run!.hall = 30;
+    c.run!.slots = [slot("skeleton", "normal", 30), null, null, null, null, null];
+    catacombTurn(c);
+    assert.deepEqual(catacombTurn(c), { kind: "restart", stalemate: true });
+    assert.equal(c.run!.hall, 1);
+  } finally { UNDEAD.skeleton.matk = matk; }
 });
 
 test("Magic levels: 200 × 1.2^(level − 1) MXP each, a point a level", () => {
@@ -201,26 +235,30 @@ test("Magic levels: 200 × 1.2^(level − 1) MXP each, a point a level", () => {
   assert.equal(pointsEarned(440), 2);
 });
 
-test("points move freely within those earned and apply on the next turn", () => {
+test("points move freely within those earned and each skill's cap, and apply on the next turn", () => {
   const c = fresh();
-  assert.equal(movePoint(c, "force", 1), false);
+  assert.equal(movePoint(c, "might", 1), false);
   c.mxp = mxpForLevel(3);
-  assert.equal(movePoint(c, "force", 1), true);
-  assert.equal(movePoint(c, "vitality", 1), true);
-  assert.equal(movePoint(c, "ward", 1), false);
-  assert.equal(movePoint(c, "ward", -1), false);
-  assert.deepEqual(heroStats(c.points), { mhp: 1100, matk: 12, mdef: 0 });
+  assert.equal(movePoint(c, "might", 1), true);
+  assert.equal(movePoint(c, "weaving", 1), true);
+  assert.equal(movePoint(c, "focus", 1), false);
+  assert.equal(movePoint(c, "focus", -1), false);
+  const m = magician(c);
+  assert.deepEqual({ mhp: m.mhp, matk: m.matk, mdef: m.mdef }, { mhp: 1025, matk: 11.11, mdef: 0 });
+  // Weaving's 1% MCrit chance out, so the hit is plain.
+  movePoint(c, "weaving", -1);
   c.run!.slots = [slot("wisp"), null, null, null, null, null];
   catacombTurn(c);
-  assert.equal((catacombTurn(c) as { heroHit: number }).heroHit, 12);
-  // Taking Vitality's point back caps MHP at the new maximum; giving it back heals nothing.
-  movePoint(c, "vitality", -1);
-  c.run!.hero.mhp = 1050;
+  assert.equal((catacombTurn(c) as { heroHit: number }).heroHit, 11.11);
+  // MHP above the new maximum is capped; a point put back heals nothing.
+  c.run!.hero.mhp = 1020;
   catacombTurn(c);
   assert.equal(c.run!.hero.mhp, 990);
-  movePoint(c, "vitality", 1);
-  catacombTurn(c);
-  assert.equal(c.run!.hero.mhp, 980);
+  // A skill takes no more than its cap.
+  c.mxp = mxpForLevel(80);
+  c.points = noPoints();
+  for (let i = 0; i < 30; i++) movePoint(c, "fortune", 1);
+  assert.equal(c.points.fortune, 25);
 });
 
 test("runTurns sums gains across several runs", () => {
@@ -261,7 +299,7 @@ test("the clock: a turn a second, haste paid from the bank, gaps banked", () => 
 test("decoding keeps a good save and drops what doesn't fit", () => {
   const c = fresh(4, 11);
   c.mxp = mxpForLevel(4);
-  c.points.force = 2;
+  c.points.might = 2;
   c.spirit.epic = 3;
   c.ingots.steel = 8;
   c.clock = { lastTurnAt: 123, bank: 45, haste: 10 };
@@ -272,12 +310,12 @@ test("decoding keeps a good save and drops what doesn't fit", () => {
   bad.run.target = 99;
   bad.number = 12;
   bad.clock.haste = 7;
-  bad.points.force = 50;
+  bad.points.might = 50;
   const d = decodeCatacombs(bad);
   assert.equal(d.run, null);
   assert.equal(d.number, 1);
   assert.equal(d.clock.haste, 1);
-  assert.deepEqual(d.points, { force: 0, ward: 0, vitality: 0 });
+  assert.deepEqual(d.points, noPoints());
   startRun(d);
   assert.equal(d.run!.hall, 1);
 });

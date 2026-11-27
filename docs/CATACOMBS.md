@@ -24,7 +24,7 @@ The designer chose floor 20, ancestral as the seventh rarity, the XP curve in 7,
 7. **Magic XP curve.**
    Decided: from level L to L + 1 takes 200 × 1.2^(L − 1) MXP, rounded (200, 240, 288, 346, 415 …; level 3 at 440 in all), one magic skill point per level.
 8. **What a magic skill point buys.**
-   Default: three stat boxes to start, data-driven so more slot in later: **Force** (+2 MAtk a point), **Ward** (+1 MDef a point), **Vitality** (+100 MHP a point).
+   First built as three stat boxes (Force, Ward, Vitality); the designer's five Magic skills replaced them (step 8, **Magic skills** below).
 9. **Strong, Elite and Boss drops.**
    Default: MXP and Spirit ×2 for Strong, ×4 for Elite, ×10 for a Boss (one rarity's Spirit, of the enemy's own rarity).
    Stats: Strong ×1.25 and Elite ×1.5 on all three stats (as asked), Boss the Tower's boss shape (MHP ×3.5, MAtk ×1.3, MDef ×1, `enemyCurve(...).strength.boss` in `src/enemies/curves.ts`).
@@ -46,6 +46,27 @@ The designer chose floor 20, ancestral as the seventh rarity, the XP curve in 7,
     Decided: common, uncommon, rare, epic, legendary, mythic and ancestral, matching the shared `RarityId` (`src/shop/rarity.ts`); Spirit still keeps its own list, `SPIRIT_RARITIES`.
 18. **Board width.**
     The corridor's 17 tiles match the Tower's 17 columns, so a Hall is a 17 × 17 board (rows 0 to 16, the corridor rows 7 to 9).
+
+Step 8 (the designer's spawn table, set halls, Magic skills, drops, crosshairs, potions, abilities and Spirit upgrades) settled these where the spec was open:
+
+19. **Magic ATK +1's prices.** Levels 18 to 25 were given as 111 … 397, a digit short of the series every other level follows (50 × 1.2^(level − 1), rounded); they are 1,109, 1,331, 1,597, 1,917, 2,300, 2,760, 3,312 and 3,975.
+20. **Base chances.** Every Drop and the MCrit chance start at 0%, raised only by Skills; the MCrit factor starts at ×1.5.
+21. **The "Luck" skill** that opens Gold Crosshairs is Fortune, whose third effect is the Gold Crosshair chance.
+22. **"(n pts)" in the skill table** means percentage points: a chance or factor adds that many points a point (Might's +3% MCrit factor takes ×1.5 to ×1.53).
+23. **Might's MAtk +1%** multiplies the whole MAtk (base, Might's flat points and Magic ATK +1).
+24. **MCrits** multiply MAtk before MDef, as the Tower's crits do; Spell Surge's +100% MCrit damage adds 1 to the factor.
+25. **Armor Penetration** takes the percent of MDef first, then the flat amount, never below 0.
+26. **Attack speed** is strikes a round: one, plus one while Speed Drop attacks are left, plus one while Renewing Rush lasts (bonuses add, so ×3 with both). An "attack" is a round; each round spends one of each buff and one Speed Drop attack.
+27. **Arcane Barrage** hits every undead standing, the one being fought too, after the Magician's strikes; it never MCrits. A barrage kill pays as any other.
+28. **Crosshairs** stay on their undead until tapped, the undead is beaten, or the hall is left (lasting one turn, they could not be tapped at ×100). They roll after each turn, on each undead without one. A tap may hit any marked undead, not only the one being fought, and benefits from Spell Surge without spending its attacks.
+29. **Potions** lie on the corridor's side rows (7 and 9), not the slots' walls nor the column to the treasure rooms; several can lie at once, one a tile.
+30. **Drops and amounts** are rolled together as the hall is made and saved with it, so a reload never rerolls them.
+31. **Set halls** list their undead lowest rarity first, so the strongest stands on E6, and the hall's Strong, Elite or Boss rank still goes to E6. They draw nothing from the spawn stream.
+32. **Each undead's first hall** follows the spawn table: Ghoul 25, Vampire 49, Lich 80, Demon 200 (they were 26, 51, 81 and none).
+33. **MDef.** The five skills raise no MDef, so the Magician has none for now; Ward's MDef is gone with it.
+34. **Ability cooldowns** count turns (a second each, hasted turns too), only while an ability is short of a charge; each holds one charge.
+35. **Speed Drops and buffs** are kept through a fall; a restart ends nothing but the run.
+36. **Randomness.** Drops, MCrits, crosshairs and potions each draw from their own saved stream, as spawns do, seeded once from `catacombDrops`, `catacombCrits`, `crosshairs` and `potions`.
 
 ## Unlock
 
@@ -90,12 +111,12 @@ The Catacomb screen is a view over the board, not a third `Mode`: `Game.mode` st
 | Inspiration earned, best reward | hidden; the hall's tooltip gives the deepest hall in this number |
 | Auto, play/pause, speed | none: the Catacombs keep their own clock |
 | Red END CLIMB (in the menu) | Yellow SWITCH BACK under the hamburger, where the run's Shop sits (`.mini-action.switch-back`, never `danger`) |
-| Hand and Training bar | Stats · Spirit · Forge · Academy |
+| Hand and Training bar | the abilities, over Skills · Spirit · Forge · Academy |
 | Provisions, Familiars, Arcana, Equipment, Shrine | hidden |
 
 - The **enemy table** (`ui/catacomb-odds.ts`, styled as `enemy-odds-box.ts`'s) lists each type that can appear in the current hall: its chance per slot, MHP, MAtk, MDef, MXP and Spirit rarity, with a row for the hall's Strong, Elite or Boss when it has one.
 - The **bank** sits over the board's top-right wall tiles while a second is banked or haste is on: a clock icon, the time (`45s`, `12m 05s`, `3h 12m`) and a dropdown, ×1 ×5 ×10 ×100 (`select#catacomb-haste`).
-- A **stats table** button left of the Stats row opens every Catacomb stat in one table (MHP, MAtk, MDef, Magic level, MXP to next, points spent and free, Lore bonus, current hall, best hall, number), dismissed by a tap anywhere.
+- A **stats table** button left of the Skills row opens every Catacomb stat in one table (MHP, MAtk, MDef, MCrit, Armor Penetration, the gains, each Drop's chance and effect, Magic level, MXP to next, points spent and free, Lore bonus, current hall, best hall, number), dismissed by a tap anywhere.
 
 ## A hall
 
@@ -130,10 +151,10 @@ The corridor is rows 7 to 9, columns 0 to 16, laid out left to right:
 | Wisp | common | 100 | 10 | 0 | 1 | 1 |
 | Ghost | uncommon | 250 | 10 | 5 | 3 | 1 |
 | Skeleton | rare | 550 | 10 | 12 | 7 | 11 |
-| Ghoul | epic | 1,150 | 10 | 25 | 20 | 26 |
-| Vampire | legendary | 1,950 | 10 | 50 | 70 | 51 |
-| Lich | mythic | 3,500 | 10 | 150 | 150 | 81 |
-| Demon | ancestral | 25,000 | 10 | 300 | 400 | not yet (future content) |
+| Ghoul | epic | 1,150 | 10 | 25 | 20 | 25 |
+| Vampire | legendary | 1,950 | 10 | 50 | 70 | 49 |
+| Lich | mythic | 3,500 | 10 | 150 | 150 | 80 |
+| Demon | ancestral | 25,000 | 10 | 300 | 400 | 200 |
 
 - An enemy's stats are its base × `tierStats(N)` (×1, ×5, ×20, ×60 …) × its strength × the deep-hall factors; MXP and Spirit don't scale with N or depth.
 - **Deep halls.** From the hall after each listed one, every enemy's MHP and MDef multiply again, compounding:
@@ -152,9 +173,42 @@ The corridor is rows 7 to 9, columns 0 to 16, laid out left to right:
 
   So Hall 1,201 has MHP ×64 and MDef ×7.59; past Hall 2,000, MHP ×1,024 and MDef ×38.44.
   These products use only `*` (engine independence).
-- **Spawning.** Each of the six slots draws once: a roll against the hall's odds table (`spawnOdds(hall)`, data in `src/catacombs/catalog.ts`).
-  Until the designer supplies the real table, every hall uses Wisp 30% and Ghost 15%, the rest empty; Skeleton and later types appear only once the table gives them odds (their From hall still gates them).
+- **Spawning.** Each of the six slots draws once: a roll against the hall's odds table (`spawnOdds(hall)`, `SPAWN_TABLE` in `src/catacombs/catalog.ts`).
   A hall that rolls no enemy gets one Wisp in slot 6.
+
+| Halls | Common | Uncommon | Rare | Epic | Legendary | Mythic | Ancestral |
+|---|---|---|---|---|---|---|---|
+| 1–10 | 28.57% | 14.29% | | | | | |
+| 11–20 | 25.40% | 12.70% | 11.11% | | | | |
+| 21–24 | 25.52% | 10.94% | 12.50% | | | | |
+| 25–39 | 22.97% | 9.84% | 11.25% | 10.00% | | | |
+| 40–48 | 23.41% | 8.78% | 9.88% | 11.11% | | | |
+| 49–59 | 21.74% | 8.15% | 9.17% | 10.32% | 7.14% | | |
+| 60–79 | 21.27% | 7.98% | 8.97% | 11.54% | 7.69% | | |
+| 80–99 | 19.50% | 7.31% | 8.23% | 12.34% | 8.64% | 5.00% | |
+| 100–119 | 18.47% | 7.92% | 9.05% | 12.06% | 10.56% | 5.00% | |
+| 120–199 | 18.10% | 9.05% | 7.92% | 11.88% | 11.88% | 5.00% | |
+| 200–239 | 16.53% | 8.26% | 9.64% | 13.50% | 11.57% | 5.44% | 2.00% |
+| 240–279 | 16.49% | 8.25% | 9.62% | 13.47% | 11.54% | 5.43% | 2.22% |
+| 280–399 | 16.39% | 9.83% | 9.83% | 11.47% | 11.47% | 5.74% | 2.50% |
+| 400–599 | 15.70% | 9.42% | 9.42% | 10.99% | 12.82% | 6.90% | 3.33% |
+| 600+ | 13.50% | 8.10% | 9.72% | 11.67% | 14.00% | 9.33% | 6.67% |
+
+- **Set halls** (`FIXED_HALLS`) aren't rolled: each holds six undead by rarity (question 31).
+
+| Hall | Undead |
+|---|---|
+| 45, 95 | 6 Common |
+| 70, 380 | 6 Uncommon |
+| 100, 145, 440 | 6 Rare |
+| 115, 165, 500 | 6 Epic |
+| 125, 180, 540 | 6 Legendary |
+| 390, 560 | 6 Mythic |
+| 595 | 6 Ancestral |
+| 140 | 5 Uncommon, 1 Legendary |
+| 195 | 1 Common, 2 Uncommon, 2 Rare, 1 Mythic |
+| 295 | 5 Uncommon, 1 Ancestral |
+| 395 | 1 each, Uncommon to Ancestral |
 - **Strong, Elite and Boss halls** (the final slot, E6, always filled):
   every 25th hall a Boss (three chevrons), else every 10th an Elite (two), else every 5th a Strong (one); stats and drops by question 9.
   Chevrons draw through `rankChevrons`, as on Tower enemies.
@@ -210,12 +264,76 @@ Each turn is exactly one of these, decided by the hero's next target in the hall
 
 ## Bottom menus
 
-A row of four tabs replaces the hand and Training bar on the Catacomb screen: **Stats**, **Spirit**, **Forge**, **Academy**.
+A row of four tabs replaces the hand and Training bar on the Catacomb screen: **Skills**, **Spirit**, **Forge**, **Academy**, with the abilities over them.
 
-- **Stats**: a row of stat boxes, each its name and the points in it.
-  Tapped, a box widens to show rectangular − and + buttons and, beside them, a line for each stat it raises, per point and in total (*MAtk +2 a point · +34*).
-  Points move freely at any time, never below 0 in a box or past the points earned.
-- **Spirit**, **Forge** and **Academy** show their names and a line saying they open later; their TODOs are below.
+- **Skills**: a row of skill boxes, each its name and its points of its cap.
+  Tapped, a box widens to show rectangular − and + buttons and, beside them, a line for each effect, per point and in total (*MAtk +1% a point · +17%*).
+  Points move freely at any time, never below 0, past a skill's cap or past the points earned.
+- **Spirit**: the Spirit held, and the Spirit upgrades, each its level, what a level does and its next price.
+- **Forge** and **Academy** show their names and a line saying they open later; their TODOs are below.
+
+## Magic skills
+
+Magic skills (Skills, in the Catacombs) are the Magician's attributes: each point raises three effects (`MAGIC_SKILLS` in `magic.ts`).
+"pts" are percentage points (question 22).
+
+| Skill | Effect 1 | Effect 2 | Effect 3 | Cap |
+|---|---|---|---|---|
+| Might | MAtk +1 | MAtk +1% | MCrit factor +3% (3 pts) | 50 |
+| Weaving | Max MHP +25 | MCrit chance +1% | Speed Drop chance +0.20% (0.2 pts) | 50 |
+| Resonance | Spirit gain +4% | Loot Drop chance +0.30% (0.3 pts) | Armor Penetration +2 | 25 |
+| Focus | MXP gain +5% | MXP Drop chance +0.30% (0.3 pts) | Armor Penetration +3% | 25 |
+| Fortune | MCrit chance +2% | All Drop chances +0.20% (0.2 pts) | Gold Crosshair chance +0.50% (0.5 pts) | 25 |
+
+The MCrit factor starts at ×1.5 and the MCrit chance at 0%.
+Divination and Corruption, opened by Ascension, and upgrades raising a skill's effects or cap are Later.
+
+## Drops
+
+As a hall is made, each undead rolls each Drop at the Magician's chance (`rollDrops`, the `drops` stream), and the amount of each that lands, every whole number in its range as likely; an icon (a coloured pip) shows each on the undead, and beating it pays them all (`defeat` in `combat.ts`).
+
+| Drop | Effect |
+|---|---|
+| MXP Drop | ×3 to ×5 MXP from this undead |
+| Loot Drop | ×2 to ×5 Spirit from this undead |
+| Speed Drop | +10 to +110 attacks at ×2 attack speed (they stack, and are kept through a fall) |
+| MHP Drop | +15 to +50 MHP (never past the maximum) |
+
+The stats table lists each Drop's chance and effect.
+
+## Crosshairs and potions
+
+The active part of a run: something to tap while watching, worth most early on.
+
+- **Crosshair.** After each turn, each undead standing without one gains a crosshair at 5% (`rollTaps`, the `crosshairs` stream).
+  Tapped (`tapCrosshair`), its undead takes one of the Magician's hits, MCrit rolled as ever, with no turn spent; untapped, nothing happens.
+  A tap that beats the undead being fought sends the hero on to the next target next turn.
+- **Gold Crosshair.** A crosshair is gold at Fortune's Gold Crosshair chance; its hit is ×3 (`GOLD_CROSSHAIR_FACTOR`).
+- **Potion.** After each turn, at 5%, a potion appears on a random free side tile (`SIDE_TILES`: the corridor's rows 7 and 9, off the hero's path; the `potions` stream).
+  Tapped (`takePotion`), it restores 5 MHP, never past the maximum; one left when the hall is left is lost.
+
+## Abilities
+
+Three limited-use spells (`abilities.ts`), opened in order by Unlock Ability.
+Each holds one charge; cast, its charge comes back after its cooldown in turns, and its buff lasts the next 5 attacks.
+
+| Ability | Effect | Cooldown |
+|---|---|---|
+| Spell Surge | Next 5 attacks: +20% MAtk, +100% MCrit damage | 60 |
+| Renewing Rush | Next 5 attacks: +100% attack speed; +25 MHP on cast | 120 |
+| Arcane Barrage | Next 5 attacks: hits at 20% MAtk to every undead too | 90 |
+
+- Each unlocked ability's button sits over the menus, the turns until its charge (or *Ready*) under it, and a tooltip on hover or hold.
+- A slim **Auto** toggle above each, saved, casts it by itself at the start of any turn it is ready.
+
+## Spirit upgrades
+
+The Spirit menu's purchases (`spirit-upgrades.ts`); more come later.
+
+| Upgrade | Level | Price |
+|---|---|---|
+| Unlock Ability | 1, 2, 3 | 10 Uncommon, 75 Rare, 150 Epic Spirit |
+| Magic ATK +1 | 1 to 25 | 50, 60, 72, 86, 104, 124, 149, 179, 215, 258, 310, 372, 446, 535, 642, 770, 924, 1,109, 1,331, 1,597, 1,917, 2,300, 2,760, 3,312, 3,975 Uncommon Spirit (question 19) |
 
 ## Save
 
@@ -226,17 +344,23 @@ type CatacombSave = {
   number: number;             // the tower number the run belongs to
   run: CatacombRun | null;    // null before the first entry
   best: Record<number, number>; // best hall, by number
-  rng: number | null;         // the spawn stream's state
+  rng: Record<"spawns" | "drops" | "crits" | "crosshairs" | "potions", number | null>; // each saved stream's state
   clock: { lastTurnAt: number; bank: number; haste: 1 | 5 | 10 | 100 };
   mxp: number;
-  points: Record<MagicStatId, number>; // skill points in each stat box
-  spirit: Record<SpiritRarity, number>;
+  points: Record<MagicSkillId, number>; // skill points in each Magic skill
+  spirit: Record<SpiritRarity, number>;  // fractional: Spirit gain is a percent
   ingots: Record<IngotId, number>;
+  speed: number;                         // Speed Drop attacks left
+  abilities: Record<AbilityId, { charges: number; cooldown: number; auto: boolean }>;
+  buffs: Record<AbilityId, number>;      // attacks left on each buff
+  upgrades: Record<SpiritUpgradeId, number>;
 };
 type CatacombRun = {
   hall: number;
   hero: { x: number; y: number; mhp: number };
-  slots: ({ id: UndeadId; strength: "normal" | "strong" | "elite" | "boss"; mhp: number } | null)[]; // E1–E6, emptied as beaten
+  slots: ({ id: UndeadId; strength: "normal" | "strong" | "elite" | "boss"; mhp: number;
+    drops?: Partial<Record<DropId, number>>; mark?: "crosshair" | "gold" } | null)[]; // E1–E6, emptied as beaten
+  potions: [number, number][];  // potions lying on the side tiles
   target: number;             // index into the hall's targets (living undead and pickups); every earlier one is done
   fell?: true;                // a restart is next
 };
@@ -269,6 +393,7 @@ All seven steps are built, each with its tests, docs and DEVLOG line; docs/agent
 5. **Stats menu.** The Stats, Spirit, Forge and Academy row, the Stats boxes and the stats table; `tests/catacombs-menus.test.ts`.
 6. **Offline and currencies.** Start-up banking reported in the Offline dialog, and Spirit and Ingots in the currencies table; `tests/catacombs-offline.test.ts`.
 7. **Docs and Codex.** The Codex's Catacombs category (how it works, and each undead once a hall it can stand in is reached) and Spirit and Ingots in its Currencies; `tests/codex.test.ts`.
+8. **The designer's first TODOs.** The spawn table and set halls, the five Magic skills (Stats renamed Skills), Drops, MCrits and Armor Penetration, crosshairs and potions, the three abilities and their Auto, and the Spirit menu's two upgrades; `tests/catacombs-active.test.ts`.
 
 ## Follow-ups
 
@@ -278,11 +403,10 @@ All seven steps are built, each with its tests, docs and DEVLOG line; docs/agent
 
 ## Later (designer TODOs)
 
-- **Spawn odds** by enemy type and hall, replacing the Wisp 30% / Ghost 15% placeholder.
-- **Demon**: its starting hall and where it appears.
-- **More Stats boxes** and their per-point values.
-- **Spirit**: spend Spirit on stat boosts for the Catacombs.
+- **Ability upgrades** (spec to come from the designer): upgrades that shorten the abilities' cooldowns and raise their effects and charges (`MAX_CHARGES` is 1 for now).
+- **Divination and Corruption**: two more Magic skills, opened by Ascension.
+- **Skill upgrades**: upgrades that raise a skill's effects and its cap.
+- **More Spirit upgrades** for the Spirit menu.
 - **Forge**: spend Ingots to upgrade the Blacksmith's forge (design to come).
 - **Academy**: spend Spirit on boosts outside the Catacombs.
-- **Abilities**: limited-use magic, unlocked at set points, used in the Catacombs.
-- **Player interaction**: randomly select enemies vulnerable to a tap, which does an extra free hit.
+- **An MDef source**: nothing raises the Magician's MDef since Ward left (question 33).

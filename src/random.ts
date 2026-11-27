@@ -36,11 +36,11 @@ export function tileRandom(x: number, y: number, seed: number) {
  * (seeding their saved stream the same way: equipment/acquire.ts), `missions` for
  * the daily missions given (seeding theirs: game/mission-desk.ts), `events`
  * for the missions the Events' stand-in draws (game/event-desk.ts), `gemBank`
- * for the GEM card's half bank slot, rolled each time the bank is claimed (game/gem-finder.ts), `arcana` for the seed of the Arcana choices' saved stream (arcana/arcana.ts), `champion` for Champion Status's chances (the Daily Training Points' multiplier, the ad Gem button's jackpot: shop/champion.ts), `gifts` for the seed of the gifts' saved stream (economy/gifts.ts), `scarabs` for the seed of the Golden Scarabs' saved stream, which picks their boosts (boosts/scarabs.ts), `catacombs` for the seed of the Catacombs' saved spawn stream (catacombs/state.ts). Worlds don't use these: each board
+ * for the GEM card's half bank slot, rolled each time the bank is claimed (game/gem-finder.ts), `arcana` for the seed of the Arcana choices' saved stream (arcana/arcana.ts), `champion` for Champion Status's chances (the Daily Training Points' multiplier, the ad Gem button's jackpot: shop/champion.ts), `gifts` for the seed of the gifts' saved stream (economy/gifts.ts), `scarabs` for the seed of the Golden Scarabs' saved stream, which picks their boosts (boosts/scarabs.ts), `catacombs` for the seed of the Catacombs' saved spawn stream, and `catacombDrops`, `catacombCrits`, `crosshairs` and `potions` for the seeds of their saved drop, MCrit, crosshair and potion streams (catacombs/state.ts). Worlds don't use these: each board
  * is a pure function of its run seed (`random`, `tileRandom`). A new purpose,
  * such as a chance-based effect or a minigame, gets its own name here. */
-export type StreamName = "game" | "effects" | "badges" | "equipment" | "missions" | "events" | "gemBank" | "arcana" | "champion" | "gifts" | "scarabs" | "catacombs";
-const STREAMS: StreamName[] = ["game", "effects", "badges", "equipment", "missions", "events", "gemBank", "arcana", "champion", "gifts", "scarabs", "catacombs"];
+export type StreamName = "game" | "effects" | "badges" | "equipment" | "missions" | "events" | "gemBank" | "arcana" | "champion" | "gifts" | "scarabs" | "catacombs" | "catacombDrops" | "catacombCrits" | "crosshairs" | "potions";
+const STREAMS: StreamName[] = ["game", "effects", "badges", "equipment", "missions", "events", "gemBank", "arcana", "champion", "gifts", "scarabs", "catacombs", "catacombDrops", "catacombCrits", "crosshairs", "potions"];
 let streams = seeded(startSeed("game"));
 
 /** The start-up seed of the named set of streams: the one a test pinned

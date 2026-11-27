@@ -2,7 +2,7 @@
 // three-tile corridor across its middle rows, six enemy slots pinching it,
 // a Lore tile at its centre, stairs down at its right end, and on every 5th,
 // 10th, 15th and 20th hall a treasure room holding an Ingot.
-import { hallStrength, INGOT_EVERY, INGOTS, loreOnTile, spawnOdds, undeadStats, type CatacombStrength, type IngotId, type UndeadId } from "./catalog.ts";
+import { fixedHall, hallStrength, INGOT_EVERY, INGOTS, loreOnTile, spawnOdds, undeadStats, type CatacombStrength, type DropId, type IngotId, type UndeadId } from "./catalog.ts";
 
 export const HALL_SIZE = 17;
 /** The corridor's middle row, which the hero walks. */
@@ -15,8 +15,11 @@ export const LORE_X = 8;
 /** The six enemy slots' columns, E1 to E6. */
 export const SLOT_XS = [2, 4, 6, 10, 12, 14] as const;
 
-/** An enemy standing on a slot, and the MHP it has left. */
-export type Slot = { id: UndeadId; strength: CatacombStrength; mhp: number };
+/** A crosshair on an undead: tapped, it takes a free hit (a gold one ×3). */
+export type Mark = "crosshair" | "gold";
+/** An enemy standing on a slot, the MHP it has left, the drops it rolled
+ * (each amount: MXP and Spirit factors, attacks, MHP) and its crosshair. */
+export type Slot = { id: UndeadId; strength: CatacombStrength; mhp: number; drops?: Partial<Record<DropId, number>>; mark?: Mark };
 
 type Rect = { x: number; y: number; w: number; h: number };
 /** Each Ingot's treasure room: its 3 × 3 tiles, the tiles that open it to
@@ -27,6 +30,11 @@ export const ROOMS: Record<IngotId, { room: Rect; opening: readonly (readonly [n
   steel: { room: { x: 2, y: 3, w: 3, h: 3 }, opening: [[5, 4], [6, 4]], ingot: [3, 4], torch: [1, 4] },
   nickel: { room: { x: 2, y: 11, w: 3, h: 3 }, opening: [[5, 12], [6, 12]], ingot: [3, 12], torch: [1, 12] },
 };
+/** The corridor's side tiles, off the hero's path (rows 7 and 9, the slots'
+ * walls and the way to the treasure rooms left out): where potions lie. */
+export const SIDE_TILES: readonly (readonly [number, number])[] = [CORRIDOR_ROW - 1, CORRIDOR_ROW + 1].flatMap((y) =>
+  Array.from({ length: HALL_SIZE }, (_, x) => x).filter((x) => x !== LORE_X && !(SLOT_XS as readonly number[]).includes(x)).map((x) => [x, y] as const));
+
 /** The Ingots whose rooms hall `hall` has. */
 export const hallIngots = (hall: number) => INGOTS.filter((i) => hall % INGOT_EVERY[i] === 0);
 /** How many of Ingot `ingot` its tile on hall `hall` holds: its nth room in
@@ -88,10 +96,13 @@ export function hallTargets(hall: number, number: number, slots: readonly (Slot 
 /** Rolls hall `hall`'s six slots from `rng`, one draw a slot (two for a
  * Strong, Elite or Boss hall's final slot, which is never empty: one picks
  * among the types open there by their odds). A hall that rolls no enemy
- * gets one Wisp on its last slot. */
+ * gets one Wisp on its last slot. A fixed hall (`FIXED_HALLS`) draws
+ * nothing: its six stand as set, the last at the hall's strength. */
 export function rollSlots(hall: number, number: number, rng: () => number): (Slot | null)[] {
   const odds = spawnOdds(hall), ranked = hallStrength(hall);
   const make = (id: UndeadId, strength: CatacombStrength): Slot => ({ id, strength, mhp: undeadStats(id, strength, hall, number).mhp });
+  const fixed = fixedHall(hall);
+  if (fixed) return fixed.map((id, i) => make(id, i === fixed.length - 1 && ranked ? ranked : "normal"));
   const slots: (Slot | null)[] = SLOT_XS.map((_, i): Slot | null => {
     if (i === SLOT_XS.length - 1 && ranked) return null;
     let roll = rng() * 100;

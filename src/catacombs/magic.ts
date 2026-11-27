@@ -1,6 +1,8 @@
-// The Magician's levels, magic skill points and stats (docs/CATACOMBS.md).
+// The Magician's levels, Magic skills and stats (docs/CATACOMBS.md).
 // Levels decide play and are saved, so the curve multiplies out in order
 // (no Math.pow): the same bits in every engine.
+import { snap } from "../exact.ts";
+import { DROP_IDS, type DropId } from "./catalog.ts";
 
 /** 1.2^(level − 1), by level from 1, multiplied out in order. */
 const powers: number[] = [1];
@@ -29,41 +31,100 @@ export function magicLevel(mxp: number) {
 /** The magic skill points `mxp` has earned: one a level past the first. */
 export const pointsEarned = (mxp: number) => magicLevel(mxp) - 1;
 
-export type MagicStatId = "force" | "ward" | "vitality";
-export const MAGIC_STAT_IDS: readonly MagicStatId[] = ["force", "ward", "vitality"];
-export type HeroStat = "mhp" | "matk" | "mdef";
-/** Each stat box: its name and what each point in it raises. */
-export const MAGIC_STATS: Record<MagicStatId, { name: string; raises: readonly { stat: HeroStat; per: number }[] }> = {
-  force: { name: "Force", raises: [{ stat: "matk", per: 2 }] },
-  ward: { name: "Ward", raises: [{ stat: "mdef", per: 1 }] },
-  vitality: { name: "Vitality", raises: [{ stat: "mhp", per: 100 }] },
+/** What a Magic skill's point can raise. Flat effects add their amount; the
+ * rest are percent, and a chance adds percentage points. */
+export type MagicEffect =
+  | "matk" | "matkPercent" | "critFactor" | "mhp" | "critChance" | "speedDrop" | "spiritGain" | "lootDrop"
+  | "armorPen" | "mxpGain" | "mxpDrop" | "armorPenPercent" | "allDrops" | "goldCrosshair";
+/** Each effect's name, and whether its amount is a percent. */
+export const EFFECT_NAMES: Record<MagicEffect, { name: string; percent: boolean }> = {
+  matk: { name: "MAtk", percent: false },
+  matkPercent: { name: "MAtk", percent: true },
+  critFactor: { name: "MCrit factor", percent: true },
+  mhp: { name: "Max MHP", percent: false },
+  critChance: { name: "MCrit chance", percent: true },
+  speedDrop: { name: "Speed Drop chance", percent: true },
+  spiritGain: { name: "Spirit gain", percent: true },
+  lootDrop: { name: "Loot Drop chance", percent: true },
+  armorPen: { name: "Armor Penetration", percent: false },
+  mxpGain: { name: "MXP gain", percent: true },
+  mxpDrop: { name: "MXP Drop chance", percent: true },
+  armorPenPercent: { name: "Armor Penetration", percent: true },
+  allDrops: { name: "All Drop chances", percent: true },
+  goldCrosshair: { name: "Gold Crosshair chance", percent: true },
 };
-/** The Magician's stats with no points spent. */
-export const HERO_BASE: Readonly<Record<HeroStat, number>> = { mhp: 1000, matk: 10, mdef: 0 };
 
-export type MagicPoints = Record<MagicStatId, number>;
-export const noPoints = (): MagicPoints => ({ force: 0, ward: 0, vitality: 0 });
-/** The points spent across every box. */
-export const pointsSpent = (points: MagicPoints) => MAGIC_STAT_IDS.reduce((s, id) => s + points[id], 0);
+/** The Magic skills (Skills, in the Catacombs), the order the Skills menu
+ * shows them. Divination and Corruption come with Ascension (Later). */
+export type MagicSkillId = "might" | "weaving" | "resonance" | "focus" | "fortune";
+export const MAGIC_SKILL_IDS: readonly MagicSkillId[] = ["might", "weaving", "resonance", "focus", "fortune"];
+/** Each skill: its name, the most points it takes, and what each point raises. */
+export const MAGIC_SKILLS: Record<MagicSkillId, { name: string; cap: number; effects: readonly { effect: MagicEffect; per: number }[] }> = {
+  might: { name: "Might", cap: 50, effects: [{ effect: "matk", per: 1 }, { effect: "matkPercent", per: 1 }, { effect: "critFactor", per: 3 }] },
+  weaving: { name: "Weaving", cap: 50, effects: [{ effect: "mhp", per: 25 }, { effect: "critChance", per: 1 }, { effect: "speedDrop", per: 0.2 }] },
+  resonance: { name: "Resonance", cap: 25, effects: [{ effect: "spiritGain", per: 4 }, { effect: "lootDrop", per: 0.3 }, { effect: "armorPen", per: 2 }] },
+  focus: { name: "Focus", cap: 25, effects: [{ effect: "mxpGain", per: 5 }, { effect: "mxpDrop", per: 0.3 }, { effect: "armorPenPercent", per: 3 }] },
+  fortune: { name: "Fortune", cap: 25, effects: [{ effect: "critChance", per: 2 }, { effect: "allDrops", per: 0.2 }, { effect: "goldCrosshair", per: 0.5 }] },
+};
 
-/** The Magician's MHP, MAtk and MDef with `points` spent. */
-export function heroStats(points: MagicPoints): Record<HeroStat, number> {
-  const stats = { ...HERO_BASE };
-  for (const id of MAGIC_STAT_IDS) for (const r of MAGIC_STATS[id].raises) stats[r.stat] += r.per * points[id];
-  return stats;
+export type MagicPoints = Record<MagicSkillId, number>;
+export const noPoints = (): MagicPoints => ({ might: 0, weaving: 0, resonance: 0, focus: 0, fortune: 0 });
+/** The points spent across every skill. */
+export const pointsSpent = (points: MagicPoints) => MAGIC_SKILL_IDS.reduce((s, id) => s + points[id], 0);
+
+/** What every point spent adds to effect `effect`. */
+export function effectTotal(points: MagicPoints, effect: MagicEffect) {
+  let total = 0;
+  for (const id of MAGIC_SKILL_IDS) for (const e of MAGIC_SKILLS[id].effects) if (e.effect === effect) total += e.per * points[id];
+  return snap(total);
 }
 
-/** Moves one point into (`delta` 1) or out of (−1) box `id`: never below 0
- * in a box, never past the points earned. Whether it moved. */
-export function movePoint(state: { mxp: number; points: MagicPoints }, id: MagicStatId, delta: 1 | -1) {
-  if (delta < 0 ? state.points[id] < 1 : pointsSpent(state.points) >= pointsEarned(state.mxp)) return false;
+export type HeroStat = "mhp" | "matk" | "mdef";
+/** The Magician with no points spent: MCrit factor ×1.5, no MCrit chance. */
+export const HERO_BASE = { mhp: 1000, matk: 10, mdef: 0, critFactor: 1.5 } as const;
+
+/** Everything the Magician fights with: MHP, MAtk and MDef; MCrit chance
+ * (percent) and factor; Armor Penetration, flat and percent of the undead's
+ * MDef; the Spirit and MXP factors; each drop's chance (percent); and the
+ * chance a crosshair is gold (percent). */
+export type Magician = Record<HeroStat, number> & {
+  critChance: number; critFactor: number; armorPen: number; armorPenPercent: number;
+  spiritGain: number; mxpGain: number; drops: Record<DropId, number>; goldCrosshair: number;
+};
+/** What raises the Magician besides points: the Spirit upgrades bought. */
+export type MagicSource = { points: MagicPoints; upgrades: { matk: number } };
+
+/** The Magician with `c`'s points and Spirit upgrades. MAtk is the base,
+ * the flat points and Magic ATK +1, times Might's percent. */
+export function magician(c: MagicSource): Magician {
+  const t = (e: MagicEffect) => effectTotal(c.points, e), all = t("allDrops");
+  const flat = { mxp: t("mxpDrop"), loot: t("lootDrop"), speed: t("speedDrop"), mhp: 0 };
+  return {
+    mhp: HERO_BASE.mhp + t("mhp"),
+    matk: snap(((HERO_BASE.matk + t("matk") + c.upgrades.matk) * (100 + t("matkPercent"))) / 100),
+    mdef: HERO_BASE.mdef,
+    critChance: Math.min(100, t("critChance")),
+    critFactor: snap(HERO_BASE.critFactor + t("critFactor") / 100),
+    armorPen: t("armorPen"),
+    armorPenPercent: Math.min(100, t("armorPenPercent")),
+    spiritGain: snap((100 + t("spiritGain")) / 100),
+    mxpGain: snap((100 + t("mxpGain")) / 100),
+    drops: Object.fromEntries(DROP_IDS.map((d) => [d, snap(flat[d] + all)])) as Record<DropId, number>,
+    goldCrosshair: Math.min(100, t("goldCrosshair")),
+  };
+}
+
+/** Moves one point into (`delta` 1) or out of (−1) skill `id`: never below
+ * 0 or past its cap, never past the points earned. Whether it moved. */
+export function movePoint(state: { mxp: number; points: MagicPoints }, id: MagicSkillId, delta: 1 | -1) {
+  if (delta < 0 ? state.points[id] < 1 : state.points[id] >= MAGIC_SKILLS[id].cap || pointsSpent(state.points) >= pointsEarned(state.mxp)) return false;
   state.points[id] += delta;
   return true;
 }
 
-/** Each Magician stat's short name, as the HUD and the Stats boxes write it. */
+/** Each Magician stat's short name, as the HUD writes it. */
 export const HERO_STAT_NAMES: Record<HeroStat, string> = { mhp: "MHP", matk: "MAtk", mdef: "MDef" };
 
-/** What box `id` raises with `points` in it: each stat, a point's worth and the total. */
-export const statLines = (id: MagicStatId, points: number) =>
-  MAGIC_STATS[id].raises.map((r) => ({ stat: r.stat, name: HERO_STAT_NAMES[r.stat], per: r.per, total: r.per * points }));
+/** What skill `id` raises with `points` in it: each effect, a point's worth and the total. */
+export const skillLines = (id: MagicSkillId, points: number) =>
+  MAGIC_SKILLS[id].effects.map((e) => ({ effect: e.effect, ...EFFECT_NAMES[e.effect], per: e.per, total: snap(e.per * points) }));

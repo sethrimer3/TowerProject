@@ -25,7 +25,7 @@ test("starting the app banks the time away while a Catacomb run is under way", (
   const g = new Game(save);
   g.clock = () => 1_000_000;
   assert.equal(g.catacombs.arrive(1_000_000 + HOUR), 0, "no run, nothing banked");
-  save.catacombs.rng = 1;
+  save.catacombs.rng.spawns = 1;
   g.catacombs.enter(1);
   save.catacombs.clock.lastTurnAt = 1_000_000;
   assert.equal(g.catacombs.arrive(1_000_000 + 3 * HOUR), 10_800);

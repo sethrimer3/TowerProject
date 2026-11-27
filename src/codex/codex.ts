@@ -632,9 +632,12 @@ function environments(src: CodexSource): CodexCategory {
 /** How the Catacombs work, in a line each. */
 const CATACOMBS_HOW: CodexEntry[] = [
   { id: "halls", icon: { kind: "kit", id: "stairs" }, name: "Halls", brief: "Each hall is a corridor of undead, a Lore tablet and stairs down." },
-  { id: "magic", icon: { kind: "kit", id: "sword" }, name: "Magic stats", brief: "Only MHP, MAtk and MDef count. Spend magic skill points on them." },
+  { id: "magic", icon: { kind: "kit", id: "sword" }, name: "Magic skills", brief: "Spend magic skill points on Might, Weaving, Resonance, Focus and Fortune." },
   { id: "turns", icon: { kind: "kit", id: "hourglass" }, name: "Turns and the bank", brief: "A turn a second. Time away is banked, and haste spends it." },
   { id: "treasure", icon: { kind: "kit", id: "torch" }, name: "Treasure rooms", brief: "Every 5th hall and more hold Ingots, worth more each time." },
+  { id: "drops", icon: { kind: "kit", id: "trophy" }, name: "Drops", brief: "Undead may carry drops, shown as pips. Beating one pays them all." },
+  { id: "crosshairs", icon: { kind: "kit", id: "shield" }, name: "Crosshairs and potions", brief: "Tap a crosshair for a free hit, or a potion for 5 MHP. Neither spends a turn." },
+  { id: "abilities", icon: { kind: "kit", id: "book" }, name: "Abilities", brief: "Spirit unlocks three spells. Each recharges over turns, or casts itself on Auto." },
 ];
 
 /** The Catacombs (docs/CATACOMBS.md): how they work, and each undead,

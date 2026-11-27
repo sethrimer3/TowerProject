@@ -6093,6 +6093,26 @@ html.catacombs nav { display: none !important; }
 .catacomb-free { align-self: center; color: #d7a8ff; font-size: 10px; }
 .catacomb-later, .catacomb-held { margin: 2px 4px; font-size: 11px; line-height: 15px; }
 .catacomb-held { color: #e6d6ff; }
+.catacomb-panel[data-shows="spirit"] .catacomb-held { flex: 1 1 100%; }
+/* The Spirit menu's upgrades: name, level and what a level does, beside the price. */
+.catacomb-upgrade { flex: 1 1 220px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 8px;
+  border: 1px solid #5a4a7c; border-radius: 3px; background: #120e1c; }
+.catacomb-upgrade b { font-size: 11px; }
+.catacomb-upgrade small { color: #d7a8ff; font-size: 10px; }
+.catacomb-upgrade p { margin: 2px 0 0; font-size: 10px; line-height: 13px; color: #e6d6ff; }
+.catacomb-buy { flex: none; min-width: 64px; min-height: 30px; display: inline-flex; align-items: center; justify-content: center; gap: 2px; font-size: 11px; }
+/* The abilities over the tabs: a slim Auto toggle over each button, the turns to its next charge under it. */
+.catacomb-abilities { display: flex; justify-content: center; gap: 8px; }
+.catacomb-abilities[hidden] { display: none; }
+.catacomb-ability { display: flex; flex-direction: column; align-items: stretch; gap: 2px; width: 96px; }
+.catacomb-auto { min-height: 16px; padding: 0 4px; font-size: 9px; line-height: 14px; border-radius: 2px; opacity: 0.7; }
+.catacomb-auto[aria-pressed="true"] { opacity: 1; color: #1a1026; background: #c99aff; border-color: #e6d6ff; }
+.catacomb-cast { min-height: 34px; padding: 2px 4px; font-size: 10px; line-height: 12px; border-color: #9a7ad9; background: #1d1530; color: #e6d6ff; }
+.catacomb-cast small { display: block; color: #ffd23a; font-size: 9px; }
+.catacomb-cooldown { text-align: center; color: #d7a8ff; font-size: 10px; font-variant-numeric: tabular-nums; }
+.catacomb-tip { position: fixed; z-index: 60; width: 220px; transform: translateY(-100%); display: flex; flex-direction: column; gap: 3px; padding: 6px 8px;
+  border: 1px solid #9a7ad9; border-radius: 3px; background: #120e1cf2; color: #e6d6ff; font-size: 11px; line-height: 14px; pointer-events: none; }
+.catacomb-tip small { color: #d7a8ff; font-size: 10px; }
 .catacomb-stat-head b { font-size: 11px; }
 .catacomb-stat-head small { font-size: 12px; }
 /* Spirit and Ingots in the currencies table, drawn in CSS until their PNGs. */

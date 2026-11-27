@@ -17,18 +17,59 @@ It is not offered in the Proving Grounds.
 **The Catacomb screen.** Entering, or pressing the Catacomb button, opens the Catacomb your run is in.
 Your climb waits behind it, paused, and **Switch Back** (or Escape) returns to it, playing on from where it was.
 The Magician walks each hall left to right, a turn a second: a dash to the next undead, then a round of spells, the Magician first; then the Lore tablet in the middle, any Ingots in the treasure rooms, the rest of the undead, and the stairs down.
+Deeper halls bring stronger undead: Skeletons from Hall 11, Ghouls from 25, Vampires from 49, Liches from 80 and Demons from 200.
+Some halls are always the same, such as Hall 45's six Wisps and Hall 395's one of each from Ghost to Demon.
 A fall starts the run again at Hall 1 with full MHP; MXP, Lore, Spirit and Ingots are kept.
 The HUD shows the Magician's MHP, MAtk and MDef, the Magic level and its MXP, unspent magic skill points in the portrait's corner, Lore in place of Silver, the hall in place of the floor, and the Lore bonus in place of the Gold bonus.
 The enemy box shows a Wisp here; tap it for every undead the hall can hold, its chance, stats and rewards.
 The Catacombs play on while you are elsewhere in the game.
 
-**Stats.** Under the hall, the Catacomb screen has four menus: Stats, Spirit, Forge and Academy.
+**Skills.** Under the hall, the Catacomb screen has four menus: Skills, Spirit, Forge and Academy.
 Each Magic level past the first gives a magic skill point.
-In Stats, tap a box to open it: − and + move a point out of it or into it, at any time, and its lines show what a point gives and what the box gives in all.
-Force gives +2 MAtk a point, Ward +1 MDef and Vitality +100 MHP.
-A point moved counts from the next turn; taking points out of Vitality can lower your MHP, but putting them back never heals.
-The ≡ button lists every Catacomb stat in one table; tap anywhere to put it away.
-Spirit, Forge and Academy open in later updates.
+In Skills, tap a skill to open it: − and + move a point out of it or into it, at any time, and its lines show what a point gives and what the skill gives in all.
+Each skill takes up to its cap of points, and each point gives three things:
+
+| Skill | Each point | Cap |
+|---|---|---|
+| Might | +1 MAtk, +1% MAtk, +3% MCrit factor | 50 |
+| Weaving | +25 Max MHP, +1% MCrit chance, +0.2% Speed Drop chance | 50 |
+| Resonance | +4% Spirit, +0.3% Loot Drop chance, +2 Armor Penetration | 25 |
+| Focus | +5% MXP, +0.3% MXP Drop chance, +3% Armor Penetration | 25 |
+| Fortune | +2% MCrit chance, +0.2% to every Drop chance, +0.5% Gold Crosshair chance | 25 |
+
+An MCrit multiplies MAtk by the MCrit factor, ×1.5 to start, before MDef.
+Armor Penetration ignores a share of an undead's MDef, then a flat amount.
+A point moved counts from the next turn; taking points out of Weaving can lower your MHP, but putting them back never heals.
+The ≡ button lists every Catacomb stat in one table, with each Drop's chance and what it gives; tap anywhere to put it away.
+Forge and Academy open in later updates.
+
+**Drops.** As a hall is made, each undead may roll Drops, shown as coloured pips on it, and beating it pays them all.
+An MXP Drop (purple) gives ×3 to ×5 MXP from that undead, and a Loot Drop (green) ×2 to ×5 Spirit.
+A Speed Drop (yellow) gives 10 to 110 attacks at double speed, which add up and are kept when you fall.
+An MHP Drop (red) gives back 15 to 50 MHP, never past your maximum.
+Every Drop's chance starts at 0% and grows with Skills.
+
+**Crosshairs and potions.** While you watch, you can tap the hall for a little extra.
+Each turn, an undead may gain a crosshair.
+Tap it (or the wall just above or below the undead) for a free hit, which can be an MCrit and spends no turn.
+A Gold Crosshair hits three times as hard; Fortune gives the chance of one.
+Each turn, a potion may also appear on a tile beside the corridor.
+Tap it for 5 MHP; it is lost if you leave the hall first.
+
+**Spirit.** The Spirit menu spends Spirit on upgrades.
+Unlock Ability opens a new ability each level: Spell Surge for 10 Uncommon Spirit, Renewing Rush for 75 Rare and Arcane Barrage for 150 Epic.
+Magic ATK +1 gives +1 MAtk a level, 25 levels, from 50 Uncommon Spirit.
+
+**Abilities.** Each ability unlocked has a button over the menus.
+Tap it to cast; then the number under it counts down the turns until it is ready again.
+Hover over it, or hold it, to see what it does.
+The slim Auto button above it casts it by itself whenever it is ready.
+
+| Ability | For the next 5 attacks | Cooldown |
+|---|---|---|
+| Spell Surge | +20% MAtk and +100% MCrit damage | 60 turns |
+| Renewing Rush | +100% attack speed, and 25 MHP when cast | 120 turns |
+| Arcane Barrage | every undead in the hall also takes a hit at 20% MAtk | 90 turns |
 
 **Banked time.** Time the game is closed is banked, a second at a time, and the Welcome Back dialog says how many turns, and shown over the hall's top right with a speed choice: ×1, ×5, ×10 or ×100.
 Above ×1, each extra turn spends a banked second; when the bank runs out the speed drops back to ×1.

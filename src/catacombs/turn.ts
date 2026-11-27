@@ -3,40 +3,50 @@
 // it changes only the CatacombSave it is given and reports what it earned,
 // so the game credits the Lore (`save.cells`) and draws what happened.
 import { snap } from "../exact.ts";
-import { INGOTS, SPIRIT_RARITIES, undeadRewards, undeadStats, type IngotId, type SpiritRarity } from "./catalog.ts";
+import { undeadStats } from "./catalog.ts";
 import { hallTargets, type Target } from "./hall.ts";
-import { heroStats } from "./magic.ts";
+import { magician } from "./magic.ts";
+import { autoCast, BARRAGE_SHARE, coolAbilities } from "./abilities.ts";
+import { defeat, hitFor, noGains, rollCrit, striking, type CatacombGains } from "./combat.ts";
+import { rollTaps } from "./taps.ts";
 import { enterHall, startRun, type CatacombSave } from "./state.ts";
 
+export { noGains, type CatacombGains } from "./combat.ts";
+
+/** A round: the hits the Magician struck its target with (summed), whether
+ * any crit, how many strikes it had, what the undead struck back, whether
+ * the target fell, and Arcane Barrage's hit on each other undead. */
 export type TurnEvent =
   | { kind: "dash"; x: number; y: number }
-  | { kind: "round"; slot: number; heroHit: number; enemyHit: number; killed: boolean }
+  | { kind: "round"; slot: number; heroHit: number; enemyHit: number; killed: boolean; crit: boolean; strikes: number; barrage?: { slot: number; hit: number; killed: boolean }[] }
   | { kind: "pickup"; target: Extract<Target, { kind: "lore" | "ingot" }> }
   | { kind: "descend"; hall: number }
   | { kind: "fall" }
   | { kind: "restart"; stalemate: boolean };
 
-/** What turns earned, summed: MXP, Lore (for `save.cells`), Spirit and
- * Ingots, and the kills, falls, restarts and halls descended. */
-export type CatacombGains = {
-  turns: number; mxp: number; lore: number; kills: number; falls: number; restarts: number; halls: number;
-  spirit: Record<SpiritRarity, number>; ingots: Record<IngotId, number>;
-};
-export const noGains = (): CatacombGains => ({
-  turns: 0, mxp: 0, lore: 0, kills: 0, falls: 0, restarts: 0, halls: 0,
-  spirit: Object.fromEntries(SPIRIT_RARITIES.map((r) => [r, 0])) as Record<SpiritRarity, number>,
-  ingots: Object.fromEntries(INGOTS.map((i) => [i, 0])) as Record<IngotId, number>,
-});
+/** The strikes a round gives the Magician: one, plus one each for a Speed
+ * Drop's attacks and Renewing Rush's buff (attack speed adds: ×2 and ×2 make ×3). */
+export const strikesNow = (c: CatacombSave) => 1 + (c.speed > 0 ? 1 : 0) + (c.buffs.rush > 0 ? 1 : 0);
 
 /** Takes the run's next turn, adding what it earns to `gains` (and to the
- * save's MXP, Spirit and Ingots). Null when there is no run. */
+ * save's MXP, Spirit and Ingots). Null when there is no run. The abilities
+ * cool a turn first and those on Auto are cast; then, after the turn,
+ * crosshairs and potions roll. */
 export function catacombTurn(c: CatacombSave, gains: CatacombGains = noGains()): TurnEvent | null {
-  let run = c.run;
-  if (!run) return null;
+  if (!c.run) return null;
   gains.turns++;
-  const hero = heroStats(c.points);
-  if (run.fell) return restart(c, gains, false);
-  // Points moved out of Vitality take effect now: MHP never above its maximum.
+  coolAbilities(c);
+  if (c.run.fell) return restart(c, gains, false);
+  autoCast(c);
+  const event = act(c, gains);
+  rollTaps(c);
+  return event;
+}
+
+function act(c: CatacombSave, gains: CatacombGains): TurnEvent {
+  let run = c.run!;
+  const hero = magician(c);
+  // Points moved out of Weaving take effect now: MHP never above its maximum.
   run.hero.mhp = Math.min(run.hero.mhp, hero.mhp);
   const targets = hallTargets(run.hall, c.number, run.slots), target = targets[run.target]!;
   if (target.kind === "stairs") {
@@ -59,28 +69,51 @@ export function catacombTurn(c: CatacombSave, gains: CatacombGains = noGains()):
     run.hero.y = target.y;
     return { kind: "dash", x: run.hero.x, y: run.hero.y };
   }
-  const slot = run.slots[target.slot]!, foe = undeadStats(slot.id, slot.strength, run.hall, c.number);
-  const heroHit = Math.max(0, snap(hero.matk - foe.mdef)), enemyHit = Math.max(0, snap(foe.matk - hero.mdef));
-  // Neither can hurt the other: the run ends and starts over at once.
-  if (heroHit === 0 && enemyHit === 0) return restart(c, gains, true);
-  slot.mhp = Math.max(0, snap(slot.mhp - heroHit));
-  if (slot.mhp === 0) {
-    const r = undeadRewards(slot.id, slot.strength);
-    c.mxp += r.mxp;
-    gains.mxp += r.mxp;
-    c.spirit[r.rarity] += r.spirit;
-    gains.spirit[r.rarity] += r.spirit;
-    gains.kills++;
-    run.slots[target.slot] = null;
-    // The slot is gone from the targets now, so the index already points past it.
-    return { kind: "round", slot: target.slot, heroHit, enemyHit: 0, killed: true };
+  return round(c, target.slot, gains);
+}
+
+/** A round beside slot `i`'s undead: the Magician strikes first, once a
+ * strike; Arcane Barrage hits every undead; the beaten pay; if the target
+ * stands, it strikes back. Each buff and the Speed Drops lose an attack. */
+function round(c: CatacombSave, i: number, gains: CatacombGains): TurnEvent {
+  const run = c.run!, m = striking(c), slot = run.slots[i]!, foe = undeadStats(slot.id, slot.strength, run.hall, c.number);
+  const enemyHit = Math.max(0, snap(foe.matk - m.mdef));
+  // Neither can hurt the other, even at the best MCrit: the run ends and starts over at once.
+  if (enemyHit === 0 && hitFor(m, foe.mdef, m.critChance > 0) === 0 && c.buffs.barrage === 0) return restart(c, gains, true);
+  const strikes = strikesNow(c);
+  let heroHit = 0, crit = false;
+  for (let k = 0; k < strikes && slot.mhp > 0; k++) {
+    const critical = rollCrit(c, m), hit = hitFor(m, foe.mdef, critical);
+    crit ||= critical;
+    heroHit = snap(heroHit + hit);
+    slot.mhp = Math.max(0, snap(slot.mhp - hit));
+  }
+  let barrage: { slot: number; hit: number; killed: boolean }[] | undefined;
+  if (c.buffs.barrage > 0) {
+    barrage = [];
+    run.slots.forEach((s, j) => {
+      if (!s || s.mhp === 0) return;
+      const hit = hitFor(m, undeadStats(s.id, s.strength, run.hall, c.number).mdef, false, BARRAGE_SHARE);
+      s.mhp = Math.max(0, snap(s.mhp - hit));
+      if (j === i) heroHit = snap(heroHit + hit);
+      else barrage!.push({ slot: j, hit, killed: s.mhp === 0 });
+    });
+  }
+  if (c.speed > 0) c.speed--;
+  for (const b of ["surge", "rush", "barrage"] as const) if (c.buffs[b] > 0) c.buffs[b]--;
+  // The beaten pay, the target last; a slot emptied leaves the targets, so the index already points past it.
+  for (const b of barrage ?? []) if (b.killed) defeat(c, b.slot, gains);
+  const killed = slot.mhp === 0;
+  if (killed) {
+    defeat(c, i, gains);
+    return { kind: "round", slot: i, heroHit, enemyHit: 0, killed, crit, strikes, ...(barrage ? { barrage } : {}) };
   }
   run.hero.mhp = Math.max(0, snap(run.hero.mhp - enemyHit));
   if (run.hero.mhp === 0) {
     run.fell = true;
     gains.falls++;
   }
-  return { kind: "round", slot: target.slot, heroHit, enemyHit, killed: false };
+  return { kind: "round", slot: i, heroHit, enemyHit, killed, crit, strikes, ...(barrage ? { barrage } : {}) };
 }
 
 function restart(c: CatacombSave, gains: CatacombGains, stalemate: boolean): TurnEvent {

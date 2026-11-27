@@ -8,7 +8,7 @@ import { CatacombPlayer, DRAWN_PER_SECOND } from "../src/catacombs/player.ts";
 
 const ready = (number = 1) => {
   const save = defaults();
-  save.catacombs.rng = 5;
+  save.catacombs.rng.spawns = 5;
   enterCatacomb(save.catacombs, number);
   return save;
 };

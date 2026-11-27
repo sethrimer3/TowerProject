@@ -28,6 +28,7 @@ import { getTowerGateEnemy, type TowerEnemyProfile, type TowerEnemyStrength } fr
 import { cost, UPGRADES } from "../src/progression/upgrades.ts";
 import { WIDTH } from "../src/config.ts";
 import { CIRCUIT, pathOffset, wolfAngle, wolfOffset, type Roamer } from "../src/familiars/paths.ts";
+import { seedAll } from "./catacombs-seed.ts";
 import { defaultCatacombs, enterCatacomb, mxpForLevel, rollSlots, runTurns, undeadStats, UNDEAD_IDS } from "../src/catacombs/index.ts";
 import { random } from "../src/random.ts";
 
@@ -66,7 +67,11 @@ function outputs(): Record<string, string> {
     out[`catacomb halls ${number}`] = digest([1, 5, 25, 401, 1201, 2001].map((hall) => rollSlots(hall, number, rng)));
     out[`catacomb stats ${number}`] = digest(UNDEAD_IDS.flatMap((id) => (["normal", "strong", "elite", "boss"] as const).map((s) => undeadStats(id, s, 1201, number))));
     const c = defaultCatacombs();
-    c.rng = number;
+    seedAll(c, number);
+    c.mxp = mxpForLevel(40);
+    Object.assign(c.points, { might: 10, weaving: 10, resonance: 5, focus: 5, fortune: 9 });
+    c.upgrades.unlock = 3;
+    for (const a of Object.values(c.abilities)) a.auto = true;
     enterCatacomb(c, number);
     out[`catacomb run ${number}`] = digest({ gains: runTurns(c, 3000).gains, c });
   }
