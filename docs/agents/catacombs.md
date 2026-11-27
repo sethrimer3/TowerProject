@@ -3,9 +3,15 @@
 The Catacombs' engine (`src/catacombs/`), an idle side area where the hero, as a Magician, fights undead a turn a second.
 The design and build plan is `docs/CATACOMBS.md`; this doc covers what is built.
 
-Built so far: step 1, the engine.
-It is pure and knows nothing of the DOM, `Game`, the board drawing or the clock: the game layer (step 2 on) passes it the wall clock, runs the turns it returns, and credits the Lore it reports.
-Nothing reads it yet; `save.catacombs` is not in the save until step 2.
+Built so far: step 1, the engine, and step 2, the unlock and the save.
+The engine is pure and knows nothing of the DOM, `Game`, the board drawing or the clock: the game layer (step 3 on) passes it the wall clock, runs the turns it returns, and credits the Lore it reports.
+No game code runs it yet.
+
+## Unlock and save
+
+- Tower VI's floor 20 Goal, Catacombs (`GoalUnlock` `catacombs`), reveals the Inspiration skill Reveal Catacombs (`catacombs`, 40 Inspiration; the node's `revealGoal`, progression.md).
+- `open.ts`: `catacombsOpen(save)`, the skill owned or Access to Everything on; nothing reads it until the mausoleum (step 3).
+- `save.catacombs` is a `CatacombSave`: `defaultCatacombs()` in `defaults()`, `decodeCatacombs` in `decode()`; the profile file keeps it in `towers` with its run cleared (`exportProfile`).
 
 ## Modules
 
@@ -25,6 +31,7 @@ Nothing reads it yet; `save.catacombs` is not in the save until step 2.
 - `clock.ts`: `tick(clock, now, carry)` returns the turns due: a whole second gone is a real turn; a gap over `BANK_GAP_MS` (10 s, the app closed or the tab hidden) banks its whole seconds instead, which is how offline time reaches the bank; at ×N each second also owes N − 1 hasted turns (`HasteCarry`, not saved, carries the fraction), paid from the bank, and what the bank can't pay drops the haste to ×1 (`slowed`).
   `setHaste` refuses haste with nothing banked; `offlineSeconds` is what the next tick will bank, for the Offline dialog.
 - `save.ts`: `decodeCatacombs`, reading every field through the shared readers; a run that doesn't fit its hall (wrong slots, a target past the hall's last) is dropped, and points spent past those earned are all handed back.
+- `open.ts`: `catacombsOpen`.
 - `index.ts` re-exports them.
 
 ## Rules
@@ -36,4 +43,5 @@ Nothing reads it yet; `save.catacombs` is not in the save until step 2.
 
 ## Tests
 
-`tests/catacombs-engine.test.ts`: the corridor and its pinches, the rooms by hall and their reach, Ingot amounts, target order, strength precedence, the deep halls' products, enemy stats and rewards, spawn odds and the lone Wisp, the saved stream, entering, dash and rounds, Ingot pickups, an invincible enemy to a fall and the restart that keeps what was earned, the stalemate restart, Magic levels, moving points, `runTurns` across runs, the clock and haste, and decoding.
+`tests/catacombs-engine.test.ts`: the corridor and its pinches, the rooms by hall and their reach, Ingot amounts, target order, strength precedence, the deep halls' products, enemy stats and rewards, spawn odds and the lone Wisp, the saved stream, entering, dash and rounds, Ingot pickups, an invincible enemy to a fall and the restart that keeps what was earned, the stalemate restart, Magic levels, moving points, `runTurns` across runs, the clock and haste, decoding, and the save and profile file keeping it (the run left out of the file).
+`tests/skill-trees.test.ts` covers Reveal Catacombs: hidden and unbuyable until the Goal is claimed, then 40 Inspiration.

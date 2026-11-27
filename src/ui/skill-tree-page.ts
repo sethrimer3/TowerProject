@@ -5,7 +5,7 @@ import { revealCard } from "./card-reveal.ts";
 import { UPGRADES, cost, type UpgradeId } from "../progression/upgrades.ts";
 import { TREES, columnGap, mapNodes, skillAvailable, skillHidden, treeHeight, treeOpen, type TreeId } from "../progression/skill-trees.ts";
 import { upgradeText } from "../progression/loadout.ts";
-import { goalUnlocked, UNLOCK_NAMES } from "../goals.ts";
+import { goalCheck, goalUnlocked, UNLOCK_NAMES } from "../goals.ts";
 import { TreeParticles } from "../render/effects/tree-particles.ts";
 import type { AppContext } from "./app.ts";
 import { clamp, el, POINTER_SVG, skillSprite, uiSprite, type UiSprite } from "./dom.ts";
@@ -156,7 +156,7 @@ export class SkillTreePage {
    * (all of them with Access to Everything). */
   private visible(nodes: ReturnType<typeof mapNodes>) {
     const upgrades = this.ctx.game.save.upgrades;
-    return seesAll(this.ctx.game.save) ? nodes : nodes.filter(n => !skillHidden(n.id, upgrades));
+    return seesAll(this.ctx.game.save) ? nodes : nodes.filter(n => !skillHidden(n.id, upgrades, goalCheck(this.ctx.game.save)));
   }
 
   /** The lines from each skill to those it requires, lit once owned; a
@@ -218,7 +218,7 @@ export class SkillTreePage {
     const upgrades = this.ctx.game.save.upgrades;
     const skill = UPGRADES.find(u => u.id === n.id)!;
     const rank = upgrades[n.id];
-    const available = skillAvailable(n.id, upgrades);
+    const available = skillAvailable(n.id, upgrades, goalCheck(this.ctx.game.save));
     const chosen = n.id === this.skill && this.tooltipVisible;
     const unlocks = this.current().unlocks;
     const state = unlocks ? (rank ? ", unlocked" : "") : `, ${rank} of ${skill.max}`;
@@ -243,7 +243,7 @@ export class SkillTreePage {
     const balance = tree.currency === "inspiration" ? save.tower.inspiration : save.breakthrough;
     const locked = this.locked(tree);
     const maxed = level >= u.max;
-    const available = skillAvailable(id, save.upgrades);
+    const available = skillAvailable(id, save.upgrades, goalCheck(save));
     const affordable = this.ctx.game.free || balance >= price;
     return { u, level, price, balance, locked, maxed, available, affordable, canBuy: !locked && !maxed && available && affordable };
   }

@@ -3,6 +3,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { random, withStream } from "../src/random.ts";
+import { decode, defaults } from "../src/save/save.ts";
+import { exportProfile, importProfile } from "../src/profile-file.ts";
 import {
   BANK_GAP_MS, catacombTurn, CORRIDOR_ROW, decodeCatacombs, deepFactors, defaultCatacombs, enterCatacomb, hallCell, hallStrength,
   hallTargets, heroStats, ingotAmount, loreOnTile, magicLevel, movePoint, mxpForLevel, mxpToNext, newCarry, noGains, pointsEarned,
@@ -278,4 +280,20 @@ test("decoding keeps a good save and drops what doesn't fit", () => {
   assert.deepEqual(d.points, { force: 0, ward: 0, vitality: 0 });
   startRun(d);
   assert.equal(d.run!.hall, 1);
+});
+
+test("the save keeps the Catacombs, and the profile file all of them but the run", () => {
+  const save = defaults();
+  enterCatacomb(save.catacombs, 2);
+  save.catacombs.mxp = 300;
+  save.catacombs.ingots.iron = 4;
+  const back = decode(JSON.stringify(save));
+  assert.deepEqual(back.catacombs, save.catacombs);
+  const file = JSON.parse(exportProfile(save, 0));
+  assert.equal(file.towers.catacombs.run, null);
+  assert.equal(file.towers.catacombs.mxp, 300);
+  const imported = importProfile(exportProfile(save, 0));
+  assert.ok("save" in imported);
+  assert.equal(imported.save.catacombs.run, null);
+  assert.equal(imported.save.catacombs.ingots.iron, 4);
 });

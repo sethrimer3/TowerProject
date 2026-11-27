@@ -120,6 +120,8 @@ const UNLOCK_TUTORIALS: Record<GoalUnlock, string> = {
     `<p class="hint">The Common piece is rolled separately from the boss's usual drops.</p>`,
   familiarResearch: `<p>Familiar Research opens five projects in the Archives' Familiars section, one for each familiar's Cooldown. Each level makes its effect come 1 turn sooner, up to 25 turns.</p>` +
     `<p class="hint">Familiars hatch from eggs bought with Medals, on the Events screen's Familiars tab.</p>`,
+  catacombs: `<p>Reveal Catacombs appears in the Inspiration tree. Buy it to open the Catacombs.</p>` +
+    `<p class="hint">The Catacombs are still being dug. They open in a later update.</p>`,
   researchSpeed: `<p>Research Speed opens in the Archives. It trains your archivists to read faster, so every project takes less time, including ones already under way.</p>`,
   badgeSlots: `<p>Badge Slots opens in the Archives. Each level lets every card hold one more badge.</p>` +
     `<p>Drag a badge onto a card on the Deck page to fill its next slot. If every slot is full, it replaces the bottom one.</p>` +

@@ -31,6 +31,8 @@ import { decodeEvents, defaultEvents } from "../events/progress.ts";
 import { decodeRelics } from "../economy/relics.ts";
 import { decodeDivineRelics, hasAnchor } from "../divine.ts";
 import { decodeGifts, defaultGifts } from "../economy/gifts.ts";
+import { defaultCatacombs } from "../catacombs/state.ts";
+import { decodeCatacombs } from "../catacombs/save.ts";
 import { decodeReview, defaultReview } from "../review-prompt.ts";
 import { decodeMusic } from "../events/music.ts";
 import { decodeShrines, defaultShrines, validShrineRun } from "../shrines.ts";
@@ -120,6 +122,7 @@ export function defaults(): Save {
     relics: [],
     divineRelics: [],
     gifts: defaultGifts(),
+    catacombs: defaultCatacombs(),
     review: defaultReview(),
     shrines: defaultShrines(),
     themes: defaultThemes(),
@@ -553,6 +556,7 @@ export function decode(raw: string | null): Save {
     d.relics = decodeRelics(s.relics);
     d.divineRelics = decodeDivineRelics(s.divineRelics);
     d.gifts = decodeGifts(s.gifts);
+    d.catacombs = decodeCatacombs(s.catacombs);
     settlePerks(d);
     d.review = decodeReview(s.review);
     d.shrines = decodeShrines(s.shrines);

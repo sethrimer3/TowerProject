@@ -18,7 +18,7 @@ export const PROFILE_SECTIONS = {
   research: ["archives"],
   premium: ["entitlements", "shop", "vip", "champion"],
   gear: ["provisions", "equipment", "arcana"],
-  towers: ["tower", "delve"],
+  towers: ["tower", "delve", "catacombs"],
   goals: ["goals", "trialAccess"],
   online: ["tournament", "mail", "missions", "events"],
 } as const satisfies Record<string, readonly (keyof Save)[]>;
@@ -44,6 +44,8 @@ export function exportProfile(save: Save, now: number): string {
     // A Gem or Golden Scarab lying on a floor, and how far the runs have gone, are the runs'.
     gemDrop: { ...save.gemDrop, out: null, reached: { tower: null, delve: null } },
     scarab: { ...save.scarab, out: null, reached: { tower: null, delve: null } },
+    // The Catacomb run under way is a run: the file keeps the rest.
+    catacombs: { ...save.catacombs, run: null },
   };
   const sections = Object.fromEntries(Object.entries(PROFILE_SECTIONS).map(([name, keys]) =>
     [name, Object.fromEntries(keys.map((k) => [k, kept[k]]))]));

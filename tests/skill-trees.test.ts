@@ -4,7 +4,9 @@ import { defaults, decode } from "../src/save/save.ts";
 import { Game, MAX_MOVE_RATE } from "../src/state.ts";
 import { TREES, columnGap, mapNodes, skillAvailable, skillHidden, treeHeight } from "../src/progression/skill-trees.ts";
 import { LIMIT_BREAKS, TRAINING } from "../src/progression/training.ts";
-import { UPGRADES, type UpgradeId } from "../src/progression/upgrades.ts";
+import { UPGRADES, cost, type UpgradeId } from "../src/progression/upgrades.ts";
+import { goalCheck, unlockAt } from "../src/goals.ts";
+import { catacombsOpen } from "../src/catacombs/open.ts";
 import { RESEARCH } from "../src/progression/archives.ts";
 import { GOLD_SHOP } from "../src/economy/provisions.ts";
 import { provisionOpen } from "../src/progression/loadout.ts";
@@ -203,12 +205,13 @@ test("the Archives and everything under them stay hidden, unbuyable, until Quest
     for (const n of TREES[0].nodes) if (!below.has(n.id) && n.requires.some((r) => below.has(r))) { below.add(n.id); grew = true; }
   }
   assert.ok(["pocketMoney", "lifesteal", "greaterHeal", "keySiphon", "cardRedKey"].every((id) => below.has(id as UpgradeId)));
-  for (const n of TREES[0].nodes) assert.equal(skillHidden(n.id, upgrades), below.has(n.id), n.id);
+  // Reveal Catacombs waits on a Goal instead (its own test, below).
+  for (const n of TREES[0].nodes) if (!n.revealGoal) assert.equal(skillHidden(n.id, upgrades), below.has(n.id), n.id);
   for (const n of TREES[0].nodes) for (const r of n.requires) upgrades[r] = 1;
   for (const id of below) upgrades[id] = 0;
   assert.ok([...below].every((id) => !skillAvailable(id, upgrades)), "hidden, whatever is owned");
   upgrades.aetherShield = upgrades.enemyLevelSkips = upgrades.questForKnowledge = upgrades.pathToWealth = upgrades.physician = upgrades.life = upgrades.keyMastery = upgrades.moreWealth = upgrades.cardMastery = upgrades.beastMastery = upgrades.doorMastery = 1;
-  assert.ok(TREES[0].nodes.every((n) => !skillHidden(n.id, upgrades)), "all revealed");
+  assert.ok(TREES[0].nodes.every((n) => !skillHidden(n.id, upgrades, () => true)), "all revealed");
   assert.ok(skillAvailable("archives", upgrades));
   const quest = UPGRADES.find((u) => u.id === "questForKnowledge")!;
   assert.deepEqual([quest.name, quest.description, quest.currency], ["Quest for Knowledge", "Discover hidden archives to research new skills", "breakthrough"]);
@@ -459,4 +462,25 @@ test("the Card Ascension skills: Uncommon left of Path to Wealth, Rare under it,
   assert.ok(["pathToWealth", "moreWealth", "goldenFloors"].every((id) => at(id).x === at("offlineGold").x), "the wealth path above Offline Gold");
   const spots = breakthrough.nodes.map((n) => `${n.x},${n.y}`);
   assert.equal(new Set(spots).size, spots.length, "no two nodes share a spot");
+});
+
+test("Reveal Catacombs (40 Inspiration) shows only once Tower VI's floor 20 Goal, Catacombs, is claimed", () => {
+  const save = defaults();
+  assert.deepEqual(unlockAt("catacombs"), { tower: 6, floor: 20 });
+  const u = UPGRADES.find((u) => u.id === "catacombs")!;
+  assert.deepEqual([u.name, u.base, u.max, u.currency], ["Reveal Catacombs", 40, 1, "inspiration"]);
+  assert.equal(cost("catacombs", 0), 40);
+  assert.ok(skillHidden("catacombs", save.upgrades, goalCheck(save)));
+  assert.ok(!skillAvailable("catacombs", save.upgrades, goalCheck(save)));
+  assert.ok(!catacombsOpen(save));
+  save.goals.claimed[6] = [20];
+  assert.ok(!skillHidden("catacombs", save.upgrades, goalCheck(save)));
+  assert.ok(skillAvailable("catacombs", save.upgrades, goalCheck(save)));
+  save.tower.inspiration = 40;
+  const game = new Game(save);
+  assert.ok(game.skills.canBuy("catacombs"));
+  save.tower.inspiration = 39;
+  assert.ok(!game.skills.canBuy("catacombs"));
+  save.upgrades.catacombs = 1;
+  assert.ok(catacombsOpen(save));
 });

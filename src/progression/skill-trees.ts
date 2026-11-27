@@ -1,8 +1,14 @@
 import type { UpgradeId, Currency } from "./upgrades.ts";
+import type { GoalUnlock } from "../goals.ts";
 export type TreeId = "wayfinding" | "inspiration" | "breakthrough" | "legacy" | "wisdom" | "renown";
 /** A node with `reveal` stays hidden, with every node that requires it,
- * until that upgrade is owned: unseen, it can't be read or bought. */
-export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; requires: UpgradeId[]; reveal?: UpgradeId };
+ * until that upgrade is owned, and one with `revealGoal` until that Goal
+ * unlock is claimed: unseen, it can't be read or bought. */
+export type SkillNode = { id: UpgradeId; icon: string; x: number; y: number; requires: UpgradeId[]; reveal?: UpgradeId; revealGoal?: GoalUnlock };
+/** Whether a Goal unlock is claimed (`goalUnlocked` in goals.ts, bound to
+ * the save), for the nodes a Goal reveals; none is, when not given. */
+export type GoalCheck = (unlock: GoalUnlock) => boolean;
+const noGoals: GoalCheck = () => false;
 /** A skill tree. Node positions are percentages of the tree's view: x of
  * its width, y of its height, so a tree taller than one screen (`height`,
  * in the same units, 100 by default) scrolls. In a tree of `unlocks`, each
@@ -134,6 +140,9 @@ export const TREES: SkillTree[] = [
     { id: "redSiphon", icon: "⚿", x: 30, y: 484, requires: ["blueSiphon"] },
     { id: "keyLessBadges", icon: "⚿", x: 30, y: 502, requires: ["redSiphon"] },
     { id: "keyAtLeastBadges", icon: "⚿", x: 30, y: 520, requires: ["keyLessBadges"] },
+    // Reveal Catacombs at the foot of the middle column, hidden until Tower
+    // VI's floor 20 Goal (Catacombs) is claimed.
+    { id: "catacombs", icon: "✝", x: 50, y: 520, requires: [], revealGoal: "catacombs" },
   ] },
   { id: "breakthrough", name: "Breakthrough", currency: "breakthrough", gate: "breakthrough", description: "Earn a Breakthrough point for each Tower Goal you claim.", height: 538, unlocks: true, nodes: [
     // Quest for Knowledge first: it reveals the Inspiration tree's Archives
@@ -269,17 +278,18 @@ export const TREES: SkillTree[] = [
     { id: "renownCrown", icon: "♛", x: 38, y: 80, requires: ["renownOath"] },
   ] },
 ];
-export function skillAvailable(id: UpgradeId, levels: Record<UpgradeId, number>) {
+export function skillAvailable(id: UpgradeId, levels: Record<UpgradeId, number>, goals: GoalCheck = noGoals) {
   const tree = TREES.find(t => t.nodes.some(n => n.id === id));
   const node = tree?.nodes.find(n => n.id === id);
-  return !!node && treeOpen(tree!, levels) && !skillHidden(id, levels) && node.requires.every(key => levels[key] > 0);
+  return !!node && treeOpen(tree!, levels) && !skillHidden(id, levels, goals) && node.requires.every(key => levels[key] > 0);
 }
-/** Whether skill `id` is hidden: its node waits on a `reveal` not yet owned,
- * or requires a node that is hidden. */
-export function skillHidden(id: UpgradeId, levels: Record<UpgradeId, number>): boolean {
+/** Whether skill `id` is hidden: its node waits on a `reveal` not yet owned
+ * or a `revealGoal` not yet claimed, or requires a node that is hidden. */
+export function skillHidden(id: UpgradeId, levels: Record<UpgradeId, number>, goals: GoalCheck = noGoals): boolean {
   const node = TREES.flatMap(t => t.nodes).find(n => n.id === id);
   if (!node) return false;
-  return (node.reveal !== undefined && !(levels[node.reveal] > 0)) || node.requires.some(key => skillHidden(key, levels));
+  return (node.reveal !== undefined && !(levels[node.reveal] > 0)) || (node.revealGoal !== undefined && !goals(node.revealGoal))
+    || node.requires.some(key => skillHidden(key, levels, goals));
 }
 /** Whether `tree`'s gate is owned (or it has none). */
 export function treeOpen(tree: SkillTree, levels: Record<UpgradeId, number>) {

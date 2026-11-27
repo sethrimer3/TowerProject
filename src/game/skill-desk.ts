@@ -1,5 +1,6 @@
 import { cost, UPGRADES, type UpgradeId } from "../progression/upgrades.ts";
 import { skillAvailable } from "../progression/skill-trees.ts";
+import { goalCheck } from "../goals.ts";
 import type { DeskHost } from "./desk.ts";
 import { readyForestRuns } from "./hero-sync.ts";
 import { dealCard, dealsToHand, handSlots, upgradeCards } from "../cards/cards.ts";
@@ -15,7 +16,7 @@ export class SkillDesk {
   /** Whether skill `id` can be bought now: open, below its last rank, and
    * paid for by the currency held (anything, with Dev free purchases). */
   canBuy(id: UpgradeId) {
-    if (!skillAvailable(id, this.save.upgrades)) return false;
+    if (!skillAvailable(id, this.save.upgrades, goalCheck(this.save))) return false;
     const u = UPGRADES.find((u) => u.id === id)!, n = this.save.upgrades[id];
     const held = u.currency === "breakthrough" ? this.save.breakthrough : this.save.tower.inspiration;
     return n < u.max && (this.host.free || cost(id, n) <= held);

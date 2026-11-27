@@ -23,7 +23,7 @@ import { ROSTER_STRENGTHS, ROSTER_PROFILES } from "../enemies/roster.ts";
 import { traitOdds, type Trait } from "../enemies/odds.ts";
 import { enemyShare } from "../enemies/schedule.ts";
 import { TIERS } from "../tiers.ts";
-import { goalUnlocked } from "../goals.ts";
+import { goalCheck, goalUnlocked } from "../goals.ts";
 import { levelForXp } from "../progression/xp.ts";
 import { TRIALS, TRIAL_IDS } from "../proving-grounds/catalog.ts";
 import { BOONS, BOON_IDS, boonLabel, shrinesOpen, type BoonDef } from "../shrines.ts";
@@ -346,7 +346,7 @@ export function costToReach(id: UpgradeId, levels: Record<UpgradeId, number>) {
 }
 
 function skillTree(src: CodexSource, treeId: "inspiration" | "breakthrough"): CodexCategory {
-  const s = src.save, tree = TREES.find((t) => t.id === treeId)!, levels = s.upgrades, all = seesAll(s);
+  const s = src.save, tree = TREES.find((t) => t.id === treeId)!, levels = s.upgrades, all = seesAll(s), goals = goalCheck(s);
   const currency = tree.currency === "inspiration" ? "Inspiration" : "Breakthrough";
   const entry = (id: UpgradeId, status?: string): CodexEntry =>
     ({ id, icon: { kind: "skill", id }, name: UPGRADES.find((u) => u.id === id)!.name, brief: `${upgradeText(id)}.`, ...(status ? { status } : {}),
@@ -356,8 +356,8 @@ function skillTree(src: CodexSource, treeId: "inspiration" | "breakthrough"): Co
     const level = levels[node.id], reach = () => `(Cost to reach ${n(costToReach(node.id, levels))} ${currency})`;
     // Both trees' skills are bought once each, so none has a rank to show.
     if (level > 0) owned.push(entry(node.id));
-    else if (skillHidden(node.id, levels)) unseen.push(all ? entry(node.id, reach()) : hidden(node.id));
-    else if (skillAvailable(node.id, levels)) open.push(entry(node.id, `(Cost ${n(cost(node.id, level))} ${currency})`));
+    else if (skillHidden(node.id, levels, goals)) unseen.push(all ? entry(node.id, reach()) : hidden(node.id));
+    else if (skillAvailable(node.id, levels, goals)) open.push(entry(node.id, `(Cost ${n(cost(node.id, level))} ${currency})`));
     else locked.push(entry(node.id, reach()));
   }
   const name = tree.name;

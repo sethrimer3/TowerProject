@@ -61,14 +61,16 @@ import { seesAll } from "./access.ts";
  * Esoteric Research (floor 150: every Archives project of 100 or 150 levels
  * opens its last 50, maxLevel in progression/archives.ts), and Tower V's
  * Familiar Research (floor 60: the Archives' five familiar Cooldown
- * projects, read by FamiliarDesk.values). */
+ * projects, read by FamiliarDesk.values), and Tower VI's Catacombs (floor
+ * 20: reveals the Inspiration skill Reveal Catacombs, `revealGoal` in
+ * progression/skill-trees.ts, which opens them, docs/CATACOMBS.md). */
 export type GoalUnlock =
   | "damagePrediction" | "combatForecast" | "attackLore" | "warp" | "damageVisual" | "relativeDamageColor" | "equipment" | "tournament" | "events" | "researchSpeed"
   | "shardAttack" | "shardDefense" | "parryPercent"
   | "shrines" | "firstBoonChoice" | "improveTradeoffs" | "autoPickBoons" | "boonOptions" | "banBoons" | "autoPickRanking"
   | "badgeSlots" | "noteTaking" | "archerCard" | "attackRange" | "attackSpeed" | "attackPerTile" | "chargedShot" | "multishot" | "rapidFire"
   | "trainingDiscount" | "cardGroups" | "flyingEnemyCard" | "warpLoot" | "superCriticalResearch" | "aetherShield" | "rerollMission"
-  | "bossPotion" | "dropResearch" | "esotericResearch" | "familiarResearch";
+  | "bossPotion" | "dropResearch" | "esotericResearch" | "familiarResearch" | "catacombs";
 export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   damagePrediction: "Damage Prediction", combatForecast: "Combat Forecast", attackLore: "Attack Lore", warp: "Warp", damageVisual: "Damage Visual",
   relativeDamageColor: "Relative Damage Color", equipment: "Equipment", tournament: "Tournament", events: "Events",
@@ -81,7 +83,7 @@ export const UNLOCK_NAMES: Record<GoalUnlock, string> = {
   trainingDiscount: "Training Discount", cardGroups: "Card Groups", flyingEnemyCard: "Flying Enemy Card",
   warpLoot: "Warp Loot", superCriticalResearch: "Super Critical Research", aetherShield: "Unlock Aether Shield",
   rerollMission: "Reroll Daily Mission", bossPotion: "Boss Potion Drop", dropResearch: "Drop & Material Research",
-  esotericResearch: "Esoteric Research", familiarResearch: "Familiar Research",
+  esotericResearch: "Esoteric Research", familiarResearch: "Familiar Research", catacombs: "Catacombs",
 };
 /** What a checkpoint pays: an unlock, the next tower opened, an amount of a
  * currency or of Breakthrough points, or a relic. A `breakthrough` reward is
@@ -243,7 +245,7 @@ const TOWER_FIVE: Record<number, CheckpointSet> = {
 /** Tower VI's checkpoints. */
 const TOWER_SIX: Record<number, CheckpointSet> = {
   10: { reward: unlock("autoPickRanking"), premium: gold(1_000_000) },
-  20: { reward: gems(35), premium: gems(40) },
+  20: { reward: unlock("catacombs"), premium: gems(40) },
   30: { reward: gold(2_000_000), premium: gold(4_000_000) },
   40: { reward: gems(35), premium: gems(45) },
   50: { reward: unlock("badgeSlots"), premium: gold(5_000_000) },
@@ -464,6 +466,9 @@ export const goalUnlocked = (save: Pick<Save, "goals">, what: GoalUnlock) => {
   const at = unlockAt(what);
   return !!save.goals.claimed[at.tower]?.includes(at.floor);
 };
+/** `goalUnlocked` bound to the save: what the skill trees' Goal-revealed
+ * nodes ask (`GoalCheck` in progression/skill-trees.ts). */
+export const goalCheck = (save: Pick<Save, "goals">) => (what: GoalUnlock) => goalUnlocked(save, what);
 /** The tower and checkpoint floor whose reward unlocks `what`. */
 export function unlockAt(what: GoalUnlock) {
   for (let tower = 1; tower <= TIERS; tower++) {

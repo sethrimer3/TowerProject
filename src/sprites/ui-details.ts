@@ -26,5 +26,5 @@ export const GOAL_SPRITES = {
   warp: "goal-warp", parryPercent: "goal-parry", equipment: "goal-equipment",
   damageVisual: "goal-damage-visual", relativeDamageColor: "goal-relative-damage", rerollMission: "redo",
   bossPotion: "potion-blue", dropResearch: "goal-equipment",
-  esotericResearch: "hourglass", familiarResearch: "familiar-egg-dragon",
+  esotericResearch: "hourglass", familiarResearch: "familiar-egg-dragon", catacombs: "torch",
 } satisfies Record<GoalUnlock, string>;

@@ -169,6 +169,7 @@ const SKILL_DETAIL_SPRITES: Partial<Record<UpgradeId, string>> = {
   ricochetShockResearch: "arcana-ricochet-shot", timeDilationResearch: "arcana-time-dilation", arcanaResearch: "arcana-overseer",
   overseerZapResearch: "arcana-overseer", overseerGoldResearch: "arcana-overseer",
   voidwellResearch: "arcana-voidwell", extraVoidwellResearch: "arcana-voidwell",
+  catacombs: "torch",
 };
 /** The forest's Enter button: an arrow going up into an arched doorway. */
 export const ENTER_ICON = kitIcon("tower", "", "enter-icon");

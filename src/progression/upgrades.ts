@@ -6,6 +6,7 @@ export type Currency = "breakthrough" | "inspiration";
 export const UPGRADES = [
   { id: "breakthrough", name: "Breakthrough", description: "Unlock the Breakthrough skill tree", base: 3, max: 1, currency: "inspiration" },
   { id: "questForKnowledge", name: "Quest for Knowledge", description: "Discover hidden archives to research new skills", base: 1, max: 1, currency: "breakthrough" },
+  { id: "catacombs", name: "Reveal Catacombs", description: "Open the Catacombs, a mausoleum in the forest", base: 40, max: 1, currency: "inspiration" },
   { id: "legacy", name: "An enduring legacy", description: "Unlock the Legacy skill tree", base: 8, max: 1, currency: "breakthrough" },
   {
     id: "revive",

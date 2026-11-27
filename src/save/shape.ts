@@ -1,6 +1,7 @@
 /** The shape of the save: each mode's slice (`ModeSave`) and everything kept between runs (`Save`). save/save.ts loads and decodes it. */
 import type { ChampionSave } from "../shop/champion.ts";
 import type { GiftSave } from "../economy/gifts.ts";
+import type { CatacombSave } from "../catacombs/state.ts";
 import type { ReviewSave } from "../review-prompt.ts";
 import type { TrainingJob, TrainingPaid } from "../progression/training-jobs.ts";
 import type { TierRecord } from "../tiers.ts";
@@ -268,6 +269,10 @@ export type Save = {
   divineRelics: import("../divine.ts").DivineRelicId[];
   /** The gifts received, how many of each, and their saved stream (economy/gifts.ts), kept between runs. */
   gifts: GiftSave;
+  /** The Catacombs: the run under way and its number, best halls, the spawn
+   * stream, the clock and bank, MXP and magic skill points, Spirit and
+   * Ingots (catacombs/state.ts), kept between runs but for the run. */
+  catacombs: CatacombSave;
   /** The Review Prompt's button: when it was last pressed, and whether it is done with (review-prompt.ts). */
   review: ReviewSave;
   /** The Shrine Boons page's choices, kept between runs (shrines.ts). */

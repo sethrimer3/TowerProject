@@ -1,7 +1,7 @@
 # Catacombs
 
 The Catacombs' design and build plan: an endless, idle side mode under the forest where the hero, as a Magician, fights a stream of undead in real time for Lore, Spirit, Ingots and Magic levels.
-Step 1, the engine, is built (`src/catacombs/`, docs/agents/catacombs.md); the rest is still to come.
+Steps 1 and 2, the engine and the unlock, are built (`src/catacombs/`, docs/agents/catacombs.md); the rest is still to come.
 Each section is the spec the implementation follows; **Decisions** lists what the request left open and what was settled.
 
 ## Decisions
@@ -53,7 +53,7 @@ The designer chose floor 20, ancestral as the seventh rarity, the XP curve in 7,
 - `SkillNode` gains an optional `revealGoal?: GoalUnlock`, read by `skillHidden` beside `reveal`: hidden until `goalUnlocked(save, revealGoal)`.
   `skillHidden` takes the save's goals for it, so its callers in `skill-tree-page.ts` and `SkillDesk` pass them.
 - New upgrade `catacombs` in `UPGRADES`: "Reveal Catacombs", "Open the Catacombs: a mausoleum in the forest", base 40, max 1, Inspiration.
-- `catacombsOpen(save)` = the upgrade owned (or Access to Everything, or Dev mode).
+- `catacombsOpen(save)` = the upgrade owned, or Access to Everything on.
 
 ## Getting there
 
@@ -266,7 +266,7 @@ Each step ships on its own with its tests, docs and DEVLOG line.
    The decoder stands alone; `save.catacombs` joins the save in step 2.
    Tests (`tests/catacombs-*.test.ts`): hall layout and rooms by hall number; slots pinched; spawn odds over many halls with a pinned stream; the empty-hall Wisp; Strong, Elite and Boss precedence (25 over 10 over 5); deep-hall products at 400, 401, 1,201 and 2,001; ingot amounts; turn order (dash, round, pickup, descend); hero first strike; invincible enemy to defeat; stalemate restart in the same turn; restart keeps MXP, Spirit, Ingots and Lore; points moved apply next turn; clock real and hasted turns, bank exhaustion dropping to ×1; offline banking; `runTurns` summing several runs; decode round trip.
    Add the catacomb modules to `tests/engine-independence.test.ts` and the stream to `tests/random-streams.test.ts`.
-2. **Unlock.** `save.catacombs` in the save (`defaults()`, `Save`, `decode()`, `PROFILE_SECTIONS`, the save golden); the Goal, `revealGoal`, Reveal Catacombs, `catacombsOpen`; `tests/goals.test.ts`, `tests/skill-trees.test.ts`.
+2. **Unlock** (done). `save.catacombs` in the save (`defaults()`, `Save`, `decode()`, `PROFILE_SECTIONS`, the save golden); the Goal, `revealGoal`, Reveal Catacombs, `catacombsOpen`; `tests/goals.test.ts`, `tests/skill-trees.test.ts`.
 3. **Mausoleum and menu.** `OutsideWorld.mausoleum`, the tap, `#run-catacombs`; `tests/outside*.test.ts`; render golden (forest with it) and UI golden (menu) re-recorded.
 4. **Catacomb screen.** `CatacombView`, the hall drawing, the HUD swaps, Switch Back, pausing and resuming the run behind it, the enemy table, the bank and haste; render and UI goldens for a hall and the HUD; a Playwright flow (`tests/catacombs.mjs`): enter from the forest, watch a turn, Switch Back to a Tower run and see it resume, re-enter from the menu.
 5. **Stats menu.** The tabs row, the Stats boxes, the stats table.
