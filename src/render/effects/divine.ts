@@ -1,43 +1,56 @@
 import { PORTAL_FADE_MS } from "../../divine.ts";
 import { tileCenter, type FrameContext } from "../render-frame.ts";
-import { paintVortex, type VortexPalette } from "./voidwell.ts";
 
-/** The Divine Portal (divine.ts): Voidwell's vortex in gold and pale light,
- * turning over its tile, with motes of light swirling in toward its middle. */
-const PORTAL: VortexPalette = {
-  core: "rgba(255, 246, 214, 0.85)",
-  edge: "rgba(214, 160, 60, 0.28)",
-  rim: "rgba(255, 214, 110, 0.85)",
-  arm: "rgba(255, 233, 160, 0.75)",
-};
-/** The portal's radius, in tiles, and how far it breathes either side of it. */
-const RADIUS = 0.62, BREATH = 0.05;
-/** The motes swirling in, and how long each takes from the rim to the middle, in ms. */
-const MOTES = 10, MOTE_MS = 1800;
+/** The Divine Portal (divine.ts): Breakout's deployment portal in gold, drawn
+ * in art pixels (sixteen a tile): a swirling disc of three spiral arms inside a
+ * bright segmented rim turning the other way, a dark outline, and sparks
+ * circling just outside it. Its swirl runs dark void to hot white. */
+const SWIRL = ["#1c1002", "#4f2f06", "#93600f", "#dca024", "#ffdc66", "#fffae0"];
+const RIM = "#ffe9a0", RIM_HOT = "#ffffff", RIM_DIM = "#d99a2c", OUTLINE = "#140a00";
+/** The portal's radius and its sparks' orbit, in art pixels (ART a tile). */
+const ART = 16, R = 10, SPARKS = 6;
+/** 4x4 Bayer matrix, normalized to (0, 1), for the swirl's ordered dither. */
+const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => (v + 0.5) / 16);
+const bayer = (gx: number, gy: number) => BAYER4[(gy & 3) * 4 + (gx & 3)];
 /** The sparkles round the Divine Relic's chest, and how long each takes to twinkle, in ms. */
 const SPARKLES = 6, TWINKLE_MS = 1400;
 
-/** The Divine Portal on tile (x, y), its glow under it; `still`, nothing moves. */
+/** The Divine Portal on tile (x, y); `still`, nothing turns. */
 export function drawDivinePortal(f: FrameContext, at: { x: number; y: number }) {
-  const still = f.look.reduceMotion, now = still ? 0 : f.now, c = f.c;
-  const { x, y } = tileCenter(f, at.x, at.y);
-  const radius = f.s * (RADIUS + (still ? 0 : BREATH * Math.sin(now / 600)));
+  const still = f.look.reduceMotion, time = still ? 0 : f.now / 1000, c = f.c;
+  const { x, y } = tileCenter(f, at.x, at.y), px = f.s / ART;
+  // Art pixel (gx, gy) counts from the tile's middle, which falls on a pixel corner.
+  const cell = (gx: number, gy: number) => {
+    const x0 = Math.round(x + gx * px), y0 = Math.round(y + gy * px);
+    c.fillRect(x0, y0, Math.max(1, Math.round(x + (gx + 1) * px) - x0), Math.max(1, Math.round(y + (gy + 1) * px) - y0));
+  };
+  const spin = time * 1.7, span = R + 2;
   c.save();
-  const glow = c.createRadialGradient(x, y, 0, x, y, radius * 1.9);
-  glow.addColorStop(0, "rgba(255, 222, 140, 0.45)");
-  glow.addColorStop(1, "rgba(255, 222, 140, 0)");
-  c.fillStyle = glow;
-  c.fillRect(x - radius * 2, y - radius * 2, radius * 4, radius * 4);
-  c.restore();
-  paintVortex(c, x, y, radius, Math.max(1, f.s / 16), now * 2.2, still, PORTAL);
-  if (still) return;
-  c.save();
-  c.fillStyle = "#fff6cf";
-  for (let i = 0; i < MOTES; i++) {
-    const k = ((now / MOTE_MS + i / MOTES) % 1 + 1) % 1, turn = i * 2.4 - k * Math.PI * 2.5, out = radius * 1.5 * (1 - k);
-    const size = Math.max(1, (f.s / 14) * (1 - k * 0.6));
-    c.globalAlpha = Math.min(1, k * 4) * (1 - k);
-    c.fillRect(Math.round(x + Math.cos(turn) * out - size / 2), Math.round(y + Math.sin(turn) * out - size / 2), size, size);
+  for (let gy = -span; gy < span; gy++) {
+    for (let gx = -span; gx < span; gx++) {
+      const dx = gx + 0.5, dy = gy + 0.5, dist = Math.hypot(dx, dy);
+      if (dist > R + 1) continue;
+      if (dist > R) c.fillStyle = OUTLINE;
+      else if (dist > R - 1.3) {
+        // Segmented rim that turns the other way to the swirl.
+        const seg = Math.floor((((Math.atan2(dy, dx) / (Math.PI * 2)) * 18 - spin * 2.5) % 3) + 3) % 3;
+        c.fillStyle = seg === 0 ? RIM_HOT : seg === 1 ? RIM : RIM_DIM;
+      } else {
+        const d = dist / R, a = Math.atan2(dy, dx) / (Math.PI * 2);
+        // Three spiral arms drawn into the middle, round a hot core.
+        const arm = 0.5 + 0.5 * Math.cos(Math.PI * 2 * (a * 3 + d * 1.6 + spin));
+        const core = Math.max(0, 1 - d / 0.35);
+        const b = Math.min(1, arm * (0.25 + 0.65 * d) + core * 0.9 + 0.08);
+        c.fillStyle = SWIRL[Math.max(0, Math.min(SWIRL.length - 1, Math.floor(b * (SWIRL.length - 1) + bayer(gx, gy) - 0.25)))];
+      }
+      cell(gx, gy);
+    }
+  }
+  // Sparks circling just outside the rim.
+  c.fillStyle = RIM;
+  for (let k = 0; k < SPARKS; k++) {
+    const a = spin * 1.7 + (k * Math.PI * 2) / SPARKS, r = R + 2.5 + Math.sin(time * 5 + k * 1.9) * 0.8;
+    cell(Math.floor(Math.cos(a) * r), Math.floor(Math.sin(a) * r));
   }
   c.restore();
 }

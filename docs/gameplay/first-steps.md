@@ -77,7 +77,7 @@ Floor 1's stairs always stand open, so Stairs climbs it, paying the run's first 
 
 ### The Divine Portal
 
-On floor 2 of that first climb a golden vortex swirls a few steps from the way in: the **Divine Portal**.
+On floor 2 of that first climb a golden portal swirls a few steps from the way in, sparks circling its rim: the **Divine Portal**.
 Tapping it says *Divine Portal* and *A unique opportunity.*, and the hero walks to it; nothing else on the floor can be reached, and the climb can't be ended yet (the End Climb buttons stay hidden).
 Stepping in plays the warp's sound, the floor fades, and the hero arrives on floor **999999**: a quiet room walled round its edge, a torch lit in each corner, and a sparkling golden chest in the middle.
 Tapping the chest says *Divine Relic* and *A unique opportunity, granted by the builders themselves.*; in this room the hero walks wherever you tap, and the only sound is the relic's hum, louder the nearer the chest.
