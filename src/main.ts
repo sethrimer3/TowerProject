@@ -106,6 +106,8 @@ stampProfile(game.save, game.clock());
 // The time since the app was last open is time offline, before anything
 // saves (and marks the app open now): it may owe Offline Gold.
 const offlineGrant = game.arriveOffline();
+// The Catacombs bank the time away, a turn a second, reported with it.
+const catacombBanked = game.catacombs.arrive(game.clock());
 applyUiTheme(game.save);
 bindFeedback({
   // The Gem bank's chime answers only to its own setting, not Master Sound.
@@ -806,7 +808,7 @@ export function startGame() {
   renderHandMore();
   renderer.draw(performance.now());
   loop.start();
-  if (offlineGrant) offerOfflineGold();
+  if (offlineGrant || catacombBanked > 0) offerOfflineGold();
   void refreshTournament();
   void refreshMail();
 }
@@ -814,7 +816,7 @@ export function startGame() {
  * while the dialog shows, and Claim banks the Gold, drops it, and plays on. */
 function offerOfflineGold() {
   const grant = game.save.offline.grant;
-  if (!grant) return;
+  if (!grant && catacombBanked < 1) return;
   game.pauseForPage();
   showOfflineGold(modal, grant, () => {
     const gold = game.claimOfflineGold();
@@ -822,5 +824,5 @@ function offerOfflineGold() {
     save();
     update();
     dropGold(gold, game.save.settings.reduceMotion);
-  });
+  }, catacombBanked);
 }

@@ -81,6 +81,7 @@ The last ten give the **Recent Gold per Hour**: their Gold over their time, so a
 The Settings page's Stats dialog shows it after the Gold earned, shortened (*12.3K*).
 **Offline Gold** (2 Breakthrough, straight under Golden Floors, beside Esoteric Training, with Gem Card under it) pays Gold for the time the app was closed.
 Starting the app again after a minute or more away (less is no time away) opens the *Offline Gold* dialog, pausing a climb in progress: the time away and the most that pays (*03h:10m offline (of 02h:00m max)*), and the sum, *Recent 12.3K × 02h:00m × 10.0% = 2.46K*.
+While a Catacomb run is under way, the same dialog also shows the Catacomb turns the time away banked, a turn a second ([The Catacombs](catacombs.md)); with no Offline Gold owed, the dialog shows only that line.
 Time away that pays nothing (no Recent Gold per Hour yet) opens no dialog.
 A Champion is paid Offline Gold even without the skill, for twice the time, at the Champion's Club's rate added, and **Offline Gems** besides, listed in the same dialog.
 **Claim** banks the Gold, rains coins down the screen, and plays the climb on.

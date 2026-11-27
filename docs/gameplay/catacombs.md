@@ -29,5 +29,7 @@ A point moved counts from the next turn; taking points out of Vitality can lower
 The ≡ button lists every Catacomb stat in one table; tap anywhere to put it away.
 Spirit, Forge and Academy open in later updates.
 
-**Banked time.** Time the game is closed is banked, a second at a time, and shown over the hall's top right with a speed choice: ×1, ×5, ×10 or ×100.
+**Banked time.** Time the game is closed is banked, a second at a time, and the Welcome Back dialog says how many turns, and shown over the hall's top right with a speed choice: ×1, ×5, ×10 or ×100.
 Above ×1, each extra turn spends a banked second; when the bank runs out the speed drops back to ×1.
+
+**Spirit and Ingots.** Each undead beaten drops Spirit of its rarity, and treasure rooms hold Ingots; both are kept for good and listed in the currencies table once the Catacombs are open.

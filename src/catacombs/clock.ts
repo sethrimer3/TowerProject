@@ -29,15 +29,13 @@ export function tick(clock: ClockSave, now: number, carry: HasteCarry): Due {
     carry.prev = now;
     return due;
   }
-  const gone = now - clock.lastTurnAt;
-  if (gone > BANK_GAP_MS) {
-    due.banked = Math.floor(gone / SECOND);
-    clock.bank += due.banked;
-    clock.lastTurnAt += due.banked * SECOND;
+  due.banked = bankGap(clock, now);
+  if (due.banked) {
     carry.prev = now;
     carry.owed = 0;
     return due;
   }
+  const gone = now - clock.lastTurnAt;
   due.real = Math.floor(gone / SECOND);
   clock.lastTurnAt += due.real * SECOND;
   const since = carry.prev && now > carry.prev ? now - carry.prev : 0;
@@ -62,12 +60,22 @@ export function setHaste(clock: ClockSave, haste: Haste, carry?: HasteCarry) {
   if (carry) carry.owed = 0;
 }
 
-/** The seconds the next tick will bank by `now`, as the Offline dialog
- * reports them on start-up. */
+/** The seconds the next tick will bank by `now`. */
 export const offlineSeconds = (clock: ClockSave, now: number) => {
   const gone = clock.lastTurnAt ? now - clock.lastTurnAt : 0;
   return gone > BANK_GAP_MS ? Math.floor(gone / SECOND) : 0;
 };
+
+/** Banks a gap over `BANK_GAP_MS` since the clock's last turn (the app
+ * closed, the tab hidden): its whole seconds, the rest left to count on.
+ * Returns the seconds banked (0 for no such gap, or a clock not started).
+ * The app calls it as it starts, for the Offline dialog to report. */
+export function bankGap(clock: ClockSave, now: number) {
+  const seconds = offlineSeconds(clock, now);
+  clock.bank += seconds;
+  clock.lastTurnAt += seconds * SECOND;
+  return seconds;
+}
 
 /** The most turns played on the board in a second; past it a frame's turns
  * run together and only the last is drawn (`MAX_MOVE_RATE` in config.ts). */

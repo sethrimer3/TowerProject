@@ -1,11 +1,15 @@
 import { controlIcon } from "./control-icon.ts";
-import { cellIcon, el, equipTicketIcon, gemIcon, goldIcon, medalIcon, onePieceIcon, pointsIcon, arcaniteIcon, rubyIcon, ticketIcon, uiSprite, vipIcon } from "./dom.ts";
+import { cellIcon, el, ingotIcon, spiritIcon, equipTicketIcon, gemIcon, goldIcon, medalIcon, onePieceIcon, pointsIcon, arcaniteIcon, rubyIcon, ticketIcon, uiSprite, vipIcon } from "./dom.ts";
 import { isChampion } from "../shop/champion.ts";
 import { materialIcon } from "./equipment-icons.ts";
 import { EQUIP_MATERIALS, EQUIP_MATERIAL_IDS } from "../equipment/catalog.ts";
 import { trainingPoints } from "../progression/loadout.ts";
 import { shortAmount, whole } from "../whole.ts";
 import type { Game } from "../state.ts";
+import { INGOTS, SPIRIT_RARITIES } from "../catacombs/catalog.ts";
+import { catacombsOpen } from "../catacombs/open.ts";
+
+const titled = (s: string) => s[0]!.toUpperCase() + s.slice(1);
 
 /** A currency held, as the currencies bar and its dialog show it: in full to
  * 9,999, then shortened (12.3K, 4.56M), ∞ in Dev mode. */
@@ -17,7 +21,7 @@ export type CurrencyRow = { id: string; icon: string; name: string; value: strin
 
 /** Every currency the player holds, in the dialog's order: Gold, Gems,
  * Rubies (once one is had), Arcanite, Medals, VIP Points (for a Champion), the run's Silver, Training Points, Inspiration
- * and Breakthrough, then Lore, Tournament, Equipment and One Piece Tickets (once one is had) and each Equipment material. Each shows
+ * and Breakthrough, then Lore, the Catacombs' seven Spirits and four Ingots (once they are open), Tournament, Equipment and One Piece Tickets (once one is had) and each Equipment material. Each shows
  * once the system behind it is open (all of them in Dev mode), so the list
  * never names what the player hasn't reached. */
 export function currencyRows(game: Game): CurrencyRow[] {
@@ -35,6 +39,11 @@ export function currencyRows(game: Game): CurrencyRow[] {
     [true, "inspiration", uiSprite("inspiration"), "Inspiration", save.tower.inspiration],
     [!!save.upgrades.breakthrough, "breakthrough", uiSprite("breakthrough"), "Breakthrough", save.breakthrough],
     [save.profile.earned.cells > 0, "cells", cellIcon(), "Lore Fragments", save.cells],
+    // The Catacombs' Spirit and Ingots, once they are open.
+    ...SPIRIT_RARITIES.map((r): [boolean, string, string, string, number] =>
+      [catacombsOpen(save), `spirit-${r}`, spiritIcon(r), `${titled(r)} Spirit`, save.catacombs.spirit[r]]),
+    ...INGOTS.map((i): [boolean, string, string, string, number] =>
+      [catacombsOpen(save), `ingot-${i}`, ingotIcon(i), `${titled(i)} Ingots`, save.catacombs.ingots[i]]),
     [game.tournament.unlocked, "tickets", ticketIcon(), "Tournament Tickets", save.tournament.tickets],
     [save.equipment.unlocked, "equip-tickets", equipTicketIcon(), "Equipment Tickets", save.equipment.tickets],
     [save.champion.ticketsClaimed > 0, "one-piece", onePieceIcon(), "One Piece Tickets", save.champion.tickets],

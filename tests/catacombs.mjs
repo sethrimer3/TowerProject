@@ -24,11 +24,16 @@ try {
     g.save.catacombs.rng = 7; g.catacombs.enter(1);
     g.save.catacombs.mxp = 440;
     g.save.catacombs.clock.bank = 600;
+    // Two minutes since the Catacombs' last turn: the reload banks them and says so.
+    g.save.catacombs.clock.lastTurnAt = Date.now() - 120_000;
     g.newRun({ seed: 9 });
     sessionStorage.setItem("catacombsFixture", JSON.stringify(g.save));
   });
   await page.reload();
   await page.locator("#boot-loading").waitFor({ state: "hidden", timeout: 120000 });
+  await expect(page.locator(".offline-catacombs")).toContainText(/Catacombs: \+1[12]\d banked turns/);
+  await page.locator("#offline-claim").click();
+  await expect(page.locator("#modal")).not.toBeVisible();
   await expect(page.locator("#height-label")).toHaveText("FLOOR");
   const floorBefore = await page.locator("#height").textContent();
   await openMenu(page);
@@ -44,12 +49,12 @@ try {
   // A turn a second: the status line follows the Magician.
   await expect(page.locator("#message")).toContainText(/dashes|strikes|Down to Hall|Lore found|banished|shrugs/, { timeout: 4000 });
   // Haste spends the bank.
-  const bankBefore = await page.evaluate(() => JSON.parse(localStorage.getItem("towerdelve.v1")).catacombs?.clock.bank ?? 600);
+  const left = (t) => { const m = /^(?:(\d+)m )?(\d+)s$/.exec(t); return Number(m[1] ?? 0) * 60 + Number(m[2]); };
+  const bankBefore = left(await page.locator("#catacomb-bank-time").textContent());
   await page.selectOption("#catacomb-haste", "10");
   await page.waitForTimeout(2500);
   const bankAfter = await page.locator("#catacomb-bank-time").textContent();
   if (!/^\d+m \d\ds$|^\d+s$/.test(bankAfter)) throw new Error(`bank reads ${bankAfter}`);
-  const left = (t) => { const m = /^(?:(\d+)m )?(\d+)s$/.exec(t); return Number(m[1] ?? 0) * 60 + Number(m[2]); };
   if (left(bankAfter) > bankBefore - 15) throw new Error(`haste spent too little of the bank: ${bankBefore} -> ${bankAfter}`);
   // Stats: a point into Force shows on the HUD at once; taking it back too.
   await expect(page.locator("#catacomb-menus")).toBeVisible();

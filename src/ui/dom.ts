@@ -61,6 +61,10 @@ export const arcaniteIcon = (className = "arcanite-icon") =>
 /** A Lore Fragment: a clay tablet, the Archives' Speed Ups' currency. */
 export const cellIcon = (className = "cell-icon") =>
   kitIcon("cell", "", className);
+/** A Spirit of `rarity`: a wisp in its rarity's colour (CSS, until its PNG). */
+export const spiritIcon = (rarity: string) => `<span class="spirit-icon spirit-${rarity}" aria-hidden="true"></span>`;
+/** An Ingot of metal `ingot`: a small bar in its colour (CSS, until its PNG). */
+export const ingotIcon = (ingot: string) => `<span class="ingot-icon ingot-${ingot}" aria-hidden="true"></span>`;
 /** A Medal: a gold disc with a star, hung from a red ribbon. */
 export const medalIcon = (className = "medal-icon") =>
   kitIcon("medal", "", className);

@@ -1,7 +1,7 @@
 # Catacombs
 
 The Catacombs' design and build plan: an endless, idle side mode under the forest where the hero, as a Magician, fights a stream of undead in real time for Lore, Spirit, Ingots and Magic levels.
-Steps 1 to 5, the engine, the unlock, the way in, the Catacomb screen and its Stats menu, are built (`src/catacombs/`, docs/agents/catacombs.md); the rest is still to come.
+Steps 1 to 6, the engine, the unlock, the way in, the Catacomb screen, its Stats menu and the time away, are built (`src/catacombs/`, docs/agents/catacombs.md); the rest is still to come.
 Each section is the spec the implementation follows; **Decisions** lists what the request left open and what was settled.
 
 ## Decisions
@@ -271,7 +271,7 @@ Each step ships on its own with its tests, docs and DEVLOG line.
 4. **Catacomb screen** (done; the magic skill points sit in the portrait's corner, the level row having no room, and the bottom row stays empty until step 5).
    Step 5 (done): the row of Stats, Spirit, Forge and Academy; Stats spends points, the others say what they will do. `CatacombView`, the hall drawing, the HUD swaps, Switch Back, pausing and resuming the run behind it, the enemy table, the bank and haste; render and UI goldens for a hall and the HUD; a Playwright flow (`tests/catacombs.mjs`): enter from the forest, watch a turn, Switch Back to a Tower run and see it resume, re-enter from the menu.
 5. **Stats menu.** The tabs row, the Stats boxes, the stats table.
-6. **Offline and currencies.** The Offline dialog's line, the currencies rows, the background clock on every page.
+6. **Offline and currencies** (done; the background clock came with step 4, and Spirit and Ingot icons are drawn in CSS until their PNGs). The Offline dialog's line, the currencies rows, the background clock on every page.
 7. **Docs.** `docs/agents/catacombs.md` (modules, rules, tests) with its line in AGENTS.md's topic list and test table; `docs/gameplay/catacombs.md` with its README row; `CONTEXT.md` terms (Catacomb, Hall, Magician, MHP, MAtk, MDef, MXP, Magic level, magic skill point, Spirit, Ingot, Mausoleum, Turn Bank, Haste); `docs/project/how-its-built.md`; Codex entries for the undead.
 
 ## Later (designer TODOs)

@@ -1,5 +1,6 @@
 import { catacombsOpen } from "../catacombs/open.ts";
 import { enterCatacomb, type CatacombRun } from "../catacombs/state.ts";
+import { bankGap } from "../catacombs/clock.ts";
 import type { DeskHost } from "./desk.ts";
 
 /** The Catacombs' commands (docs/CATACOMBS.md): entering one from the
@@ -32,6 +33,13 @@ export class CatacombDesk {
   wouldLeave(number: number): { number: number; hall: number } | null {
     const run = this.c.run;
     return run && this.c.number !== number && run.hall > 1 ? { number: this.c.number, hall: run.hall } : null;
+  }
+
+  /** The app has started at `now`: the time it was closed is banked, a
+   * second a turn, while a Catacomb run is under way. Returns the seconds
+   * banked, for the Offline dialog. */
+  arrive(now: number) {
+    return this.c.run && this.open ? bankGap(this.c.clock, now) : 0;
   }
 
   /** Enters Catacomb `number`: the same number keeps the run under way,
