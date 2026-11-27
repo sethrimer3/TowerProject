@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-27", text: "Cinematic mode and Battery saver show their own options indented beneath them." },
   { date: "2026-11-27", text: "The Codex gains a Catacombs tab: how they work, and each undead once you reach a hall it can appear in." },
   { date: "2026-11-27", text: "Welcome Back says how many Catacomb turns your time away banked; Spirit and Ingots join the currencies table." },
   { date: "2026-11-27", text: "The Catacomb screen gains Stats: spend magic skill points on Force, Ward and Vitality, and see every stat in one table." },

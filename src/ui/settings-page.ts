@@ -37,6 +37,13 @@ const SOUNDS = ["sound", "soundNotifications", "soundUi", "soundEvents", "soundA
 const UNDER: Partial<Record<SettingKey, readonly SettingKey[]>> = {
   sound: ["soundNotifications", "soundUi", "soundEvents", "soundAmbience", "soundMusic"],
   soundAmbience: ["weatherSound"],
+  batterySaver: ["batteryWhite"],
+  cinematic: ["cinematicIdle", "cinematicGems"],
+};
+/** The hints drawn under a setting's control. */
+const HINTS: Partial<Record<PageKey, string>> = {
+  experimentalAtlas: "Loads artwork from sprite atlases. Changing this reloads the game.",
+  squareDoors: "Pixel art is the default. Other UI and Game themes use their own art.",
 };
 /** The dev section's settings, shown under Dev Mode while it is on. */
 const DEV = ["devMode", "freePurchases", "accessAll"] as const satisfies readonly SettingKey[];
@@ -228,7 +235,7 @@ export function renderSettingsPage(ctx: AppContext, overlay: BoardOverlay) {
     `<button class="setting menu-open" id="tileset-lab-open">Tileset Lab<b>${controlIcon("forward")}</b></button>` +
     `<button class="setting menu-open" id="arcana-lab-open">Arcana Effects Lab<b>${controlIcon("forward")}</b></button>` +
     `<button class="setting menu-open" id="toggles-open">Toggles<b>${controlIcon("forward")}</b></button>` +
-    shownOf(PAGE, game.save).map((key) => control(key, game) + (key === "experimentalAtlas" ? `<p class="hint">Loads artwork from sprite atlases. Changing this reloads the game.</p>` : "") + (key === "squareDoors" ? `<p class="hint">Pixel art is the default. Other UI and Game themes use their own art.</p>` : "")).join("") +
+    grouped(PAGE, game) +
     `<h3 class="settings-visual-title">Sounds</h3>` + grouped(SOUNDS, game) +
     `<p class="hint">Automation pauses outside the board tabs and while the browser is hidden. Progress saves after each action.</p>` +
     control("devTools", game) +
@@ -243,7 +250,7 @@ function grouped(keys: readonly PageKey[], game: PageGame): string {
   const shown = shownOf(keys, game.save), inner = new Set(Object.values(UNDER).flat());
   const draw = (key: PageKey): string => {
     const under = shown.filter((k) => UNDER[key as SettingKey]?.includes(k as SettingKey));
-    return control(key, game) + (under.length ? `<div class="setting-group">${under.map(draw).join("")}</div>` : "");
+    return control(key, game) + (HINTS[key] ? `<p class="hint">${HINTS[key]}</p>` : "") + (under.length ? `<div class="setting-group">${under.map(draw).join("")}</div>` : "");
   };
   return shown.filter((k) => !inner.has(k as SettingKey)).map(draw).join("");
 }

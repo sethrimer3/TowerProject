@@ -1865,7 +1865,8 @@ dialog > small {
 }
 
 /* Settings shown only while the setting above them is on, indented under
-   it: Dev Mode's dev section, Master Sound's kinds, Ambience's weather. */
+   it: Dev Mode's dev section, Master Sound's kinds, Ambience's weather,
+   Battery saver's white, Cinematic mode's options. */
 .setting-group {
   margin-left: 16px;
   padding-left: 12px;
