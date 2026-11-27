@@ -118,13 +118,13 @@ export const OFFERS: readonly ShopOffer[] = [
   {
     id: "coins2", name: "Special Gold Bundle", category: "special", item: { kind: "entitlement", id: "coins2", amounts: { gems: 150 } }, quantity: 1,
     price: money("coins_x2", 9.95), rarity: "epic", purchaseLimit: 1,
-    effects: ["×2 training speed forever"], tags: ["oneTime"],
+    effects: ["×1.5 training speed forever"], tags: ["oneTime"],
   },
   {
     id: "coins3", name: "Champion's Bundle", category: "special", item: { kind: "entitlement", id: "coins3", amounts: { gems: 750 } }, quantity: 1,
     price: money("coins_x3", 29.95), rarity: "legendary", purchaseLimit: 1, after: ["adFree", "coins2"],
     effects: [
-      "×3 training speed forever", "Champion Status and the Champion's Club", "VIP Points raise permanent bonuses",
+      "×2 training speed forever", "Champion Status and the Champion's Club", "VIP Points raise permanent bonuses",
       "+5% Offline Gold rate and Offline Gems", "×2 Offline time max", "+25% XP gain",
       "Unique legendary relic: Champion's Cape, +5% ATK and +5% DEF", "−20s Gem button cooldown",
       "Daily Training Points", "See the next two Premium Offers",

@@ -106,7 +106,7 @@ Until that note is tapped, which ends the lesson, the other tabs can't be presse
 The first time training points can be spent, in the forest a note says that after levelling up you can spend points to increase your stats, a hand pointing at the **Research** tab.
 On its Training tab a note says *Spend training points to upgrade your stats.*, with a hand on each training-points button you can press, until you tap the note, which ends the lesson.
 Once **Trainers** is bought, the forest says to press the **Research** tab to hire your first trainer, a hand pointing at it and a red dot on it.
-On its Training tab a note says *Here's 50 Gems and 100 Gold to get you started.* (the currencies as their icons), with a **Claim** button that pays them, the only thing to press there until it is pressed.
+On its Training tab a note headed *A gift from your family!* says *Here's 50 Gems and 100 Gold to get you started.* (the currencies as their icons), with a **Claim** button that pays them, the only thing to press there until it is pressed.
 A hand then points at the button that hires a trainer for 50 Gems, and nothing else can be pressed until it is; after a reload the forest holds you to the Research tab until then.
 A note then praises you for hiring a trainer for your hero: the more they train, the stronger they get and the higher they can climb, so start training and hire more trainers as soon as you can.
 Tapping it ends the lesson (the training points' note waits until then).

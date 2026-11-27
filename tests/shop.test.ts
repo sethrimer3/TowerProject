@@ -158,7 +158,7 @@ test("Ad-Disable runs the trainers' ×2 boost for good, ranks already training i
   assert.equal(decode(JSON.stringify(back)).trainingBoostUntil, BOOST_FOREVER, "the entitlement keeps it on");
 });
 
-test("the Gold bundles make training ×2 and ×3 as fast, stacking with Ad-Disable's boost to ×12", () => {
+test("the Gold bundles make training ×1.5 and ×2 as fast, stacking with Ad-Disable's boost to ×6", () => {
   const g = new Game(defaults());
   g.save.upgrades.trainers = 1;
   g.save.trainers = 1;
@@ -171,18 +171,18 @@ test("the Gold bundles make training ×2 and ×3 as fast, stacking with Ad-Disab
   assert.ok(g.training.trainWithGold("hp"));
   now += 3000;
   assert.equal(g.shop.buy("coins2", NOON, true), null);
-  assert.equal(trainingRate(g.save), 2);
+  assert.equal(trainingRate(g.save), 1.5);
   assert.equal(g.training.left("hp"), 12_000, "the training left is kept");
-  assert.equal(g.save.trainingJobs[0].completesAt, now + 6000, "and goes twice as fast");
+  assert.equal(g.save.trainingJobs[0].completesAt, now + 8000, "and goes 1.5 times as fast");
   assert.ok(!permanentBoost(g.save), "the Special Gold Bundle leaves the boost to the ad");
   assert.equal(g.shop.buy("adFree", NOON, true), null);
-  assert.equal(g.save.trainingJobs[0].completesAt, now + 3000, "four times with Ad-Disable's boost too");
+  assert.equal(g.save.trainingJobs[0].completesAt, now + 4000, "three times with Ad-Disable's boost too");
   assert.equal(g.shop.buy("coins3", NOON, true), null);
-  assert.equal(trainingRate(g.save), 6);
-  assert.equal(g.save.trainingJobs[0].completesAt, now + 1000, "twelve with the Champion's Bundle's ×3");
+  assert.equal(trainingRate(g.save), 3);
+  assert.equal(g.save.trainingJobs[0].completesAt, now + 2000, "six with the Champion's Bundle's ×2");
   now += 500;
-  assert.equal(g.training.left("hp"), 6000);
-  now += 500;
+  assert.equal(g.training.left("hp"), 9000);
+  now += 1500;
   assert.equal(g.training.settle(), 1);
 });
 

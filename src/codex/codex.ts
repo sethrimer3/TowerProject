@@ -200,13 +200,41 @@ export const STORY_INTRO: readonly string[] = [
   "In an unprecedented stroke of luck, the adventurer obtained the Chrono Anchor, a unique divine gift. Looking at the tower, they wonder if it was all just a vision or a dream.",
 ];
 
-/** The story so far, a chapter a collapsible section: the Intro once the
- * first Tower climb has ended (`tutorials.chamber`), which opens the tab. */
+/** The adventurer's own thoughts, in italics as the Story always sets them. */
+const thought = (text: string) => `<em>${text}</em>`;
+
+/** The Story's Training chapter, told once the Trainers skill is owned. */
+export const STORY_TRAINING: readonly string[] = [
+  "Grateful to have family support, the adventurer scraped together some money to hire a personal trainer. Now it's time to try using the Chrono Anchor for more than just climbing.",
+  thought("\"I appreciate not dying, but I've just started exploring this tower. The more time I can put into training, the more prepared I'll be going into my next climb!\""),
+  "As the adventurer thought about it, they realized it might make even more sense to hire multiple trainers to get stronger in multiple ways at the same time.",
+  thought("\"I'll bet I've just scratched the surface of what the Chrono Anchor can do.\""),
+];
+
+/** The Story's Archives chapter, told once the Archives skill is owned. */
+export const STORY_ARCHIVES: readonly string[] = [
+  "Arriving late in the day, the adventurer peered into the dimness of the vast Royal Archives. Hooded monks moved everywhere, searching for texts or squinting at ancient tomes by candlelight.",
+  thought("\"There must be millennia of lore housed here. There must be thousands, no, millions of records! It will take me forever to find anything useful.\""),
+  `The adventurer hummed thoughtfully to themself, tapping their chin. ${thought("\"Hmm... there must be a better way, if I use my brains as well as my brawn. Maybe I could hire someone to help me find what I'm looking for.\"")}`,
+  "They peered out again across the immense vaulted space.",
+  thought("\"Maybe multiple someones.\""),
+];
+
+/** The story so far, a chapter a collapsible section, each told once what
+ * it tells of is reached: the Intro once the first Tower climb has ended
+ * (`tutorials.chamber`), Training once the Trainers skill is owned, the
+ * Archives once the Archives skill is. Any chapter told opens the tab. */
 function story(src: CodexSource): CodexCategory {
-  const told = src.save.tutorials.chamber || seesAll(src.save);
-  return { id: "story", name: "Story", icon: { kind: "kit", id: "relic-divine-chrono-anchor" }, open: told, links: [],
+  const s = src.save, all = seesAll(s);
+  const chapters: [boolean, CodexSection][] = [
+    [s.tutorials.chamber, { id: "intro", title: "Intro", entries: [], prose: STORY_INTRO }],
+    [s.upgrades.trainers > 0, { id: "training", title: "Training", entries: [], prose: STORY_TRAINING }],
+    [s.upgrades.archives > 0, { id: "archives", title: "Archives", entries: [], prose: STORY_ARCHIVES }],
+  ];
+  const sections = chapters.filter(([told]) => told || all).map(([, section]) => section);
+  return { id: "story", name: "Story", icon: { kind: "kit", id: "relic-divine-chrono-anchor" }, open: sections.length > 0, links: [],
     summary: "The tale of the tower, and of the adventurer who climbs it.",
-    sections: told ? [{ id: "intro", title: "Intro", entries: [], prose: STORY_INTRO }] : [] };
+    sections };
 }
 
 // —— Currencies ———————————————————————————————————————————————————————

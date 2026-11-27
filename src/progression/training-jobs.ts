@@ -13,10 +13,9 @@ import { premiumTrainers, type EntitlementId } from "../shop/entitlements.ts";
  * 1 min, 5 min, 10 min), then the m-th rank after them takes m times
  * ten minutes (10 min, 20 min, 30 min …), before Faster Trainers research.
  * A row's own `time` may start it further along, or step by its own amount.
- * A row's own `time` may start it further along, or step by its own amount.
- * With every speedup (Ad-Disable and both Gold bundles ×12, batches of 100
+ * With every speedup (Ad-Disable and both Gold bundles ×6, batches of 100
  * ×10, Faster Trainers researched alongside), a stat's 6,000 ranks take
- * about 17 months. */
+ * about 34 months. */
 const TRAINING_START_SECONDS = [15, 60, 300, 600];
 export const TRAINING_STEP_SECONDS = 600;
 /** The most one rank can take, so a stat trained very far never overflows. */
@@ -142,7 +141,7 @@ export const boostLeft = (boostUntil: number, now: number) => Math.max(0, boostU
 
 /** The training still to do (ms, at the normal rate) on a job due at
  * `completesAt`, with the boost running to `boostUntil` and training going
- * `rate` times as fast besides (the Champion's Bundle's ×3): the boosted
+ * `rate` times as fast besides (the Champion's Bundle's ×2): the boosted
  * part of the wait counts double. This is what the job's timer shows, so
  * it counts down twice as fast while the boost lasts. */
 export function workLeft(completesAt: number, boostUntil: number, now: number, rate = 1) {

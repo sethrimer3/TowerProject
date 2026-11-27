@@ -25,6 +25,8 @@ A link to a page only the forest opens (Deck, Upgrades, Gear, Goals, Relics, Shr
 
 The Story category (`story` in codex.ts) tells the tale a chapter a section: a section's `prose` (its paragraphs) draws as a collapsible passage instead of entries (`codex-story`, `.codex-prose`).
 Its Intro (`STORY_INTRO`) shows, and the tab opens, once the first Tower climb has ended (`tutorials.chamber`), or with Access to Everything; its tab wears the Chrono Anchor (docs/agents/divine.md).
+Its Training chapter (`STORY_TRAINING`) shows once the Trainers skill is owned, and its Archives chapter (`STORY_ARCHIVES`) once the Archives skill is; any chapter told opens the tab.
+The adventurer's thoughts are set in italics (`thought`, an `<em>`) in every chapter.
 
 The Catacombs category (`catacombs` in codex.ts) opens with the Catacombs (`catacombsOpen`): how they work, and each undead (`UNDEAD_BRIEFS`, its base stats as facts, an `undead` icon drawn from its pixel art, `undeadIconUrl`) once any Catacomb's deepest hall reaches its first; the Currencies list Spirit and Ingots then too.
 The Familiars category opens with Events (or a familiar hatched) and shows each with its brief (`FAMILIAR_BRIEFS`), a hatched one its levels.

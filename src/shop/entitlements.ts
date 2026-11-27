@@ -30,9 +30,9 @@ export type Entitlement = {
 
 export const ENTITLEMENTS: Record<EntitlementId, Entitlement> = {
   adFree: { name: "Permanent Ad-Disable", goldFactor: 1.5, adsOff: true, permanentBoost: true },
-  coins2: { name: "Special Gold Bundle", goldFactor: 2, trainingRate: 2 },
+  coins2: { name: "Special Gold Bundle", goldFactor: 2, trainingRate: 1.5 },
   // Champion Status (shop/champion.ts) and its Club.
-  coins3: { name: "Champion's Bundle", goldFactor: 3, trainingRate: 3, relic: "shop.coins3", gifts: 10 },
+  coins3: { name: "Champion's Bundle", goldFactor: 3, trainingRate: 2, relic: "shop.coins3", gifts: 10 },
   // The Premium Passes open the Goals screen's premium rewards (goals.ts),
   // each in its set of three towers.
   pass1: { name: "Premium Pass 1", goldFactor: 1 },
@@ -56,9 +56,9 @@ export const goldFactor = (save: Owner) => owned(save).reduce((f, e) => f * e.go
 export const adsOff = (save: Owner) => owned(save).some((e) => e.adsOff);
 /** Whether the trainers' ×2 boost runs for good. */
 export const permanentBoost = (save: Owner) => owned(save).some((e) => e.permanentBoost);
-/** How many times as fast training goes for good, before the boost: ×2
- * with the Special Gold Bundle, ×3 with the Champion's Bundle, ×6 with both
- * (×12 with Ad-Disable's permanent boost too). */
+/** How many times as fast training goes for good, before the boost: ×1.5
+ * with the Special Gold Bundle, ×2 with the Champion's Bundle, ×3 with both
+ * (×6 with Ad-Disable's permanent boost too). */
 export const trainingRate = (save: Owner) => owned(save).reduce((r, e) => r * (e.trainingRate ?? 1), 1);
 /** Archivists' slots the entitlements add, beyond those Gems hire. */
 export const premiumArchivists = (save: Owner) => owned(save).reduce((n, e) => n + (e.archivists ?? 0), 0);

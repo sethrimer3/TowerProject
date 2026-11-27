@@ -248,3 +248,18 @@ test("the Catacombs open with Reveal Catacombs, each undead shown once a hall it
   assert.ok(held.some((e) => e.id === "ingot-nickel" && !e.hidden));
   assert.ok(codexCategories(source()).find((c) => c.id === "currencies")!.sections[0]!.entries.filter((e) => e.id.startsWith("spirit-")).every((e) => e.hidden));
 });
+
+test("the Story tells Training once Trainers is owned and the Archives once the Archives are, the thoughts in italics", () => {
+  const story = (save = defaults()) => codexCategories(source({ save })).find((c) => c.id === "story")!;
+  const ids = (save = defaults()) => story(save).sections.map((s) => s.id);
+  assert.ok(!story().open);
+  const save = defaults();
+  save.tutorials.chamber = true;
+  assert.deepEqual(ids(save), ["intro"]);
+  save.upgrades.trainers = 1;
+  assert.deepEqual(ids(save), ["intro", "training"]);
+  save.upgrades.archives = 1;
+  assert.deepEqual(ids(save), ["intro", "training", "archives"]);
+  const training = story(save).sections.find((s) => s.id === "training")!.prose!;
+  assert.ok(training.some((p) => p.startsWith("<em>\"I appreciate not dying")));
+});

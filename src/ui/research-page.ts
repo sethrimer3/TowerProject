@@ -403,7 +403,7 @@ export class ResearchPage {
   private trainersLessonHtml() {
     const training = this.ctx.game.training, lesson = training.lesson, { gems, gold } = TRAINER_GIFT;
     if (lesson === "gift")
-      return `<div class="tree-lesson trainers-lesson" data-lesson-hold><p>Here's ${gems} ${gemIcon()} and ${gold} ${goldIcon()} to get you started.</p>`
+      return `<div class="tree-lesson trainers-lesson" data-lesson-hold><b>A gift from your family!</b><p>Here's ${gems} ${gemIcon()} and ${gold} ${goldIcon()} to get you started.</p>`
         + `<button type="button" id="trainer-gift-claim" class="trainer-gift-claim" aria-label="Claim ${gems} Gems and ${gold} Gold">Claim ${gems} ${gemIcon()} + ${gold} ${goldIcon()}</button></div>`;
     if (lesson === "hire" && training.mustHire)
       return `<div class="tree-lesson trainers-lesson" role="status"><b>Hire your first trainer.</b><p>Tap the + button to hire a trainer for ${nextTrainerGems(this.ctx.game.save)} ${gemIcon()}.</p></div>`;
@@ -558,8 +558,8 @@ export class ResearchPage {
   }
 
   /** The Shop's permanent training speed, glowing on the trainers' row:
-   * Ad-Disable's permanent ×2 boost times the Gold bundles' rates (×2 and
-   * ×3), up to ×12 with all three; nothing without any. */
+   * Ad-Disable's permanent ×2 boost times the Gold bundles' rates (×1.5 and
+   * ×2), up to ×6 with all three; nothing without any. */
   private speedHtml() {
     const save = this.ctx.game.save, speed = (permanentBoost(save) ? BOOST_RATE : 1) * trainingRate(save);
     if (speed === 1) return "";
