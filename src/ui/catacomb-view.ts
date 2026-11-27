@@ -6,6 +6,7 @@ import type { AppContext } from "./app.ts";
 import { closeRunMenu } from "./run-menu.ts";
 import { cellIcon, clockIcon, el, pointsIcon, text } from "./dom.ts";
 import { catacombOddsHtml } from "./catacomb-odds.ts";
+import { CatacombMenus } from "./catacomb-menus.ts";
 import { shortStat } from "./hud.ts";
 import { CatacombBoard } from "../render/catacomb-board.ts";
 import { CatacombPlayer, type CatacombStep } from "../catacombs/player.ts";
@@ -41,6 +42,8 @@ export class CatacombView {
   private board = new CatacombBoard(el("world") as HTMLCanvasElement);
   private player = new CatacombPlayer();
   private last: TurnEvent | null = null;
+  /** Stats, Spirit, Forge and Academy, under the board. A point moved shows at once and counts from the next turn. */
+  private menus = new CatacombMenus(() => this.c, () => { this.decorate(); this.ctx.save(); });
   active = false;
 
   constructor(private ctx: AppContext, private hideOverlay: () => void) {
@@ -82,6 +85,7 @@ export class CatacombView {
     this.active = false;
     document.documentElement.classList.remove("catacombs");
     document.querySelector(".catacomb-odds-layer")?.remove();
+    this.menus.close();
     // The board's heading and the HUD are the run's again.
     delete el("board").dataset.heading;
     this.ctx.update();
@@ -115,6 +119,8 @@ export class CatacombView {
   /** The Catacomb's own pieces of the HUD, made once: Lore in the purse, the
    * magic skill points by the level, Switch Back, the bank. */
   private build() {
+    this.menus.mount();
+    this.menus.lore = () => this.ctx.game.save.cells;
     if (el("catacomb-bank")) return;
     document.querySelector(".purse")!.insertAdjacentHTML("beforeend",
       `<span class="catacomb-lore-stat catacomb-only" title="Lore Fragments: kept between climbs">${cellIcon()} <b id="catacomb-lore"></b></span>`);
@@ -184,6 +190,7 @@ export class CatacombView {
     text("catacomb-bank-time", bankTime(c.clock.bank));
     if (haste.value !== String(c.clock.haste)) haste.value = String(c.clock.haste);
     this.refreshOdds();
+    this.menus.render();
   }
 
   private toggleOdds() {

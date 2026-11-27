@@ -21,5 +21,13 @@ The HUD shows the Magician's MHP, MAtk and MDef, the Magic level and its MXP, un
 The enemy box shows a Wisp here; tap it for every undead the hall can hold, its chance, stats and rewards.
 The Catacombs play on while you are elsewhere in the game.
 
+**Stats.** Under the hall, the Catacomb screen has four menus: Stats, Spirit, Forge and Academy.
+Each Magic level past the first gives a magic skill point.
+In Stats, tap a box to open it: − and + move a point out of it or into it, at any time, and its lines show what a point gives and what the box gives in all.
+Force gives +2 MAtk a point, Ward +1 MDef and Vitality +100 MHP.
+A point moved counts from the next turn; taking points out of Vitality can lower your MHP, but putting them back never heals.
+The ≡ button lists every Catacomb stat in one table; tap anywhere to put it away.
+Spirit, Forge and Academy open in later updates.
+
 **Banked time.** Time the game is closed is banked, a second at a time, and shown over the hall's top right with a speed choice: ×1, ×5, ×10 or ×100.
 Above ×1, each extra turn spends a banked second; when the bank runs out the speed drops back to ×1.

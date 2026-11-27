@@ -60,3 +60,10 @@ export function movePoint(state: { mxp: number; points: MagicPoints }, id: Magic
   state.points[id] += delta;
   return true;
 }
+
+/** Each Magician stat's short name, as the HUD and the Stats boxes write it. */
+export const HERO_STAT_NAMES: Record<HeroStat, string> = { mhp: "MHP", matk: "MAtk", mdef: "MDef" };
+
+/** What box `id` raises with `points` in it: each stat, a point's worth and the total. */
+export const statLines = (id: MagicStatId, points: number) =>
+  MAGIC_STATS[id].raises.map((r) => ({ stat: r.stat, name: HERO_STAT_NAMES[r.stat], per: r.per, total: r.per * points }));

@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-27", text: "The Catacomb screen gains Stats: spend magic skill points on Force, Ward and Vitality, and see every stat in one table." },
   { date: "2026-11-27", text: "The Catacomb screen opens: the Magician fights undead a turn a second, with banked time to speed it up." },
   { date: "2026-11-27", text: "Reveal Catacombs raises a Mausoleum in the Tower's forest, and the menu gains a Catacomb button." },
   { date: "2026-11-27", text: "Tower VI's floor 20 Goal now reveals Reveal Catacombs, a 40 Inspiration skill for an area still to come." },

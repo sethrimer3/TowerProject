@@ -6073,3 +6073,24 @@ html.catacombs .xp-track i { background: linear-gradient(90deg, #6b3fb0, #c99aff
 .catacomb-bank[hidden] { display: none !important; }
 .catacomb-bank .clock-icon { width: 12px; height: 12px; }
 .catacomb-bank select { font: inherit; font-size: 10px; padding: 0 2px; background: #161026; color: #e6d6ff; border: 1px solid #6b55a0; }
+/* The Catacomb screen's bottom row (ui/catacomb-menus.ts) takes the tab bar's place. */
+html.catacombs nav { display: none !important; }
+.catacomb-menus { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.catacomb-tabs { display: flex; gap: 0; background: #111722; border: 1px solid #36404f; }
+.catacomb-tabs button { flex: 1; min-height: 34px; font-size: 11px; border-radius: 0; }
+.catacomb-tabs button[aria-selected="true"] { color: #e6d6ff; border-color: #9a7ad9; background: #1d1530; }
+.catacomb-panel { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; min-height: 64px; }
+.catacomb-table-button { min-width: 34px; font-size: 16px; padding: 0 6px; }
+.catacomb-stat { display: flex; align-items: stretch; border: 1px solid #5a4a7c; border-radius: 3px; background: #120e1c; }
+.catacomb-stat-head { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 3px; min-width: 64px; padding: 6px 8px; border: 0; background: none; }
+.catacomb-stat-head small { color: #d7a8ff; font-size: 13px; }
+.catacomb-stat.open { flex: 1 1 220px; border-color: #9a7ad9; }
+.catacomb-stat-body { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 0; }
+.catacomb-stat-buttons { display: flex; gap: 4px; }
+.catacomb-point { min-width: 34px; min-height: 30px; font-size: 16px; padding: 0 8px; border-radius: 2px; }
+.catacomb-stat-lines { margin: 0; padding: 0; list-style: none; font-size: 10px; line-height: 14px; color: #e6d6ff; }
+.catacomb-free { align-self: center; color: #d7a8ff; font-size: 10px; }
+.catacomb-later, .catacomb-held { margin: 2px 4px; font-size: 11px; line-height: 15px; }
+.catacomb-held { color: #e6d6ff; }
+.catacomb-stat-head b { font-size: 11px; }
+.catacomb-stat-head small { font-size: 12px; }

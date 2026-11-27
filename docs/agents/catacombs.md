@@ -3,7 +3,7 @@
 The Catacombs' engine (`src/catacombs/`), an idle side area where the hero, as a Magician, fights undead a turn a second.
 The design and build plan is `docs/CATACOMBS.md`; this doc covers what is built.
 
-Built so far: step 1, the engine; step 2, the unlock and the save; step 3, the Mausoleum and the Catacomb button; step 4, the Catacomb screen.
+Built so far: step 1, the engine; step 2, the unlock and the save; step 3, the Mausoleum and the Catacomb button; step 4, the Catacomb screen; step 5, its Stats menu.
 The engine is pure and knows nothing of the DOM, `Game`, the board drawing or the clock: the game layer (step 3 on) passes it the wall clock, runs the turns it returns, and credits the Lore it reports.
 The screen (`ui/catacomb-view.ts`) runs the engine on the wall clock and credits the Lore it reports.
 
@@ -32,6 +32,12 @@ The screen (`ui/catacomb-view.ts`) runs the engine on the wall clock and credits
   `decorate`, called by `main.ts`'s `update` after the HUD renders and after each step, writes MHP, MAtk and MDef into the HP, ATK and DEF slots, MAGICIAN, the Magic level and MXP (the bar purple), the hall in the floor's place, the Lore bonus in the Gold bonus's, the Wisp's stats here in the base enemy box, the heading and a status line per turn (`turnLine`).
   The board's heading is marked `catacombs`, so the run's heading is drawn again on Switch Back.
 - `ui/catacomb-odds.ts`: `catacombOddsHtml(hall, number)`, the base enemy box's table on the Catacomb screen: each type's chance a slot, its MHP, MAtk and MDef there, MXP and Spirit, and the ranked last slot's; it follows the hero to each new hall, and `refreshEnemyOddsBox` leaves it alone.
+- `ui/catacomb-menus.ts`: `CatacombMenus`, the bottom row in the tab bar's place (`html.catacombs nav` hidden; mounted after it on first open): Stats, Spirit, Forge and Academy tabs over a panel.
+  Stats (`menuPanelHtml`) shows the table button, then a box per `MAGIC_STAT_IDS` entry (`statBoxHtml`: its name and points; tapped, it widens to − and + buttons, each disabled when it can't be pressed, and a line per stat it raises, `statLines`: a point's worth and the total), then the points free.
+  `movePoint` moves a point; the view's `decorate` shows it on the HUD at once, and the engine counts it from the next turn.
+  The table button opens `catacombStatRows` (`catacombs/summary.ts`: MHP, MAtk, MDef, Magic level, MXP to next, points, the Catacomb, hall, deepest hall, Lore bonus, Lore, every Spirit and Ingot), put away by a tap anywhere.
+  Spirit, Forge and Academy say what they will do and show what they will spend (`LATER`); their designs are docs/CATACOMBS.md's TODOs.
+  The view re-renders the panel in `decorate` only when its HTML changes.
 - `render/catacomb-board.ts`: `CatacombBoard` draws the hall on `#world` at its own size: crypt stone from the Tower's tiles (`paintTile`, Tower III's look, addressed bottom up since `paintTile` reads north as y + 1), the stairs, torches, the Lore tablet and Ingot bars not yet taken, the undead in pixels (`UNDEAD_ART`, until their PNGs) with rank chevrons and an MHP bar, the hero tweened to each turn's tile, a dark falloff from the hero, and each strike's and pickup's number rising.
   It reads the run and never changes it.
 
@@ -66,7 +72,8 @@ The screen (`ui/catacomb-view.ts`) runs the engine on the wall clock and credits
 ## Tests
 
 `tests/catacombs-engine.test.ts`: the corridor and its pinches, the rooms by hall and their reach, Ingot amounts, target order, strength precedence, the deep halls' products, enemy stats and rewards, spawn odds and the lone Wisp, the saved stream, entering, dash and rounds, Ingot pickups, an invincible enemy to a fall and the restart that keeps what was earned, the stalemate restart, Magic levels, moving points, `runTurns` across runs, the clock and haste, decoding, and the save and profile file keeping it (the run left out of the file).
+`tests/catacombs-menus.test.ts` covers the Stats boxes (lines, buttons and their disabled states), the panels and the stats table's rows.
 `tests/catacombs-player.test.ts` covers the wall-clock turns: none without a run, a turn a second stepped at most 15 times a second, Lore credited, haste spending the bank down to ×1, and a long gap banked.
-`tests/catacombs.mjs` (in `npm run test:browser`; no fixed clock, since the Catacombs play on the wall clock) enters from the menu during a climb, sees turns, hastes, opens and closes the undead table, and switches back by button and by Escape to the climb's HUD.
+`tests/catacombs.mjs` (in `npm run test:browser`; no fixed clock, since the Catacombs play on the wall clock) enters from the menu during a climb, sees turns, hastes, spends and takes back a point in Force, opens and closes the stats table and the undead table, visits a menu still to come, and switches back by button and by Escape to the climb's HUD.
 `tests/catacombs-forest.test.ts` covers the Mausoleum (its tiles, yard, mode and flag), buying the skill raising it, entering by the forest's tower number, `wouldLeave`, and Access to Everything; `tests/forest-sprites.test.ts` keeps the foliage off it.
 `tests/skill-trees.test.ts` covers Reveal Catacombs: hidden and unbuyable until the Goal is claimed, then 40 Inspiration.

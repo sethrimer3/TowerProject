@@ -22,6 +22,7 @@ try {
     for (const k of Object.keys(g.save.tutorials)) g.save.tutorials[k] = true;
     g.save.tower.tiersOpen = 2; g.save.tower.tier = 2; g.save.upgrades.catacombs = 1;
     g.save.catacombs.rng = 7; g.catacombs.enter(1);
+    g.save.catacombs.mxp = 440;
     g.save.catacombs.clock.bank = 600;
     g.newRun({ seed: 9 });
     sessionStorage.setItem("catacombsFixture", JSON.stringify(g.save));
@@ -50,6 +51,24 @@ try {
   if (!/^\d+m \d\ds$|^\d+s$/.test(bankAfter)) throw new Error(`bank reads ${bankAfter}`);
   const left = (t) => { const m = /^(?:(\d+)m )?(\d+)s$/.exec(t); return Number(m[1] ?? 0) * 60 + Number(m[2]); };
   if (left(bankAfter) > bankBefore - 15) throw new Error(`haste spent too little of the bank: ${bankBefore} -> ${bankAfter}`);
+  // Stats: a point into Force shows on the HUD at once; taking it back too.
+  await expect(page.locator("#catacomb-menus")).toBeVisible();
+  await expect(page.locator(".catacomb-free")).toHaveText("2 free");
+  await page.locator('.catacomb-stat-head[data-stat="force"]').click();
+  await page.locator('.catacomb-point[data-stat="force"][data-delta="1"]').click();
+  await expect(page.locator("#attack")).toHaveText("12");
+  await expect(page.locator(".catacomb-stat-lines")).toContainText("MAtk +2 a point · +2");
+  await page.locator('.catacomb-point[data-stat="force"][data-delta="-1"]').click();
+  await expect(page.locator("#attack")).toHaveText("10");
+  // The stats table, put away by a tap.
+  await page.locator("#catacomb-stats-table").click();
+  await expect(page.locator(".catacomb-stats")).toContainText("Magic skill points");
+  await page.locator(".catacomb-stats").click();
+  await expect(page.locator(".catacomb-stats")).toHaveCount(0);
+  // The menus still to come say what they will do.
+  await page.locator('[role=tab][data-menu="forge"]').click();
+  await expect(page.locator("#catacomb-panel")).toContainText("Blacksmith's forge");
+  await page.locator('[role=tab][data-menu="stats"]').click();
   // The enemy box opens the hall's undead.
   await page.locator("#base-enemy").click();
   await expect(page.locator(".catacomb-odds h2")).toContainText("Undead in Hall");
@@ -62,6 +81,8 @@ try {
   await expect(page.locator("#height")).toHaveText(floorBefore);
   await expect(page.locator("#hero-class")).not.toHaveText("MAGICIAN");
   await expect(page.locator("#switch-back")).toBeHidden();
+  await expect(page.locator("#catacomb-menus")).toBeHidden();
+  await expect(page.locator("nav")).toBeVisible();
   // Escape switches back too.
   await openMenu(page);
   await page.locator("#catacombs-button").click();
@@ -69,7 +90,7 @@ try {
   await page.keyboard.press("Escape");
   await expect(page.locator("html")).not.toHaveClass(/catacombs/);
   if (errors.length) throw new Error(errors.join("\n"));
-  console.log("Catacomb screen: enter, turns, haste, table, Switch Back and Escape all work.");
+  console.log("Catacomb screen: enter, turns, haste, Stats, the tables, Switch Back and Escape all work.");
 } finally {
   await browser.close();
 }
