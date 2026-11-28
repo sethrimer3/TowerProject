@@ -7,6 +7,8 @@ Claimed rewards mute their artwork rather than fading the whole button, so their
 Named relics use the exact catalog PNG through `relicIcon(relic)` in the collection, event track/store, Goals and `showRelic`; generic navigation still passes a rarity and receives its pendant.
 
 Settings includes the always-visible Legacy Enemies toggle, default off, restoring the old ordinary enemy art and names without restarting a run.
+The tapped tile's highlight (`#tile-highlight`, `BoardOverlay`) is a traced outline by default: `render/effects/tile-trace.ts` plans four rings of quarter-art-pixel cells just outside the tile, each tracing clockwise from 12 o'clock at its own speed (`planTrace`, drawn from `stream("effects")`), pale at the head and settling cell by cell to a shade of gold, drawn each board frame by `track` on a canvas inside the highlight (`.traced`), then drawn still once and left to pulse by CSS (`tile-trace-pulse`); reduced motion draws it settled and still.
+The old glowing box stays as the fallback, chosen by the `legacyHighlight` setting (Legacy tile highlight) and always used under Battery saver, whose frames are too far apart to trace; `tests/tile-trace.test.ts` covers the rings and colours.
 Enemy inspection and combat messages resolve the new bestiary through `enemies/roster.ts` with the current saved preference.
 
 **PNG UI sprites.** `ui-sprites.css`, imported after the theme styles, skins buttons, panels, dialogs, fields, checkboxes, bars, banners and slots with the shared PNG kit in `public/assets/ui/frames/`.

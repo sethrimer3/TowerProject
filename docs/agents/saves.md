@@ -31,6 +31,7 @@ The run decoder drops malformed notes (`validNotes`) and `decodeFinds` reads the
 `tests/run-notes.test.ts` covers them.
 Player settings are the exception: each is one row in `SETTINGS` (`src/save/settings.ts`: its default, the values a save may hold, and its control on the Settings page), from which the `Settings` type, the defaults and the decoder all come, so every setting is always present and readers never re-default it.
 `legacyEnemies` defaults false and restores the former ordinary Tower/Delve enemy names and Classic sprites when enabled; it changes presentation only, so existing maps, combat, progression and drops need no migration.
+`legacyHighlight` defaults false and shows the tapped tile's old glowing box in place of its traced outline; adding it moved the save-decode corpus.
 Rows are in saved key order; the page lists its own order.
 A `range` row keeps whole numbers unless its `step` is under 1, when a saved value is kept to that step (`phantasmAlpha`).
 Pixel art is the default; the old `uiSprites` and `spritesOff` fields are ignored and dropped by the settings decoder.

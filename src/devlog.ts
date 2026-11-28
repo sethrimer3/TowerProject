@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-28", text: "A tapped tile is now outlined by four fine gold lines tracing round it; Legacy tile highlight brings back the old box." },
   { date: "2026-11-28", text: "Before Auto-Climb, the play button says Waiting while the hero waits for you to tap a card." },
   { date: "2026-11-28", text: "The board zoom now zooms where you point or pinch, pans with a drag, and works without Dev Mode." },
   { date: "2026-11-28", text: "Tidier notes behind the board's wall art." },
