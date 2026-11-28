@@ -213,16 +213,19 @@ export class TrialFx {
     // A light slime the hero walked into disperses.
     for (const [id, p] of was.slimes) if (!s.slimes.some((q) => q.id === id) && hero.x === p.x && hero.y === p.y) this.cue("punch");
     // Pickups rise from their tiles: shards, potions and coins, the arena's potions and the Keymaster's keys.
+    // A shard rises as its amount beside it; a potion that healed shows only
+    // its heal over the hero (below), as a run's does.
+    const change = hero.hp - was.hp, healed = change > 0;
     const pickups = new Set((s.bossVariant?.pickups ?? []).map((p) => p.id));
     for (const [id, p] of was.pickups) {
       if (pickups.has(id) || hero.x !== p.x || hero.y !== p.y) continue;
       const tile = pickupTile(p.kind, p.amount), cue = PICKUP_CUES[p.kind];
-      this.popups.reward({ x: p.x, y: p.y, text: `+${p.amount}`, art: tile ? { tile } : { coin: p.kind === "gold" ? "gold" : "silver" } }, now);
+      if (!(healed && p.kind === "potion")) this.popups.reward({ x: p.x, y: p.y, text: `+${p.amount}`, art: tile ? { tile } : { coin: p.kind === "gold" ? "gold" : "silver" } }, now);
       if (cue) this.cue(cue);
     }
     for (const k of s.consumed) if (!was.consumed.has(k)) {
       const [x, y] = k.split(",").map(Number) as [number, number];
-      this.popups.reward({ x, y, text: "Potion", art: { tile: { kind: "potion", color: "red" } } }, now);
+      if (!healed) this.popups.reward({ x, y, text: "Potion", art: { tile: { kind: "potion", color: "red" } } }, now);
       this.cue("potion");
     }
     const drops = new Map((s.keymaster?.drops ?? []).map((d) => [at(d), d.count]));
@@ -231,7 +234,6 @@ export class TrialFx {
       this.cue("key");
     }
     // The hero's HP: what a round didn't already raise (a bite, a slime, a beam), or a heal.
-    const change = hero.hp - was.hp;
     if (change < 0 && -change - taken >= 1) this.popups.hit(hero, -change - taken, "enemy", now);
     if (change > 0) this.popups.potionHeal(hero, change, now);
   }

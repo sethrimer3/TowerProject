@@ -2,6 +2,7 @@ import { boardFont } from "../sprites/font.ts";
 import { popupAmount } from "../whole.ts";
 import { HEAL_COLOR } from "./effects/damage-labels.ts";
 import type { Coin, Encounter, Gain, GainArt, Heal, ShownFight } from "../shown.ts";
+import type { Tile } from "../entities.ts";
 import { landsAt, type Volley } from "../volley.ts";
 import { OPENING_SHRINK_MS } from "../combat.ts";
 import { snap } from "../exact.ts";
@@ -643,15 +644,41 @@ function paintPixels(c: CanvasRenderingContext2D, pixels: { x: number; y: number
 
 /** A tile's contents rising, in the board's own art (its Game theme's on a
  * themed board);
- * a key a door took shifts right to make room for its minus sign. */
-function paintSpentTile(c: CanvasRenderingContext2D, f: PopupFrame, p: Popup, art: Extract<GainArt, { tile: unknown }>) {
-  const look = f.look;
+ * a key a door took shifts right to make room for its minus sign, and a
+ * counted item (`countedAmount`) rises small after its amount, as a coin does. */
+function paintSpentTile(c: CanvasRenderingContext2D, f: PopupFrame, p: Popup & { gain: Gain }, art: Extract<GainArt, { tile: unknown }>) {
+  const look = f.look, amount = countedAmount(p.gain);
+  const paint = () => look.themed ? look.themed.contents(c, art.tile)
+    : paintContents(c, art.tile, { x: p.x, y: p.y, time: f.now, reduceMotion: look.reduceMotion, lifted: true, legacyEnemies: look.legacyEnemies, styledSprites: look.styledSprites });
+  if (amount) {
+    // The item in the coin's 18 px square, its amount before it: "+3 ⚔".
+    c.save();
+    c.translate(11, 3);
+    c.scale(0.75, 0.75);
+    paint();
+    c.restore();
+    mark(c, amount, { x: 10, y: 12 }, { color: COUNTED_COLORS[art.tile.kind] ?? REWARD_COLOR, size: 10, align: "right", styled: look.styledSprites });
+    return;
+  }
   if (art.spent) c.translate(4, 0);
-  if (look.themed) look.themed.contents(c, art.tile);
-  else paintContents(c, art.tile, { x: p.x, y: p.y, time: f.now, reduceMotion: look.reduceMotion, lifted: true, legacyEnemies: look.legacyEnemies, styledSprites: look.styledSprites });
+  paint();
   if (!art.spent) return;
   c.translate(-4, 0);
   mark(c, "−", { x: 3, y: 12 }, { color: SPENT_COLOR, size: 14, styled: look.styledSprites });
+}
+
+/** The colour of a counted item's amount: an ATK shard's, a DEF shard's, a key's. */
+const COUNTED_COLORS: Partial<Record<Tile["kind"], string>> = { attack: "#ff9a7a", defense: "#9fc4ff", key: REWARD_COLOR };
+/** The amount a picked-up item rises with beside its sprite ("+3"), or
+ * null where the item rises alone: an ATK or DEF shard always shows what
+ * it added, a key only when it gave more than one. */
+export function countedAmount(gain: Gain): string | null {
+  const art = gain.art;
+  if (!art || !("tile" in art) || art.spent) return null;
+  const kind = art.tile.kind, amount = gain.text.split(" ")[0];
+  if (!/^\+\d/.test(amount)) return null;
+  if (kind === "attack" || kind === "defense") return amount;
+  return kind === "key" && amount !== "+1" ? amount : null;
 }
 
 /** Whether the fight ends with the enemy felled, by a strike or its thorns. */
