@@ -62,19 +62,6 @@ function paintCrosshair(c: CanvasRenderingContext2D, gold: boolean, now: number,
   c.fillRect(12 - r - 3, 11, 5, 2); c.fillRect(12 + r - 2, 11, 5, 2);
 }
 
-/** A small red potion: a cork, a glass neck, a round flask. */
-function paintPotion(c: CanvasRenderingContext2D, now: number, reduceMotion: boolean) {
-  const bob = reduceMotion ? 0 : Math.round(Math.sin(now / 250));
-  c.save(); c.translate(0, bob);
-  c.fillStyle = "#00000066"; c.fillRect(7, 19, 10, 2);
-  c.fillStyle = "#8a5a2a"; c.fillRect(10, 5, 4, 2);
-  c.fillStyle = "#cfe3f0"; c.fillRect(10, 7, 4, 3);
-  c.fillStyle = "#cfe3f0"; c.fillRect(7, 10, 10, 9);
-  c.fillStyle = "#e23a4a"; c.fillRect(8, 12, 8, 6);
-  c.fillStyle = "#ff9aa4"; c.fillRect(9, 12, 2, 2);
-  c.restore();
-}
-
 /** An undead's picture as an image, for the Codex: its pixel art on a 24 × 24 canvas. */
 const undeadIcons = new Map<UndeadId, string>();
 export function undeadIconUrl(id: UndeadId) {
@@ -161,8 +148,8 @@ export class CatacombBoard {
       else if (k === "lore" && left.has(`${x},${row}`)) at(row, x, () => drawKit(c, "cell", 3, 3, 18, 18));
       else if ((k === "brass" || k === "iron" || k === "steel" || k === "nickel") && left.has(`${x},${row}`)) at(row, x, () => paintIngot(c, k));
     }
-    // Potions on the side tiles.
-    for (const [x, row] of run.potions) at(row, x, () => paintPotion(c, now, reduceMotion));
+    // Potions on the side tiles, the red potion of a Tower or Delve run.
+    for (const [x, row] of run.potions) at(row, x, () => paintContents(c, { kind: "potion", color: "red" }, { x, y: row, time: now, reduceMotion, styledSprites }));
     // The undead, with their rank chevrons, their drops' pips, what MHP they have left and their crosshairs.
     run.slots.forEach((slot, i) => {
       if (!slot) return;
