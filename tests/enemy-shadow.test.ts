@@ -11,13 +11,13 @@ function block(l: number, t: number, r: number, b: number) {
 
 test("the shadow is a stepped oval sized and centred on the sprite's feet", () => {
   const rim = shadowRows(block(4, 10, 19, 21)).filter((r) => !r.core);
-  assert.deepEqual(rim.map((r) => r.y), [20, 21, 22, 23, 24]);
-  assert.equal(Math.min(...rim.map((r) => r.x0)), 3);
-  assert.equal(Math.max(...rim.map((r) => r.x1)), 20);
+  assert.deepEqual(rim.map((r) => r.y), [21, 22, 23, 24, 25]);
+  assert.equal(Math.min(...rim.map((r) => r.x0)), 1);
+  assert.equal(Math.max(...rim.map((r) => r.x1)), 22);
   for (const r of rim) assert.equal(r.x0 + r.x1, 23, "symmetric under the feet");
   const narrow = shadowRows(block(8, 10, 15, 20)).filter((r) => !r.core);
   assert.ok(narrow.length < rim.length);
-  assert.equal(Math.max(...narrow.map((r) => r.x1)) - Math.min(...narrow.map((r) => r.x0)) + 1, 10);
+  assert.equal(Math.max(...narrow.map((r) => r.x1)) - Math.min(...narrow.map((r) => r.x0)) + 1, 14);
 });
 
 test("the oval narrows towards its top and bottom without diagonal single steps", () => {

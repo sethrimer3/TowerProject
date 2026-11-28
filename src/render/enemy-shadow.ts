@@ -8,16 +8,18 @@ export type ShadowRow = { y: number; x0: number; x1: number; core: boolean };
 /** How dark the shadow's rim and core are. Both stay under the torch
  * silhouette's alpha cut (toShadow in entity-lighting.ts), so the ground
  * shadow never casts a torch shadow of its own. */
-export const SHADOW_ALPHA = { rim: 0.24, core: 0.42 };
+export const SHADOW_ALPHA = { rim: 0.28, core: 0.45 };
 
 const SIZE = 24, SOLID = 128;
+/** How far past the tile the shadow may spread: the bake's margin (ENEMY_MARGIN). */
+const REACH = 3;
 /** The oval for a sprite without solid pixels (art missing): the old fixed shadow's size. */
 const FALLBACK = { left: 4, right: 19, bottom: 20 };
 
 /** The shadow's rows for a 24x24 sprite's alpha channel (row-major, one byte a
- * pixel). The oval is two pixels wider than the sprite's bottom four solid
- * rows, centred under them, with its middle on the sprite's lowest row so it
- * peeks out below the feet. A flying enemy's sits lower and smaller, on the
+ * pixel). The oval is three pixels wider each side than the sprite's bottom
+ * four solid rows, centred under them, with its middle a row below the
+ * sprite's lowest so it shows past the enemy's outline and rim. A flying enemy's sits lower and smaller, on the
  * floor beneath it. Each row is one horizontal span, so its edge only ever
  * steps orthogonally; the core is the same oval inset by two pixels. */
 export function shadowRows(alpha: ArrayLike<number>, flying = false): ShadowRow[] {
@@ -32,11 +34,11 @@ export function shadowRows(alpha: ArrayLike<number>, flying = false): ShadowRow[
       for (let x = 0; x < SIZE; x++)
         if (alpha[y * SIZE + x] >= SOLID) { left = Math.min(left, x); right = Math.max(right, x); }
   }
-  let width = Math.min(20, Math.max(8, right - left + 3));
-  if (flying) { width = Math.max(6, width - 4); bottom = 21; }
-  const height = width >= 14 ? 5 : width >= 10 ? 4 : 3;
-  const x0 = Math.min(SIZE - width, Math.max(0, Math.round((left + right + 1 - width) / 2)));
-  const top = Math.min(SIZE + 1 - height, bottom - Math.floor(height / 2) + 1);
+  let width = Math.min(24, Math.max(10, right - left + 7));
+  if (flying) { width = Math.max(8, width - 6); bottom = 21; }
+  const height = width >= 16 ? 5 : width >= 11 ? 4 : 3;
+  const x0 = Math.min(SIZE + REACH - width, Math.max(-REACH, Math.round((left + right + 1 - width) / 2)));
+  const top = Math.min(SIZE + REACH - height, bottom - Math.floor(height / 2) + 2);
   const rows: ShadowRow[] = [];
   for (let r = 0; r < height; r++) {
     const t = (r + 0.5) / (height / 2) - 1;
