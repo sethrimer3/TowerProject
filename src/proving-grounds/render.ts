@@ -2,7 +2,6 @@ import { paintContents, paintHero, paintTile, paintTorch, type BoardLook } from 
 import { sprite } from "../sprites/pixel-sprite.ts";
 import { drawCrates } from "../render/decor/decor-sprites.ts";
 import { POSITION_HALOS_ENABLED } from "../render/lighting.ts";
-import { drawKit } from "../sprites/kit.ts";
 import { HeroIdleAnimation } from "../sprites/animations.ts";
 import { paintShockStatus } from "../sprites/spell-art.ts";
 import type { Tile } from "../entities.ts";
@@ -139,8 +138,7 @@ export class TrialRenderer {
       }
       for(const p of ARENA_CRATES)tile(p.x,p.y,()=> {
         const broken=propDestroyed(s,p);
-        if(styled && (broken?drawKit(c,"crate-broken",6,12,12,12):drawKit(c,"crate")))return;
-        drawCrates(c,0,0,[{x:4,y:6,w:16,h:16,lift:0,kind:"crate",tone:(p.x+p.y)%3}],broken);
+        drawCrates(c,0,0,[{x:4,y:6,w:16,h:16,lift:0,kind:"crate",tone:(p.x+p.y)%3}],broken,styled);
       });
       for (const p of ARENA_TORCHES) tile(p.x,p.y,()=> {
         if(propDestroyed(s,p)) {

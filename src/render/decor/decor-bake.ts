@@ -1,6 +1,7 @@
 import { tileRandom } from "../../random.ts";
-import { drawKit, kitImage, spriteRevision } from "../../sprites/kit.ts";
-import { environmentPixels, FLOWER_SPRITES, GLOWCAP_SPRITES, VINE_SPRITES, WATER_SPRITES, type SpritePixels } from "../../sprites/environment.ts";
+import { spriteRevision } from "../../sprites/kit.ts";
+import { environmentPixels, GLOWCAP_SPRITES, VINE_SPRITES, WATER_SPRITES, type SpritePixels } from "../../sprites/environment.ts";
+import { drawFlowerProp, drawGridProp, PROP_DENSITY } from "../../sprites/half-props.ts";
 import { FLOWER_COLORS, TILE_PX, tileKey, valueNoise, type DecorSource, type Flower, type Plant, type PlantKind, type TileDecor } from "./decor.ts";
 
 /** Bakes a tile's static decor (moss, water, vines, flowers, plants) into a
@@ -42,22 +43,33 @@ export class DecorBaker {
     const key = tileKey(x, y);
     if (this.bakes.has(key)) return this.bakes.get(key)!;
     if (typeof document === "undefined") return null;
-    const cv = document.createElement("canvas");
+    let cv = document.createElement("canvas");
     cv.width = cv.height = TILE_PX;
     const ctx = cv.getContext("2d");
     if (!ctx) return null;
     const img = ctx.createImageData(TILE_PX, TILE_PX);
-    // Keep the procedural plant until its replacement really is ready.
-    // Image loads change the revision and invalidate both bake caches.
-    const replacements = new Set(styled ? d.plants.filter(p => kitImage(kitPlantId(p))) : []);
-    const flowers = new Set(styled ? d.flowers.filter(f => kitImage(FLOWER_SPRITES[f.color])) : []);
+    // The kit's plants and flowers are half-pixel props, drawn over the
+    // native moss and water on a tile baked at twice the density.
+    const replacements = new Set(styled ? d.plants : []);
+    const flowers = new Set(styled ? d.flowers : []);
     if (!paintTile(new TilePixels(img.data, src, x, y, styled), d, replacements, flowers)) {
       this.bakes.set(key, null);
       return null;
     }
     ctx.putImageData(img, 0, 0);
-    for (const f of flowers) paintKitFlower(ctx, f);
-    for (const p of replacements) paintKitPlant(ctx, p);
+    if (flowers.size || replacements.size) {
+      const fine = document.createElement("canvas");
+      fine.width = fine.height = TILE_PX * PROP_DENSITY;
+      const fc = fine.getContext("2d");
+      if (fc) {
+        fc.imageSmoothingEnabled = false;
+        fc.drawImage(cv, 0, 0, fine.width, fine.height);
+        fc.scale(PROP_DENSITY, PROP_DENSITY);
+        for (const f of flowers) paintKitFlower(fc, f);
+        for (const p of replacements) paintKitPlant(fc, p);
+        cv = fine;
+      }
+    }
     if (this.bakes.size > 3000) this.bakes.clear();
     this.bakes.set(key, cv);
     return cv;
@@ -127,28 +139,29 @@ function paintTile(tp: TilePixels, d: TileDecor, replacements: Set<Plant>, flowe
   return water || moss || d.vines.length + d.flowers.length + d.plants.length > 0;
 }
 
-/** Twelve native pixels, painted 1:1 on the tile's existing 24-pixel grid. */
-export function paintKitPlant(c: CanvasRenderingContext2D, p: Plant) {
-  if (p.kind !== "web") return drawKit(c, kitPlantId(p), p.i - 6, p.j - 10, 12, 12);
+/** Twelve world pixels of half-pixel art, outlined, rooted at the plant's
+ * planned pixel; webs hang in their corner without an outline. */
+export function paintKitPlant(c: CanvasRenderingContext2D, p: Plant, outline = true) {
+  if (p.kind !== "web") return drawGridProp(c, kitPlantId(p), p.i - 6, p.j - 10, outline);
   c.save();
   const corner = p.corner ?? 0;
   c.translate(corner === 1 || corner === 2 ? TILE_PX : 0, corner >= 2 ? TILE_PX : 0);
   c.rotate(corner * Math.PI / 2);
-  const drawn = drawKit(c, "web", 0, 0, 12, 12);
+  const drawn = drawGridProp(c, "web", 0, 0, false);
   c.restore();
   return drawn;
 }
 
 /** The plant body alone, matching the ground bake, without moss, water or emitted light. */
 export function paintPlantBody(c: CanvasRenderingContext2D, p: Plant, src: DecorSource, x: number, y: number, styled = false) {
-  if (styled && paintKitPlant(c, p)) return;
+  if (styled && paintKitPlant(c, p, false)) return;
   const img = c.createImageData(TILE_PX, TILE_PX);
   PLANTS[p.kind](new TilePixels(img.data, src, x, y, false), p);
   c.putImageData(img, 0, 0);
 }
 
 const kitPlantId = (p: Plant) => p.kind === "mushrooms" && p.glow ? GLOWCAP_SPRITES[p.variant] : p.kind;
-export const paintKitFlower = (c: CanvasRenderingContext2D, f: Flower) => drawKit(c, FLOWER_SPRITES[f.color], f.i - 4, f.j - 4, 8, 8);
+export const paintKitFlower = (c: CanvasRenderingContext2D, f: Flower, outline = true) => drawFlowerProp(c, f.color, f.i - 4, f.j - 4, outline);
 
 /** Keep the seeded climbing stems; attach small PNG leaves at their existing joints. */
 function paintVines(tp: TilePixels, d: TileDecor) {
