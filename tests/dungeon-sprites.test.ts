@@ -124,7 +124,7 @@ test("all wall connections, material floors and live tile contents use the corre
   }
 });
 
-test("wall variation is seeded, diagonal corners read real openings, and corner PNGs stay on eligible joins", () => {
+test("wall variation is seeded, diagonal corners read real openings, and no wall corner is ever cut", () => {
   assert.deepEqual(new Set(Array.from({ length: 60 }, (_, x) => dungeonWallVariant(x, 5, 3))), new Set([0, 1, 2, 3, 4, 5]));
   const variants = (seed: number) => Array.from({ length: 60 }, (_, x) => dungeonWallVariant(x, 5, seed));
   assert.deepEqual(variants(3), variants(3), "wall art is stable on redraw and reload");
@@ -146,7 +146,8 @@ test("wall variation is seeded, diagonal corners read real openings, and corner 
       const neighbors = { northWall: joined, eastWall: joined, southWall: joined, westWall: joined };
       const d = ["wall", "wall", "wall", "wall"] as ("wall" | "masonry")[]; d[corner] = "masonry";
       drawDungeonGround(c, { ...tile, neighbors }, d);
-      assert.equal(frames.length, 2); assert.equal(frames[1], DUNGEON_CORNER_FRAME + corner);
+      assert.equal(frames.length, 1, "a diagonal opening never cuts the wall's corner");
+      assert.ok(!frames.some(frame => frame >= DUNGEON_CORNER_FRAME && frame < DUNGEON_CORNER_FRAME + 4));
     }
     frames.length = 0;
     drawDungeonGround(c, { ...tile, neighbors: { northWall: true, eastWall: false, southWall: true, westWall: false } }, ["masonry", "masonry", "masonry", "masonry"]);

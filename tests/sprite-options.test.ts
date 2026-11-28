@@ -34,7 +34,9 @@ test("square-door toggles retain every lock mark and torch animations freeze for
   Object.defineProperty(globalThis, "Image", { configurable: true, value: ReadyImage });
   const calls: [string, ...number[]][] = [];
   const c = new Proxy({}, { set: () => true, get: (_, key) => key === "drawImage"
-    ? (image: ReadyImage, ...args: number[]) => calls.push([image.src.split("/").at(-1)!, ...args]) : () => {} }) as CanvasRenderingContext2D;
+    ? (image: ReadyImage, ...args: number[]) => calls.push([image.src.split("/").at(-1)!, ...args])
+    : key === "fillRect" ? (...args: number[]) => calls.push(["fillRect", ...args])
+    : key === "getTransform" ? () => ({ a: 1, e: 0, f: 0 }) : () => {} }) as CanvasRenderingContext2D;
   try {
     const tile: Tile = { kind: "door", door: { type: "keys", keys: ["yellow", "blue", "red"], mode: "all", heart: true } };
     const art = { x: 0, y: 0, time: 0, reduceMotion: false, styledSprites: true };
@@ -42,8 +44,17 @@ test("square-door toggles retain every lock mark and torch animations freeze for
     assert.deepEqual(calls.map(c => c[0]), ["square-door-steel.png", "heart.png", "key-yellow.png", "key-blue.png", "key-red.png"]);
     calls.length = 0; paintContents(c, tile, art); assert.equal(calls[0][0], "door-wood.png");
     const torch = { x: 2, y: 4 } as Torch;
+    // The board's torch is the sprite's hardware with a live fire in its bowl.
+    const board = (now: number, reduced: boolean) => {
+      calls.length = 0; paintTorch(c, torch, now, reduced, true); return calls.map(call => [...call]);
+    };
+    assert.equal(board(0, false)[0][0], "torch.png");
+    assert.ok(board(0, false).some(call => call[0] === "fillRect"));
+    assert.notDeepEqual(board(0, false), board(130, false));
+    assert.deepEqual(board(0, true), board(130, true));
+    // The lighting's silhouettes keep the frame strip, frozen for reduced motion.
     const frame = (now: number, reduced: boolean, animated: boolean) => {
-      calls.length = 0; paintTorch(c, torch, now, reduced, animated); return [...calls[0]];
+      calls.length = 0; paintTorch(c, torch, now, reduced, animated, false); return [...calls[0]];
     };
     assert.equal(frame(0, false, false)[0], "torch.png");
     assert.equal(frame(0, false, true)[0], "torch-animation.png");
