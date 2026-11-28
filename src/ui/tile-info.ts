@@ -23,7 +23,7 @@ type Board = Pick<Game, "world" | "run" | "mode" | "stepRules" | "save" | "enemy
 const DIVINE_COLOR = "#ffd76a";
 type Describe = (t: Tile, p: Player, g: Board, at: { x: number; y: number }) => Omit<TileInfo, "color">;
 
-const KIND_COLORS: Partial<Record<Kind, string>> = {
+export const KIND_COLORS: Partial<Record<Kind, string>> = {
   wall: "#8d97a8",
   floor: "#8d97a8",
   enemy: "#df797e",
@@ -123,12 +123,12 @@ function shardGain(t: Tile, p: Player, g: Board, stat: "attack" | "defense") {
 
 /** A stat's icon and value, kept on one line; the icon's alt names the
  * stat, so the status row's plain text still does. */
-const stat = (icon: string, label: string, value: string, extra = "") =>
+export const stat = (icon: string, label: string, value: string, extra = "") =>
   `<span class="enemy-stat">${icon.replace('alt=""', `alt="${label}"`)} ${value}${extra}</span>`;
 
 /** An enemy's stats, one a line in the pop-up; the " · " between them is
  * hidden there, but keeps the status row's one line of plain text apart. */
-const statLines = (...stats: string[]) =>
+export const statLines = (...stats: string[]) =>
   `<span class="enemy-stats">${stats.filter(Boolean).join(`<span class="stat-sep"> · </span><br>`)}</span>`;
 
 /** What Armor Break has taken off `e`'s DEF so far (`broken`: a fight being

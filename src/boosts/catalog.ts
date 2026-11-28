@@ -20,20 +20,22 @@ export type BoostDef = {
   plus?: true;
   /** What it raises, after its value: "Card XP" in "×1.5 Card XP". */
   what: string;
+  /** What it does, in a few words, for the boost table's tap (`value`: "×1.5", "+1"). */
+  about: (value: string) => string;
 };
 
 export const BOOSTS: Record<BoostId, BoostDef> = {
-  gold: { name: "Gold Bonus", icon: "gold", base: 1.5, what: "Gold" },
-  xp: { name: "XP", icon: "badge-xp", base: 1.5, what: "XP" },
-  cardXp: { name: "Card XP", icon: "ui-card-points", base: 1.5, what: "Card XP" },
-  research: { name: "Research Speed", icon: "hourglass", base: 1.5, what: "research speed" },
-  training: { name: "Training Speed", icon: "relic-shop-trainer", base: 1.5, what: "training speed" },
-  speed: { name: "Game Speed", icon: "boon-play-speed", base: 1, plus: true, what: "steps / sec" },
-  endRush: { name: "End Rush", icon: "badge-dash", base: 3, plus: true, what: "End Rush tiles" },
-  equipmentDrops: { name: "Equipment Drops", icon: "combat-chest-equipment", base: 1.5, what: "equipment drop chance" },
-  gemBank: { name: "Gem Bank Refill", icon: "gem", base: 2, what: "Gem Bank refill speed" },
-  rubies: { name: "Rubies", icon: "ruby", base: 1.5, what: "Rubies" },
-  cells: { name: "Lore Fragments", icon: "cell", base: 1.5, what: "Lore" },
+  gold: { name: "Gold Bonus", icon: "gold", base: 1.5, what: "Gold", about: (v) => `You earn ${v} Gold.` },
+  xp: { name: "XP", icon: "badge-xp", base: 1.5, what: "XP", about: (v) => `You earn ${v} XP.` },
+  cardXp: { name: "Card XP", icon: "ui-card-points", base: 1.5, what: "Card XP", about: (v) => `Your cards earn ${v} XP.` },
+  research: { name: "Research Speed", icon: "hourglass", base: 1.5, what: "research speed", about: (v) => `Research goes ${v} faster.` },
+  training: { name: "Training Speed", icon: "relic-shop-trainer", base: 1.5, what: "training speed", about: (v) => `Training goes ${v} faster.` },
+  speed: { name: "Game Speed", icon: "boon-play-speed", base: 1, plus: true, what: "steps / sec", about: (v) => `The hero takes ${v} ${v === "+1" ? "step" : "steps"} a second.` },
+  endRush: { name: "End Rush", icon: "badge-dash", base: 3, plus: true, what: "End Rush tiles", about: (v) => `End Rush dashes ${v} tiles further.` },
+  equipmentDrops: { name: "Equipment Drops", icon: "combat-chest-equipment", base: 1.5, what: "equipment drop chance", about: (v) => `Equipment drops ${v} as often.` },
+  gemBank: { name: "Gem Bank Refill", icon: "gem", base: 2, what: "Gem Bank refill speed", about: (v) => `The Gem Bank fills ${v} faster.` },
+  rubies: { name: "Rubies", icon: "ruby", base: 1.5, what: "Rubies", about: (v) => `You earn ${v} Rubies.` },
+  cells: { name: "Lore Fragments", icon: "cell", base: 1.5, what: "Lore", about: (v) => `You earn ${v} Lore.` },
 };
 
 /** A boost's value with Golden Scarab Effect at `effect` percent (100 with

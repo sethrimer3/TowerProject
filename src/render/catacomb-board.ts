@@ -3,7 +3,7 @@
 // native PNGs, the hero, and a popup for each strike.
 // Presentation only: it reads the run and never changes it.
 import type { Tile } from "../entities.ts";
-import { paintContents, paintHero, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
+import { paintContents, paintHero, paintRingedSprite, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 import {undeadSprite, ingotSprite, buffSprite} from "../sprites/catacombs.ts";
 import { drawKit, kitUrl } from "../sprites/kit.ts";
@@ -128,7 +128,8 @@ export class CatacombBoard {
       const shake = !reduceMotion && i === this.hitSlot && now - this.hitAt < 160 ? Math.round(Math.sin((now - this.hitAt) / 18) * 2) : 0;
       at(CORRIDOR_ROW, x, () => {
         const bob = reduceMotion || slot.id !== "wisp" && slot.id !== "ghost" ? 0 : Math.round(Math.sin(now / 300 + i) * 1.5);
-        drawKit(c, undeadSprite(slot.id), shake, bob, 24, 24);
+        // The red glow and black outline a run's enemy wears, brighter and gold-rimmed by rank.
+        paintRingedSprite(c, undeadSprite(slot.id), slot.strength, shake, bob);
         if (slot.strength !== "normal") rankChevrons(c, slot.strength, "#ffd85a", "#000000", 1, 1);
         if (slot.mark) paintCrosshair(c, slot.mark === "gold", now, reduceMotion);
         // Slots are two tiles apart: two columns keep all four marks readable.

@@ -38,6 +38,7 @@ Each boost is a factor of its own: the Gold boost multiplies the Level-up Boost 
 ## The boost table
 
 The boosts running show in a small bordered table over the board's top-left corner, in the forest and inside a climb: a row each, its icon and the time left (*11:55*).
+Tap a row to see the boost's name and what it does.
 It also holds the run's [Level-up Boost](runs.md) and the [Gold ad's boost](currencies-and-shop.md).
 A claimed scarab's boost drops from its tile into its row, showing its icon, its value and the time it added (*×1.5 +12:00*).
 

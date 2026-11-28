@@ -58,6 +58,11 @@ A Gold Crosshair hits three times as hard; Fortune gives the chance of one.
 Each turn, a potion may also appear on a tile beside the corridor.
 Tap it for 10 MHP; it is lost if you leave the hall first.
 
+**What a tile holds.** Tap any tile of the hall to see what is there, in the same box a climb shows.
+An undead's box shows its MHP, its MAtk with what each of its strikes takes off you, its MDef with what each of your strikes takes off it, and the MXP and Spirit it pays.
+Under them come its Drops, its crosshair, and the forecast: what the fight would cost you, whether you survive it, and the hits it takes, without MCrits.
+Tap the same tile again to put the box away; a wall's or floor's goes by itself.
+
 **Spirit.** The Spirit menu spends Spirit on upgrades.
 Unlock Ability opens a new ability each level: Spell Surge for 10 Uncommon Spirit, Renewing Rush for 75 Rare and Arcane Barrage for 150 Epic.
 Magic ATK +1 gives +1 MAtk a level, 25 levels, from 50 Uncommon Spirit.
@@ -73,8 +78,10 @@ The slim Auto button above it casts it by itself whenever it is ready.
 | Renewing Rush | +100% attack speed, and 50 MHP when cast | 120 turns |
 | Arcane Barrage | every undead in the hall also takes 20% of a hit past its MDef | 90 turns |
 
-**Banked time.** Time the game is closed is banked, a second at a time, and the Welcome Back dialog says how many turns, and shown over the hall's top right with a speed choice: ×1, ×5, ×10 or ×100.
+**Banked time.** Time the game is closed is banked, a second at a time, and the Welcome Back dialog says how many turns, and shown over the hall's top right with a speed choice: ×0 (Pause), ×1, ×5, ×10 or ×100.
 Above ×1, each extra turn spends a banked second; when the bank runs out the speed drops back to ×1.
+At ×0 no turn is played, and each second goes to the bank instead.
+Leaving the Catacomb screen while paused sets it playing at ×1; a faster speed keeps spending the bank while you are away.
 
 **Spirit and Ingots.** Each undead beaten drops Spirit of its rarity, and treasure rooms hold Ingots; both are kept for good and listed in the currencies table once the Catacombs are open.
 

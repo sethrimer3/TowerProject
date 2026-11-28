@@ -17,6 +17,7 @@ import { tapCrosshair, takePotion, type TapEvent } from "../catacombs/taps.ts";
 import { CORRIDOR_ROW, HALL_SIZE, SLOT_XS } from "../catacombs/hall.ts";
 import { SPIRIT_RARITIES, UNDEAD, undeadStats, type SpiritRarity } from "../catacombs/catalog.ts";
 import type { TurnEvent } from "../catacombs/turn.ts";
+import { catacombTileInfo, plainTile } from "./catacomb-tile-info.ts";
 import { tierNumeral } from "../tiers.ts";
 import { shortAmount, whole } from "../whole.ts";
 import { usesGameSprites } from "../sprites/style.ts";
@@ -48,6 +49,13 @@ export function turnLine(event: TurnEvent | null, slotName: (slot: number) => st
   }
 }
 
+/** How long a tapped plain tile's box shows before it is gone (2 s, then
+ * a second's fade: a run's `tile-info-fade`). */
+const PLAIN_TILE_MS = 3000;
+
+/** The haste select's words for a haste. */
+export const hasteLabel = (h: Haste) => (h === 0 ? "×0 (Pause)" : `×${h}`);
+
 /** The six Spirits the HUD shows: Common to Mythic, or Uncommon to
  * Ancestral once any Ancestral Spirit is held. */
 export function shownSpirits(spirit: Record<SpiritRarity, number>): SpiritRarity[] {
@@ -62,6 +70,9 @@ export class CatacombView {
   private board = new CatacombBoard(el("world") as HTMLCanvasElement);
   private player = new CatacombPlayer();
   private last: TurnEvent | null = null;
+  /** The tile whose box shows, kept up to date each turn; null for none. */
+  private inspected: { x: number; y: number } | null = null;
+  private plainTimer = 0;
   /** Stats, Spirit, Forge and Academy, under the board. A point moved shows at once and counts from the next turn. */
   private menus = new CatacombMenus(() => this.c, () => { this.decorate(); this.ctx.save(); });
   active = false;
@@ -108,6 +119,9 @@ export class CatacombView {
   close() {
     if (!this.active) return;
     this.active = false;
+    this.hideInspect();
+    // Nobody watches a paused Catacomb: it plays on, or spends the bank at its haste.
+    this.unpause();
     document.documentElement.classList.remove("catacombs");
     document.querySelector(".catacomb-odds-layer")?.remove();
     this.menus.close();
@@ -119,9 +133,19 @@ export class CatacombView {
   /** Each frame, on every page: takes the turns due; while open, draws them
    * and refreshes the HUD. Returns whether it owns the board this frame. */
   frame(now: number) {
+    // Paused when the app last closed: it plays on while not watched.
+    if (!this.active && this.c.clock.haste === 0) this.unpause();
     const step = this.player.step(this.ctx.game.save, this.ctx.game.clock(), now);
     if (step && this.active) this.stepped(step, now);
     return this.active;
+  }
+
+  /** Plays a paused clock on at ×1. */
+  private unpause() {
+    if (this.c.clock.haste !== 0) return;
+    setHaste(this.c.clock, 1);
+    this.player.resetHaste();
+    this.ctx.save();
   }
 
   /** Draws the hall (the frame loop's `boardFrame`). */
@@ -133,19 +157,72 @@ export class CatacombView {
   }
 
   /** A tap on the hall: a crosshair (on its undead, or the wall above or
-   * below it) takes its free hit; a potion is drunk. No turn passes. */
+   * below it) takes its free hit; a potion is drunk. No turn passes. The
+   * tile's box shows what stands there, as a run's inspect box does (an
+   * undead's for its crosshair's tap); a second tap on it puts it away. */
   private tap(e: PointerEvent) {
     const run = this.c.run, box = el("world").getBoundingClientRect();
     if (!run || !box.width || !box.height) return;
     const x = Math.floor(((e.clientX - box.left) / box.width) * HALL_SIZE), y = Math.floor(((e.clientY - box.top) / box.height) * HALL_SIZE);
-    const slot = (SLOT_XS as readonly number[]).indexOf(x);
+    if (x < 0 || y < 0 || x >= HALL_SIZE || y >= HALL_SIZE) return;
+    const slot = (SLOT_XS as readonly number[]).indexOf(x), onSlot = slot >= 0 && Math.abs(y - CORRIDOR_ROW) <= 1;
     const name = slot >= 0 ? UNDEAD[run.slots[slot]?.id ?? "wisp"].name : "";
-    const event = slot >= 0 && Math.abs(y - CORRIDOR_ROW) <= 1 ? tapCrosshair(this.c, slot) : takePotion(this.c, x, y);
-    if (!event) return;
-    this.board.tapped(event, performance.now());
-    this.decorate();
-    text("message", tapLine(event, name));
-    this.ctx.save();
+    const event = onSlot ? tapCrosshair(this.c, slot) : takePotion(this.c, x, y);
+    // A crosshair's undead, standing or just banished, is what the box shows.
+    const at = onSlot && (event || run.slots[slot]) ? { x, y: CORRIDOR_ROW } : { x, y };
+    if (event) {
+      this.board.tapped(event, performance.now());
+      if (event.kind === "potion" || event.killed) this.hideInspect();
+      else {
+        this.inspected = at;
+        this.showInspect(true);
+      }
+      this.decorate();
+      text("message", tapLine(event, name));
+      this.ctx.save();
+      return;
+    }
+    if (this.inspected && this.inspected.x === at.x && this.inspected.y === at.y) return this.hideInspect();
+    this.inspected = at;
+    this.showInspect(true);
+  }
+
+  /** Shows the inspected tile's box over it, or below it with no room above
+   * (`place`), or, each turn, writes what it says now; a plain tile's fades
+   * after a moment, as a run's does. */
+  private showInspect(place = false) {
+    const at = this.inspected, box = el("catacomb-inspect"), glow = el("catacomb-highlight");
+    const info = at && catacombTileInfo(this.c, at.x, at.y);
+    if (!at || !info) return this.hideInspect();
+    // An undead banished, or a pickup taken, since the tap: nothing left to show.
+    if (!place && plainTile(info) && !box.classList.contains("fading")) return this.hideInspect();
+    const html = `<b style="color:${info.color}">${info.title}</b><div>${info.body}</div>`;
+    if (box.innerHTML !== html) box.innerHTML = html;
+    if (!place) return;
+    box.hidden = glow.hidden = false;
+    const frame = el("board-frame").getBoundingClientRect(), world = el("world").getBoundingClientRect(), s = world.width / HALL_SIZE;
+    const left = world.left - frame.left + at.x * s, top = world.top - frame.top + at.y * s, size = box.getBoundingClientRect();
+    Object.assign(glow.style, { left: `${left}px`, top: `${top}px`, width: `${s}px`, height: `${s}px` });
+    let boxTop = top - size.height - 8;
+    if (boxTop < 4) boxTop = Math.min(frame.height - size.height - 4, top + s + 8);
+    box.style.left = `${Math.max(4, Math.min(frame.width - size.width - 4, left + s / 2 - size.width / 2))}px`;
+    box.style.top = `${boxTop}px`;
+    const plain = plainTile(info);
+    for (const piece of [box, glow]) {
+      piece.classList.remove("fading");
+      void piece.offsetWidth;
+      piece.classList.toggle("fading", plain);
+    }
+    clearTimeout(this.plainTimer);
+    if (plain) this.plainTimer = window.setTimeout(() => this.hideInspect(), PLAIN_TILE_MS);
+  }
+
+  private hideInspect() {
+    clearTimeout(this.plainTimer);
+    this.inspected = null;
+    const box = document.getElementById("catacomb-inspect"), glow = document.getElementById("catacomb-highlight");
+    if (box) box.hidden = true;
+    if (glow) glow.hidden = true;
   }
 
   private stepped(step: CatacombStep, now: number) {
@@ -172,8 +249,9 @@ export class CatacombView {
       `<button id="switch-back" class="mini-action switch-back catacomb-only" aria-label="Switch back to where you were" title="Switch Back"><span class="mini-icon">${uiSprite("arrow-left", "ui-sprite switch-back-icon")}</span><small>SWITCH BACK</small></button>`);
     el("switch-back").onclick = () => this.close();
     el("board-frame").insertAdjacentHTML("beforeend",
-      `<div id="catacomb-bank" class="catacomb-bank catacomb-only" hidden title="Banked seconds: each hasted turn spends one">${clockIcon()}<b id="catacomb-bank-time"></b>` +
-      `<select id="catacomb-haste" aria-label="Turns a second">${HASTES.map((h) => `<option value="${h}">×${h}</option>`).join("")}</select></div>`);
+      `<div id="catacomb-highlight" class="tile-highlight active catacomb-only" hidden></div><div id="catacomb-inspect" class="inspect-box catacomb-inspect catacomb-only" hidden></div>` +
+      `<div id="catacomb-bank" class="catacomb-bank catacomb-only" title="Banked seconds: each hasted turn spends one, and each paused second adds one">${clockIcon()}<b id="catacomb-bank-time"></b>` +
+      `<select id="catacomb-haste" aria-label="Turns a second">${HASTES.map((h) => `<option value="${h}">${hasteLabel(h)}</option>`).join("")}</select></div>`);
     const haste = el("catacomb-haste") as HTMLSelectElement;
     haste.onchange = () => {
       setHaste(this.c.clock, Number(haste.value) as Haste);
@@ -225,13 +303,13 @@ export class CatacombView {
     text("board-title", "THE CATACOMBS");
     text("board-subtitle", `CATACOMB ${tierNumeral(number)} · HALL ${run.hall.toLocaleString("en-US")}`);
     el("board").dataset.heading = "catacombs";
-    text("message", turnLine(this.last, (slot) => UNDEAD[run.slots[slot]?.id ?? "wisp"].name));
-    // The bank, while it holds a second.
-    const bank = el("catacomb-bank"), haste = el("catacomb-haste") as HTMLSelectElement;
-    bank.hidden = c.clock.bank < 1 && c.clock.haste === 1;
+    text("message", c.clock.haste === 0 ? "Paused. Each second goes to the bank." : turnLine(this.last, (slot) => UNDEAD[run.slots[slot]?.id ?? "wisp"].name));
+    // The bank and the haste, always there: pausing banks seconds even with none to spend.
+    const haste = el("catacomb-haste") as HTMLSelectElement;
     text("catacomb-bank-time", bankTime(c.clock.bank));
     if (haste.value !== String(c.clock.haste)) haste.value = String(c.clock.haste);
     this.refreshOdds();
+    this.showInspect();
     this.menus.render();
   }
 

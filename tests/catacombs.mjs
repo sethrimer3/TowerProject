@@ -58,6 +58,16 @@ try {
   const world = await page.locator("#world").boundingBox();
   await page.mouse.click(world.x + (([2, 4, 6, 10, 12, 14][marked] + 0.5) / 17) * world.width, world.y + (8.5 / 17) * world.height);
   await expect(page.locator("#message")).toContainText(/A crosshair (strikes|banishes)/);
+  // The tap's box says what stands there, as a run's inspect box does: a plain wall's, and the stairs'.
+  await page.mouse.click(world.x + (16.5 / 17) * world.width, world.y + (8.5 / 17) * world.height);
+  await expect(page.locator("#catacomb-inspect")).toContainText("Stairs Down");
+  await expect(page.locator("#catacomb-highlight")).toBeVisible();
+  await page.mouse.click(world.x + (16.5 / 17) * world.width, world.y + (8.5 / 17) * world.height);
+  await expect(page.locator("#catacomb-inspect")).toBeHidden();
+  // ×0 pauses: the bank grows instead, and says why on the status line.
+  await page.selectOption("#catacomb-haste", "0");
+  await expect(page.locator("#message")).toHaveText("Paused. Each second goes to the bank.");
+  await page.selectOption("#catacomb-haste", "1");
   // Haste spends the bank.
   const left = (t) => { const m = /^(?:(\d+)m )?(\d+)s$/.exec(t); return Number(m[1] ?? 0) * 60 + Number(m[2]); };
   const bankBefore = left(await page.locator("#catacomb-bank-time").textContent());
@@ -119,7 +129,8 @@ try {
   await expect(page.locator(".catacomb-odds")).not.toContainText("slots rolls once");
   await page.locator(".catacomb-odds .enemy-odds-x").click();
   await expect(page.locator(".catacomb-odds")).toHaveCount(0);
-  // Switch Back: the climb's HUD, the floor it was on.
+  // Switch Back: the climb's HUD, the floor it was on; a paused Catacomb plays on unwatched.
+  await page.selectOption("#catacomb-haste", "0");
   await page.locator("#switch-back").click();
   await expect(page.locator("html")).not.toHaveClass(/catacombs/);
   await expect(page.locator("#height-label")).toHaveText("FLOOR");
@@ -132,6 +143,7 @@ try {
   await openMenu(page);
   await page.locator("#catacombs-button").click();
   await expect(page.locator("html")).toHaveClass(/catacombs/);
+  await expect(page.locator("#catacomb-haste")).toHaveValue("1");
   await page.keyboard.press("Escape");
   await expect(page.locator("html")).not.toHaveClass(/catacombs/);
   if (errors.length) throw new Error(errors.join("\n"));

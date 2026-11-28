@@ -396,6 +396,9 @@ const HAND_ICON = { play: "▶︎", pause: "❚❚" };
  * second) between the arrows that change it. In the forest it gives way to
  * Enter, under Goals, which goes straight in to start the run: in the
  * Delve's, into the tournament, wearing its price, a Ticket. */
+/** The icon each play/pause slot was last given (kept off the DOM, so the UI snapshots don't change). */
+const handIconShown = new WeakMap<HTMLElement, string>();
+
 function renderAutoButton(game: Game) {
   const button = el("auto"), inside = !game.run.outside, enter = el("enter-run");
   button.hidden = !inside;
@@ -414,7 +417,12 @@ function renderAutoButton(game: Game) {
   const label = waiting ? "Waiting: tap a card to move" : game.auto ? "Pause the hand" : "Play the hand";
   const icon = paused ? HAND_ICON.pause : HAND_ICON.play,
     slot = button.querySelector<HTMLElement>(".mini-icon")!;
-  if (inside && slot.textContent !== icon) slot.innerHTML = kitIcon(paused ? "pause" : "play", icon, "hand-control-icon");
+  // Rewritten only when it changes: a sprite icon has no text to compare, and
+  // replacing the icon under a press each step would swallow the press's click.
+  if (inside && handIconShown.get(slot) !== icon) {
+    slot.innerHTML = kitIcon(paused ? "pause" : "play", icon, "hand-control-icon");
+    handIconShown.set(slot, icon);
+  }
   text("auto-state", waiting ? "WAITING" : game.auto ? "PLAYING" : "PAUSED");
   button.classList.toggle("waiting", waiting);
   renderSpeed(game, inside);

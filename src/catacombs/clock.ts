@@ -1,5 +1,5 @@
 // The Catacombs' clock (docs/CATACOMBS.md): one real turn a second on every
-// screen, the bank of seconds the app was away, and haste, which spends them.
+// screen, the bank of seconds the app was away (or paused), and haste, which spends them.
 // Pure: the caller passes the wall clock and runs the turns it returns.
 import type { ClockSave, Haste } from "./state.ts";
 
@@ -21,7 +21,8 @@ export const newCarry = (): HasteCarry => ({ prev: 0, owed: 0 });
  * starts the clock; a gap over `BANK_GAP_MS` banks its whole seconds; else
  * each whole second gone is a real turn, and at ×N each second also owes
  * N − 1 hasted turns, paid from the bank: what the bank can't pay is
- * dropped and the haste falls to ×1 (`slowed`). */
+ * dropped and the haste falls to ×1 (`slowed`). At ×0 (paused) each whole
+ * second goes to the bank instead of playing. */
 export function tick(clock: ClockSave, now: number, carry: HasteCarry): Due {
   const due: Due = { real: 0, hasted: 0, banked: 0, slowed: false };
   if (!clock.lastTurnAt || now < clock.lastTurnAt) {
@@ -38,6 +39,11 @@ export function tick(clock: ClockSave, now: number, carry: HasteCarry): Due {
   const gone = now - clock.lastTurnAt;
   due.real = Math.floor(gone / SECOND);
   clock.lastTurnAt += due.real * SECOND;
+  if (clock.haste === 0) {
+    clock.bank += due.real;
+    due.banked = due.real;
+    due.real = 0;
+  }
   const since = carry.prev && now > carry.prev ? now - carry.prev : 0;
   carry.prev = now;
   if (clock.haste > 1) {
@@ -54,7 +60,7 @@ export function tick(clock: ClockSave, now: number, carry: HasteCarry): Due {
   return due;
 }
 
-/** Chooses the haste; above ×1 only while seconds are banked. */
+/** Chooses the haste: ×0 pauses; above ×1 only while seconds are banked. */
 export function setHaste(clock: ClockSave, haste: Haste, carry?: HasteCarry) {
   clock.haste = haste > 1 && clock.bank < 1 ? 1 : haste;
   if (carry) carry.owed = 0;

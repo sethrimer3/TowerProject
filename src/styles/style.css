@@ -1391,7 +1391,8 @@ html.reduce-motion .tile-trace { animation: none; }
 .free-training-box[hidden] { display: none; }
 /* The boost table over the board's top-left corner: the temporary boosts
    running (the Level-up Boost, the Gold ad's, the Golden Scarabs'), a row
-   each, its icon and time left, in a bordered column (ui/boost-table.ts). */
+   each, its icon and time left, in a bordered column (ui/boost-table.ts).
+   Its rows take taps; the board around it keeps its own. */
 .boost-table {
   position: absolute;
   top: 6px;
@@ -1409,10 +1410,10 @@ html.reduce-motion .tile-trace { animation: none; }
   font-size: 10px;
   line-height: 12px;
   white-space: nowrap;
-  pointer-events: none;
 }
 .boost-table[hidden] { display: none; }
-.boost-row { display: flex; align-items: center; gap: 3px; }
+/* Tapped, a row says what its boost does (boost-table.ts). */
+.boost-row { display: flex; align-items: center; gap: 3px; cursor: pointer; }
 .boost-icon, .boost-icon img { width: 12px; height: 12px; }
 .boost-time { min-width: 28px; font-variant-numeric: tabular-nums; color: #fff; }
 /* A claimed Golden Scarab's drop: its boost's icon, value and time added. */

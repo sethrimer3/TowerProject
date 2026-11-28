@@ -218,10 +218,41 @@ function bakeShadow(e: Enemy, legacy: boolean) {
  * each cutting out what lies inside it first, so every band keeps exactly
  * its own opacity; the sprite goes on last. */
 function bakeEnemy(e: Enemy, legacy: boolean) {
+  const m = ENEMY_MARGIN, out = ringed(kitEnemy(e, legacy), e.strength), oc = out.getContext("2d")!;
+  const rank = RANK_CHEVRONS[e.strength];
+  const rankId = rank.down ? COMBAT_MARKS.rankDown : COMBAT_MARKS.rankUp;
+  for (let i = 0; i < rank.count; i++) drawKit(oc, rankId, m, m + i * 4, 7, 6);
+  if (e.flying) drawKit(oc, COMBAT_MARKS.flying, m + 15, m, 9, 8);
+  if (e.ranged) drawKit(oc, COMBAT_MARKS.ranged, m + 15, m, 9, 8);
+  if (e.fast) drawKit(oc, COMBAT_MARKS.fast, m + 12, m + (e.ranged ? 8 : 0), 12, 8);
+  if (e.armored) drawKit(oc, COMBAT_MARKS.armored, m + 15, m + 16, 9, 8);
+  return out;
+}
+
+/** Ringed bodies by sprite and strength, for `paintRingedSprite`. */
+const ringedSprites = new Map<string, HTMLCanvasElement>();
+onSpritesLoaded(() => ringedSprites.clear());
+
+/** A 24-pixel enemy sprite `id` (an undead in a Catacomb hall) with the
+ * glow and black outline a run's enemy of `strength` wears, at (x, y) on
+ * `c`: the same rings, without the run's marks. */
+export function paintRingedSprite(c: CanvasRenderingContext2D, id: string, strength: EnemyStrength, x = 0, y = 0) {
+  const key = `${id}|${strength}`;
+  let baked = ringedSprites.get(key);
+  if (!baked) ringedSprites.set(key, (baked = ringed(id, strength)));
+  c.save();
+  c.imageSmoothingEnabled = false;
+  c.drawImage(baked, x - ENEMY_MARGIN, y - ENEMY_MARGIN);
+  c.restore();
+}
+
+/** Sprite `id` with `strength`'s rings and the black outline round it, on a
+ * canvas ENEMY_MARGIN wider than the tile on every side. */
+function ringed(id: string, strength: EnemyStrength) {
   const m = ENEMY_MARGIN, body = square(24), bc = body.getContext("2d")!;
-  drawKit(bc, kitEnemy(e, legacy));
+  drawKit(bc, id);
   const out = square(24 + 2 * m), oc = out.getContext("2d")!;
-  const look = ENEMY_LOOK[e.strength];
+  const look = ENEMY_LOOK[strength];
   for (const ring of [...look.rings, ENEMY_OUTLINE]) {
     const band = dilated(body, ring, m);
     oc.globalAlpha = 1;
@@ -233,13 +264,6 @@ function bakeEnemy(e: Enemy, legacy: boolean) {
   }
   oc.globalAlpha = 1;
   oc.drawImage(body, m, m);
-  const rank = RANK_CHEVRONS[e.strength];
-  const rankId = rank.down ? COMBAT_MARKS.rankDown : COMBAT_MARKS.rankUp;
-  for (let i = 0; i < rank.count; i++) drawKit(oc, rankId, m, m + i * 4, 7, 6);
-  if (e.flying) drawKit(oc, COMBAT_MARKS.flying, m + 15, m, 9, 8);
-  if (e.ranged) drawKit(oc, COMBAT_MARKS.ranged, m + 15, m, 9, 8);
-  if (e.fast) drawKit(oc, COMBAT_MARKS.fast, m + 12, m + (e.ranged ? 8 : 0), 12, 8);
-  if (e.armored) drawKit(oc, COMBAT_MARKS.armored, m + 15, m + 16, 9, 8);
   return out;
 }
 
