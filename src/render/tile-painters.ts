@@ -10,6 +10,7 @@ import { drawDungeonGround, dungeonDiagonals, dungeonMaterial, towerTileset } fr
 import { dungeonWallProfile } from "./wall-depth.ts";
 import { dungeonDetail } from "./dungeon-details.ts";
 import { drawAnimatedTorch, drawSquareDoor } from "../sprites/options.ts";
+import { paintTorchFire, TORCH_HARDWARE_ROW } from "./torch-fire.ts";
 import { drawPickupAnimation, drawSpriteFrame } from "../sprites/animations.ts";
 import { drawPixelOutline } from "../sprites/pixel-outline.ts";
 
@@ -240,10 +241,22 @@ export function paintHero(c: CanvasRenderingContext2D, facing = { dx: 0, dy: -1 
   else drawKit(c, `hero-${direction}`);
 }
 
+/** The torch on its tile, in tile space: the sprite's stand and bowl with a
+ * live pixel-art fire burning in it (render/torch-fire.ts). Without the
+ * outline (the lighting's silhouettes), the plain sprite, baked flame and all. */
 export function paintTorch(c: CanvasRenderingContext2D, t: Torch, now: number, reduceMotion: boolean, animated = false, outline = true) {
-  if (animated && drawAnimatedTorch(c, t.x, t.y, now, reduceMotion, outline)) return;
-  if (outline) drawPixelOutline(c, "torch", "black");
+  if (!outline) {
+    if (!animated || !drawAnimatedTorch(c, t.x, t.y, now, reduceMotion, false)) drawKit(c, "torch");
+    return;
+  }
+  c.save();
+  c.beginPath();
+  c.rect(-2, TORCH_HARDWARE_ROW, 28, 26 - TORCH_HARDWARE_ROW);
+  c.clip();
+  drawPixelOutline(c, "torch", "black");
   drawKit(c, "torch");
+  c.restore();
+  paintTorchFire(c, t.x, t.y, now, reduceMotion);
 }
 
 /** Cheap, restrained grounding shadow: a soft dark ellipse under a sprite's

@@ -30,6 +30,9 @@ This library is not connected to gameplay; relic numbers identify artwork only a
 `sprites/options.ts` provides six full-tile square door PNGs and a four-frame torch strip, controlled by the saved `squareDoors` and `spriteAnimations` settings only while the effective Game kit is active.
 Square doors retain live key and HP requirement marks, including mixed locks; startup preloading prevents gameplay from starting with missing PNGs.
 Torch frames share the original stationary hardware, advance at 130 milliseconds with spatial phase, and freeze when Reduce motion is on.
+On the board, `paintTorch` draws only the sprite's stand and bowl (the rows from `TORCH_HARDWARE_ROW` down) and burns a live fire in the bowl instead of the baked flame: `render/torch-fire.ts` (`paintTorchFire`), ported from TowerDefense's city torches, an ember bed and thirteen tongues rising off it, hottest first, in art pixels twice as fine as the sprite's (48 a tile), snapped to whole screen pixels.
+Each torch's tongues are its own, from a hash of its tile; Reduce motion holds the fire still.
+The lighting's silhouettes (`paintTorch` without the outline) and the water mirror's snapshots keep the baked sprite.
 The water reflection style key includes both options so warmed snapshots refresh immediately on a toggle.
 `sprites/animations.ts` adds native PNG potion bubbles, rare key glints, four-direction hero idle frames and the skull-and-crossbones death strip.
 Ambient motion requires the effective Classic Game kit, Animations on and Reduce motion off; potion/key bodies stay static and lifted reward icons omit their ambient overlays.

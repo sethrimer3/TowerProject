@@ -5,7 +5,8 @@
 The game uses matching pixel-art controls, icons, cards, heroes, enemies, pickups, terrain, buildings and dungeon decorations by default.
 A loading screen, a little tower room building itself under the loading text, waits for the artwork and fonts before the game appears; if loading fails, use Retry after checking your connection.
 Settings offers **Animations** and **Square doors** as independent checkboxes; both start off and remember your choices.
-Animations enables matching torch frames, subtle potion bubbles, occasional key shines and a small idle motion after the hero stops.
+Animations enables subtle potion bubbles, occasional key shines and a small idle motion after the hero stops.
+Torches always burn with a live, flickering pixel-art fire; Reduce motion holds it still.
 In Classic dungeons, walls and closed doors block torchlight and cast shadows; opening a door lets the light through.
 Items, monsters, the hero, mushrooms, wooden crates, barrels, small standing plants and torch stands cast shadows only from torches that can reach them.
 Broken crates stop casting shadows, and a torch's flame never casts its own shadow.
