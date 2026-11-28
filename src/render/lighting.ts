@@ -38,8 +38,8 @@ export const LIGHTING_CONFIG = {
       { speed: 1 / 83, weight: 0.2, phaseMult: 4.1 },
       { speed: 1 / 37, weight: 0.15, phaseMult: 6.7 },
     ],
-    /** Side-to-side flame sway, in tiles; the light pool, haze, and cast
-     * shadows move with it. */
+    /** Side-to-side flame sway, in tiles; the light pool and haze move with it; cast
+     * shadows hold still (they fall from the torch's own spot). */
     swayX: 0.09,
     /** Slight up/down bob of the flame's light, in tiles. */
     swayY: 0.035,

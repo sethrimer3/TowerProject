@@ -416,13 +416,19 @@ export class Renderer {
       width = battery && box.width ? n * BATTERY_GRID * Math.max(1, Math.round(box.width / (n * BATTERY_GRID)))
         : zoom ? n * ART_PX * zoom.perArtPixel
         : nativePixels && box.width ? n * ART_PX * artPixelScale(box.width * screen, n) : Math.round(box.width * screen),
-      dpr = (nativePixels || battery) && box.width ? width / box.width : screen;
+      // Zoomed, the frame is drawn in canvas pixels (one a CSS pixel), so the
+      // light, glow and shadow layers made at the frame's width are as sharp
+      // as the canvas, and their edges move by a canvas pixel, not a blurred
+      // CSS one, as the torches flicker.
+      dpr = zoom ? 1 : (nativePixels || battery) && box.width ? width / box.width : screen,
+      drawn = zoom ? width : box.width;
     if (this.canvas.width !== width) {
       this.canvas.width = width;
       this.canvas.height = this.canvas.width;
     }
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    this.size = box.width / n;
+    // A tile's size as shown, which the overlays and taps follow.
+    this.size = rect.width / n;
     const dt = Math.min(0.1, (now - this.last) / 1000 || 0.016);
     this.last = now;
     this.follow(n, dt, now);
@@ -434,9 +440,9 @@ export class Renderer {
     ambience.set("board", battery ? {} : surroundingLevels(this.surroundings()));
     const lunge = lunges(g.fights.encounter, now, g.save.settings.reduceMotion || battery);
     this.enemyLunge = { ...(g.fights.encounter?.to ?? { x: 0, y: 0 }), ...lunge.enemy };
-    const c = this.ctx, s = this.size, outside = !!g.run.outside, settings = g.save.settings;
+    const c = this.ctx, s = drawn / n, outside = !!g.run.outside, settings = g.save.settings;
     c.fillStyle = battery ? "#000" : "#0b1017";
-    c.fillRect(0, 0, box.width, box.width);
+    c.fillRect(0, 0, drawn, drawn);
     const look = this.look(), p = g.run.player;
     const idle = look.styledSprites && look.spriteAnimations && !look.reduceMotion && !g.route.length && !g.fights.encounter && p.hp > 0
       && Math.abs(this.playerX - p.x) < .01 && Math.abs(this.playerY - p.y) < .01;
@@ -444,7 +450,7 @@ export class Renderer {
     const heroIdleFrame = this.heroIdle.frame(now, !!idle, idleKey);
     const snap = (v: number) => (battery ? Math.round(v * BATTERY_GRID) / BATTERY_GRID : pixelPerfect ? onArtGrid(v) : v);
     const f: FrameContext = {
-      c, now, dt, dpr, width: box.width, n, s, left: snap(this.left), bottom: snap(this.bottom),
+      c, now, dt, dpr, width: drawn, n, s, left: snap(this.left), bottom: snap(this.bottom),
       playerX: snap(this.playerX + lunge.hero.dx), playerY: snap(this.playerY + lunge.hero.dy), heroFacing: g.facing,
       world: this.inFlight.board(g.world), look, heroIdleFrame, darkness: darknessOf(g), torches: [], walls: [], glows: [],
       lunge: this.enemyLunge,
@@ -457,7 +463,7 @@ export class Renderer {
       this.decor.update({ dt, now, hx: this.playerX, hy: this.playerY, tileAt: this.tileAt, reduceMotion: f.look.reduceMotion });
       f.glows.push(...this.decor.glows(f, f.look.styledSprites));
     }
-    this.placeZoom(f, zoom?.scale ?? 1);
+    this.placeZoom(box.width, zoom?.scale ?? 1);
     return f;
   }
   /** Dev zoom's steps for the board as it is laid out now, or null in
@@ -521,13 +527,13 @@ export class Renderer {
     return this.devZoom > 0;
   }
   /** Scales and places the canvas for Dev zoom, inside its frame. */
-  private placeZoom(f: FrameContext, scale: number) {
+  private placeZoom(width: number, scale: number) {
     const style = this.canvas.style;
     if (!style) return;
     this.canvas.parentElement?.classList.toggle("dev-zoom", scale !== 1);
     const dpr = devicePixelRatio || 1;
-    this.zoomX = clampOffset(this.zoomX, f.width, scale, dpr);
-    this.zoomY = clampOffset(this.zoomY, f.width, scale, dpr);
+    this.zoomX = clampOffset(this.zoomX, width, scale, dpr);
+    this.zoomY = clampOffset(this.zoomY, width, scale, dpr);
     if (scale === 1) {
       if (this.zoomScale !== 1) style.transform = style.transformOrigin = "";
       this.zoomScale = 1;

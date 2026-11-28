@@ -1,5 +1,5 @@
 import type { Tile, Torch } from "../entities.ts";
-import { LIGHTING_CONFIG, getTorchFlicker, getTorchSway } from "./lighting.ts";
+import { LIGHTING_CONFIG, getTorchFlicker } from "./lighting.ts";
 import { insidePolygon, torchReaches } from "./floor-relief.ts";
 import { lightFalloff } from "./torch-light.ts";
 import { paintContents, paintHero, paintTorch } from "./tile-painters.ts";
@@ -194,10 +194,11 @@ export class EntityLighting {
    * returns the shadow it casts; null when the torch doesn't reach it. */
   private lightCaster(f: FrameContext, caster: Caster, t: Torch, light: Record<SpriteDir, number>): Shadow | null {
     const cfg = LIGHTING_CONFIG.shadow, sl = LIGHTING_CONFIG.spriteLight;
-    // Shadows swing gently as the flame sways.
-    const sway = getTorchSway(t, f.now, f.look.reduceMotion);
+    // Shadows fall from the torch's own spot, not the swaying flame: the
+    // sway's quick flutter shook their edges back and forth a pixel at a
+    // time, plain to see once the board is zoomed in.
     const x = caster.sampleX ?? caster.x + 0.5, y = caster.sampleY ?? caster.y + 0.5;
-    const dx = x - t.x - 0.5 - sway.x, dy = y - t.y - 0.5 - sway.y;
+    const dx = x - t.x - 0.5, dy = y - t.y - 0.5;
     const d = Math.hypot(dx, dy);
     if (d < 0.5 || d >= t.lightRadius) return null;
     if (!t.active || t.baseIntensity <= 0) return null;
@@ -229,7 +230,8 @@ export class EntityLighting {
     const { t, dx, dy, d } = shadow;
     // Screen-space direction away from the torch (world y is up).
     const ux = dx / d, uy = -dy / d;
-    const k = Math.min(cfg.maxLength, cfg.minLength + d * cfg.lengthPerTile) * shadow.flicker;
+    // The flicker breathes in the shadow's darkness only, never its length.
+    const k = Math.min(cfg.maxLength, cfg.minLength + d * cfg.lengthPerTile);
     // The shadow lies on the floor: the sprite's base line stays
     // put and horizontal, and height above it maps to a vertical stretch
     // (up when the torch is below, down when above) plus a partial lean
