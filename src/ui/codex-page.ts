@@ -1,6 +1,6 @@
 import type { AppContext } from "./app.ts";
 import { INGOTS, SPIRIT_RARITIES, type UndeadId } from "../catacombs/catalog.ts";
-import { undeadIconUrl } from "../render/catacomb-board.ts";
+import { undeadSprite } from "../sprites/catacombs.ts";
 import { ingotIcon, spiritIcon } from "./dom.ts";
 import { codexCategories, type CodexCategory, type CodexDoor, type CodexCategoryId, type CodexEntry, type CodexIcon, type CodexLink, type CodexSection, type CodexTarget } from "../codex/codex.ts";
 import { noteDiscoveries } from "../codex/discovery.ts";
@@ -90,7 +90,7 @@ function iconHtml(icon: CodexIcon): string {
     case "familiar": return pngIcon(`familiar-${id}-icon`, "codex-kit");
     case "trial": return kitIcon(TRIAL_ART[id] ?? "trophy", "", "codex-kit");
     case "environment": return ENVIRONMENT_ICONS[id]?.() ?? "";
-    case "undead": return `<img class="codex-kit codex-undead" src="${undeadIconUrl(id as UndeadId)}" alt="" aria-hidden="true">`;
+    case "undead": return kitIcon(undeadSprite(id as UndeadId), "", "codex-kit codex-undead");
   }
 }
 

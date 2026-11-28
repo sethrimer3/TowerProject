@@ -1,6 +1,6 @@
 {
   "image": "assets/atlases/world.png",
-  "revision": "18295aa2402fbff0",
+  "revision": "b41472b4ae72a4fd",
   "width": 2048,
   "height": 8192,
   "padding": 2,
@@ -712,6 +712,12 @@
       "height": 12,
       "x": 1823,
       "y": 4078
+    },
+    "assets/style/forest-mausoleum.png": {
+      "width": 72,
+      "height": 72,
+      "x": 2,
+      "y": 4106
     },
     "assets/style/forest-mossy-boulder.png": {
       "width": 24,

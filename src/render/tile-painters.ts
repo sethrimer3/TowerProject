@@ -288,4 +288,3 @@ export function paintTorch(c: CanvasRenderingContext2D, t: Torch, now: number, r
   c.restore();
   paintTorchFire(c, t.x, t.y, now, reduceMotion);
 }
-

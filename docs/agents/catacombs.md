@@ -16,7 +16,7 @@ The screen (`ui/catacomb-view.ts`) runs the engine on the wall clock and credits
 ## The way in
 
 - `OutsideWorld`'s seventh flag, `mausoleum` (set by `Game.forestWorld` from `catacombsOpen`; the Tower's forest only), raises the Mausoleum at `MAUSOLEUM` (`outside.ts`: by the entrance column, `dx` 7, rows 1 to 3, a 3 × 3 block of walls) in a yard one tile wider that the trees and grass leave clear (`forestProtected`, `Roads.mausoleum` in the grass's cache key, the cloud shadows' key).
-  `drawMausoleum` draws it in pixels until its PNG is made; `Renderer` draws it after the Tournament Hall.
+  `drawMausoleum` draws the native 72-pixel `forest-mausoleum` PNG; `Renderer` draws it after the Tournament Hall.
 - `Game.atMausoleum(x, y)` is what `BoardOverlay`'s tap tests (its sixth callback); `Game.reshapeForest()` rebuilds the forest when a building opens, which the Upgrades page calls on buying Reveal Catacombs.
 - `game/catacomb-desk.ts`: `CatacombDesk` (`game.catacombs`): `open`, `run`, `number`, `wouldLeave(number)` (the number and hall a run of another number past Hall 1 would leave) and `enter(number)` (refused while shut).
 - `ui/catacombs-entry.ts`: `enterFromMausoleum` enters the forest's `save.tower.tier`, confirming first when `wouldLeave` says so, then opens the Catacomb screen.
@@ -39,7 +39,7 @@ The screen (`ui/catacomb-view.ts`) runs the engine on the wall clock and credits
   Spirit shows the Spirit held and an `upgradeHtml` per Spirit upgrade (level, what a level does, a buy button with its price as the rarity's icon and amount, disabled while short, MAX once maxed: Spirit isn't Gems, so the Gem rule doesn't apply); Forge and Academy say what they will do and show what they will spend (`LATER`).
   The ability row (`abilitiesHtml`, `#catacomb-abilities`, hidden until one is unlocked) is a slot an unlocked ability: a slim Auto toggle (`aria-pressed`), the cast button (disabled without a charge, the buff's attacks left under its name) and the turns to its next charge or *Ready*; a mouse hover, or a touch held `HOLD_MS`, shows `.catacomb-tip`, and the press that showed it casts nothing.
   The view re-renders the panel and the ability row in `decorate` only when their HTML changes.
-- `render/catacomb-board.ts`: `CatacombBoard` draws the hall on `#world` at its own size: crypt stone from the Tower's tiles (`paintTile`, Tower III's look, addressed bottom up since `paintTile` reads north as y + 1), the stairs, torches, the Lore tablet and Ingot bars not yet taken, potions (the red potion of a Tower or Delve run, `paintContents`), the undead in pixels (`UNDEAD_ART`, until their PNGs) with rank chevrons, an MHP bar, a pip a Drop (`DROP_COLORS`) and a pulsing crosshair (red, or gold), the hero tweened to each turn's tile, a dark falloff from the hero, and each strike's (MCrits gold, Barrage's blue), tap's and pickup's number rising (`turn`, `tapped`).
+- `render/catacomb-board.ts`: `CatacombBoard` draws the hall on `#world` at its own size: crypt stone from the Tower's tiles (`paintTile`, Tower III's look, addressed bottom up since `paintTile` reads north as y + 1), the stairs, torches, the Lore tablet and Ingot bars not yet taken, potions (the red potion of a Tower or Delve run, `paintContents`), the seven native undead sprites (`sprites/catacombs.ts`) with rank chevrons, an MHP bar, a native 12-pixel icon per Drop (MXP crystal, Loot pouch, Speed boot, MHP heart), in two columns beside the enemy and a pulsing crosshair (red, or gold), the hero tweened to each turn's tile, a dark falloff from the hero, and each strike's (MCrits gold, Barrage's blue), tap's and pickup's number rising (`turn`, `tapped`).
 - The view's capture `pointerdown` on `#world` maps the tap to a hall tile (`tap`): a slot's column on the corridor or the wall just above or below it taps that slot's crosshair (`tapCrosshair`), any other tile a potion (`takePotion`); either draws its popup, writes `tapLine` and saves.
   It reads the run and never changes it.
 
@@ -95,3 +95,16 @@ The screen (`ui/catacomb-view.ts`) runs the engine on the wall clock and credits
 `tests/catacombs.mjs` (in `npm run test:browser`; no fixed clock, since the Catacombs play on the wall clock) claims the start-up dialog's banked turns, enters from the menu during a climb, sees turns, hastes, spends and takes back a point in Might, opens and closes the stats table and the undead table, visits a menu still to come, and switches back by button and by Escape to the climb's HUD.
 `tests/catacombs-forest.test.ts` covers the Mausoleum (its tiles, yard, mode and flag), buying the skill raising it, entering by the forest's tower number, `wouldLeave`, and Access to Everything; `tests/forest-sprites.test.ts` keeps the foliage off it.
 `tests/skill-trees.test.ts` covers Reveal Catacombs: hidden and unbuyable until the Goal is claimed, then 40 Inspiration.
+
+## Native Catacombs artwork
+
+`tools/prepare-catacomb-sprites.mjs` exports the retained generated sheets in `assets/game-sprites/catacombs-sources/` to 33 native PNGs with the shared palette, binary alpha and clear padding.
+`sprites/catacombs.ts` names the seven undead, eight Spirit subjects including fragments, separate board/UI ingots, five menu icons, four buff marks and the 72-pixel Mausoleum.
+Spirit currently has seven live rarity balances; the fragment asset and `spiritIcon("fragments")` are available without adding a balance or conversion rule.
+Currency helpers, upgrade prices, currency tables, the Codex, the in-run Catacomb button and the four menu tabs use the shared icon renderer in both atlas modes.
+The board uses whole backing pixels per native texel; buff marks stay outside the body and MHP bar, within the space before the next slot.
+New atlas entries append after existing artwork, preserving old source rectangles and atlas dimensions.
+
+`node tests/catacomb-sprites.mjs` checks literal texels for all 33 subjects in both atlas modes, real phone/desktop forest and menu layouts, all Codex portraits and read-only board rendering.
+`tests/catacomb-sprites.test.ts` checks native sizes, exact palette, binary alpha, transparent edges, unique art and currency helpers.
+The appended `catacombSprites` render scene shows the Mausoleum, every undead and buff mark, all four Ingot rooms and consumed pickups without moving existing scene seeds.

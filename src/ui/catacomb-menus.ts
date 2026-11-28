@@ -2,6 +2,8 @@
 // Forge and Academy in place of the hand and the Training bar, with the
 // abilities over them. Skills spends magic skill points, Spirit buys
 // upgrades with Spirit; Forge and Academy open in later updates.
+import { kitIcon } from "../sprites/kit.ts";
+import { catacombMenuSprite } from "../sprites/catacombs.ts";
 import { el, spiritIcon } from "./dom.ts";
 import { controlIcon } from "./control-icon.ts";
 import { MAGIC_SKILL_IDS, MAGIC_SKILLS, movePoint, pointsEarned, pointsSpent, skillLines, type MagicSkillId } from "../catacombs/magic.ts";
@@ -95,7 +97,7 @@ export class CatacombMenus {
     document.querySelector("nav")!.insertAdjacentHTML("afterend",
       `<section id="catacomb-menus" class="catacomb-menus catacomb-only" aria-label="Catacomb menus">` +
       `<div id="catacomb-abilities" class="catacomb-abilities" aria-label="Abilities"></div><div class="catacomb-tabs" role="tablist">` +
-      MENUS.map((m) => `<button type="button" role="tab" data-menu="${m.id}">${m.name}</button>`).join("") +
+      MENUS.map((m) => `<button type="button" role="tab" data-menu="${m.id}">${kitIcon(catacombMenuSprite(m.id), "", "catacomb-tab-icon")}<span>${m.name}</span></button>`).join("") +
       `</div><div id="catacomb-panel" class="catacomb-panel" role="tabpanel"></div></section>`);
     const row = el("catacomb-menus");
     row.onclick = (e) => this.press(e.target as Element);

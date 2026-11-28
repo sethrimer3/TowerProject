@@ -237,5 +237,9 @@
  "pixelLevelUp.fade": "f62ddeffd282b3cc",
  "pixelLevelUp.points": "47fd3239ce77f53d",
  "pixelLevelUp.reducedMotion": "b2eaa1d0c4291f69",
- "pixelLevelUp.expired": "8cebcbf98ae15a33"
+ "pixelLevelUp.expired": "8cebcbf98ae15a33",
+ "catacombSprites.mausoleum": "ad8603e006f82942",
+ "catacombSprites.undeadAndBuffs": "dd2b37b79d41a62f",
+ "catacombSprites.demon": "9a8873a2e60c661a",
+ "catacombSprites.collected": "6d31cf80313838a7"
 }
