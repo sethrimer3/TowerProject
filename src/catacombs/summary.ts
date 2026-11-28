@@ -12,6 +12,12 @@ const titled = (s: string) => s[0]!.toUpperCase() + s.slice(1);
 /** A percent as the table writes it: 0.6%, 12%. */
 const pct = (v: number) => `${snap(v).toLocaleString("en-US", { maximumFractionDigits: 2 })}%`;
 
+/** The Loot Drop's effect with Loot Drop Gain's addition on both ends. */
+const lootEffect = (gain: number) => {
+  const x = (v: number) => snap(v + gain).toLocaleString("en-US", { maximumFractionDigits: 2 });
+  return `×${x(DROPS.loot.lo)} to ×${x(DROPS.loot.hi)} Spirit from this undead`;
+};
+
 /** The rows of the Catacomb stats table for `c`, with `lore` Lore held:
  * the Magician's stats and level, the run, each drop's chance and what it
  * gives, the Lore bonus, and every Spirit and Ingot held. */
@@ -27,7 +33,7 @@ export function catacombStatRows(c: CatacombSave, lore: number): [string, string
     ["Spirit gain", `×${snap(hero.spiritGain)}`],
     ["MXP gain", `×${snap(hero.mxpGain)}`],
     ["Speed Drop attacks left", n(c.speed)],
-    ...DROP_IDS.map((d): [string, string] => [`${DROPS[d].name} chance`, `${pct(hero.drops[d])}: ${DROPS[d].effect}`]),
+    ...DROP_IDS.map((d): [string, string] => [`${DROPS[d].name} chance`, `${pct(hero.drops[d])}: ${d === "loot" ? lootEffect(hero.lootGain) : DROPS[d].effect}`]),
     ["Gold Crosshair chance", `${pct(hero.goldCrosshair)}: ×${GOLD_CROSSHAIR_FACTOR} damage`],
     ["Magic level", n(level)],
     ["MXP to next level", `${n(c.mxp - mxpForLevel(level))} / ${n(mxpForLevel(level + 1) - mxpForLevel(level))}`],

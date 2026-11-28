@@ -6,7 +6,7 @@ import { TIERS } from "../tiers.ts";
 import { DROP_IDS, DROPS, INGOTS, SPIRIT_RARITIES, UNDEAD_IDS, type CatacombStrength, type DropId } from "./catalog.ts";
 import { HALL_SIZE, hallTargets, SIDE_TILES, SLOT_XS, type Slot } from "./hall.ts";
 import { MAGIC_SKILL_IDS, MAGIC_SKILLS, noPoints, pointsEarned, pointsSpent } from "./magic.ts";
-import { ABILITIES, ABILITY_IDS, MAX_CHARGES } from "./abilities.ts";
+import { ABILITIES, ABILITY_IDS, MAX_CHARGES, TAP_UNLOCKS } from "./abilities.ts";
 import { SPIRIT_UPGRADE_IDS, SPIRIT_UPGRADES } from "./spirit-upgrades.ts";
 import { CATACOMB_STREAMS, defaultCatacombs, HASTES, type CatacombRun, type CatacombSave, type Haste } from "./state.ts";
 
@@ -73,6 +73,7 @@ export function decodeCatacombs(raw: unknown): CatacombSave {
       c.abilities[id].auto = a.auto === true;
     }
   if (isRecord(raw.buffs)) for (const id of ABILITY_IDS) if (whole(raw.buffs[id])) c.buffs[id] = raw.buffs[id];
+  if (Array.isArray(raw.taught)) c.taught = TAP_UNLOCKS.filter((id) => (raw.taught as unknown[]).includes(id));
   // Points spent past those earned (an edited save) are all handed back.
   if (pointsSpent(c.points) > pointsEarned(c.mxp)) c.points = noPoints();
   return c;

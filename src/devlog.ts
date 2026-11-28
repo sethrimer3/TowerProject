@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-28", text: "Catacombs: faster Magic levels, Spirit Potion and Zap to unlock, and seven new Spirit upgrades." },
   { date: "2026-11-28", text: "Catacomb torches stand inside the rooms and by the Lore, crosshairs turn, and a restart says the hero rises." },
   { date: "2026-11-28", text: "Trial fights show a climb's HP bars, coins, leans, boss hit numbers, footsteps and stair sounds." },
   { date: "2026-11-28", text: "Catacomb and trial fights rise and sound like a climb's; crosshairs call thunderbolts; Catacomb speeds x2 and x25." },

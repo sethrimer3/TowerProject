@@ -23,8 +23,8 @@ try {
     for (const k of Object.keys(g.save.tutorials)) g.save.tutorials[k] = true;
     g.save.tower.tiersOpen = 2; g.save.tower.tier = 2; g.save.upgrades.catacombs = 1;
     g.save.catacombs.rng.spawns = 7; g.catacombs.enter(1);
-    g.save.catacombs.mxp = 440;
-    g.save.catacombs.spirit.uncommon = 10;
+    g.save.catacombs.mxp = 26;
+    g.save.catacombs.spirit.common = 10; g.save.catacombs.spirit.uncommon = 20;
     // A crosshair on the hall's last undead, far from the hero.
     const run = g.save.catacombs.run, marked = run.slots.findLastIndex(Boolean);
     run.slots[marked].mark = "crosshair";
@@ -85,11 +85,17 @@ try {
   await expect(page.locator(".catacomb-stat-lines")).toContainText("MAtk +1 a point · +1");
   await page.locator('.catacomb-point[data-skill="might"][data-delta="-1"]').click();
   await expect(page.locator("#attack")).toHaveText("10");
-  // Spirit: Unlock Ability opens Spell Surge, which casts and counts down its cooldown.
+  // Spirit: Unlock Ability opens Spirit Potion, whose lesson a tap dismisses, then Spell Surge, which casts and counts down its cooldown.
   await expect(page.locator("#catacomb-abilities")).toBeHidden();
   await page.locator('[role=tab][data-menu="spirit"]').click();
   await page.locator('.catacomb-buy[data-upgrade="unlock"]').click();
-  await expect(page.locator('.catacomb-upgrade[data-upgrade="unlock"]')).toContainText("1/3");
+  await expect(page.locator('.catacomb-upgrade[data-upgrade="unlock"]')).toContainText("1/5");
+  await expect(page.locator("#catacomb-abilities")).toBeHidden();
+  await expect(page.locator(".catacomb-lesson")).toContainText("Reveal health potions");
+  await page.locator(".catacomb-lesson").click();
+  await expect(page.locator(".catacomb-lesson")).toHaveCount(0);
+  await page.locator('.catacomb-buy[data-upgrade="unlock"]').click();
+  await expect(page.locator('.catacomb-upgrade[data-upgrade="unlock"]')).toContainText("2/5");
   await expect(page.locator(".catacomb-cooldown")).toHaveText("Ready");
   await page.locator('.catacomb-cast[data-cast="surge"]').hover();
   await expect(page.locator(".catacomb-tip")).toContainText("Spell Surge");

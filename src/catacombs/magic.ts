@@ -3,14 +3,15 @@
 // (no Math.pow): the same bits in every engine.
 import { snap } from "../exact.ts";
 import { DROP_IDS, type DropId } from "./catalog.ts";
+import { SPIRIT_PER, type SpiritUpgradeId } from "./spirit-upgrades.ts";
 
 /** 1.2^(level − 1), by level from 1, multiplied out in order. */
 const powers: number[] = [1];
-/** MXP from level `level` to the next: 200 × 1.2^(level − 1), rounded. */
+/** MXP from level `level` to the next: 12 × 1.2^(level − 1), rounded. */
 export function mxpToNext(level: number) {
   if (level < 1) return 0;
   while (powers.length < level) powers.push(powers[powers.length - 1]! * 1.2);
-  return Math.round(200 * powers[level - 1]!);
+  return Math.round(12 * powers[level - 1]!);
 }
 
 /** Total MXP that reaches level `level` (0 for level 1). */
@@ -85,31 +86,35 @@ export const HERO_BASE = { mhp: 1000, matk: 10, mdef: 0, critFactor: 1.5 } as co
 
 /** Everything the Magician fights with: MHP, MAtk and MDef; MCrit chance
  * (percent) and factor; Armor Penetration, flat and percent of the undead's
- * MDef; the Spirit and MXP factors; each drop's chance (percent); and the
- * chance a crosshair is gold (percent). */
+ * MDef; the Spirit and MXP factors; each drop's chance (percent); what Loot
+ * Drop Gain adds to a Loot Drop's factor; and the chance a crosshair is
+ * gold (percent). */
 export type Magician = Record<HeroStat, number> & {
   critChance: number; critFactor: number; armorPen: number; armorPenPercent: number;
-  spiritGain: number; mxpGain: number; drops: Record<DropId, number>; goldCrosshair: number;
+  spiritGain: number; mxpGain: number; drops: Record<DropId, number>; lootGain: number; goldCrosshair: number;
 };
 /** What raises the Magician besides points: the Spirit upgrades bought. */
-export type MagicSource = { points: MagicPoints; upgrades: { matk: number } };
+export type MagicSource = { points: MagicPoints; upgrades: Record<SpiritUpgradeId, number> };
 
 /** The Magician with `c`'s points and Spirit upgrades. MAtk is the base,
- * the flat points and Magic ATK +1, times Might's percent. */
+ * the flat points and Magic ATK +1 and +2, times Might's percent. Chances,
+ * flat amounts and the MCrit factor add the upgrades to the points; MXP
+ * Gain is its own kind of bonus, so it multiplies Focus's. */
 export function magician(c: MagicSource): Magician {
-  const t = (e: MagicEffect) => effectTotal(c.points, e), all = t("allDrops");
-  const flat = { mxp: t("mxpDrop"), loot: t("lootDrop"), speed: t("speedDrop"), mhp: 0 };
+  const t = (e: MagicEffect) => effectTotal(c.points, e), all = t("allDrops"), u = c.upgrades, per = SPIRIT_PER;
+  const flat = { mxp: t("mxpDrop"), loot: t("lootDrop"), speed: t("speedDrop"), mhp: snap(per.mhpDrop * u.vitality) };
   return {
-    mhp: HERO_BASE.mhp + t("mhp"),
-    matk: snap(((HERO_BASE.matk + t("matk") + c.upgrades.matk) * (100 + t("matkPercent"))) / 100),
+    mhp: HERO_BASE.mhp + t("mhp") + per.mhp * u.mhp + per.vitalityMhp * u.vitality,
+    matk: snap(((HERO_BASE.matk + t("matk") + per.matk * u.matk + per.matk2 * u.matk2) * (100 + t("matkPercent"))) / 100),
     mdef: HERO_BASE.mdef,
-    critChance: Math.min(100, t("critChance")),
-    critFactor: snap(HERO_BASE.critFactor + t("critFactor") / 100),
-    armorPen: t("armorPen"),
+    critChance: Math.min(100, snap(t("critChance") + per.critChance * u.crit)),
+    critFactor: snap(HERO_BASE.critFactor + (t("critFactor") + per.critDamage * u.crit) / 100),
+    armorPen: t("armorPen") + per.pierce * u.pierce,
     armorPenPercent: Math.min(100, t("armorPenPercent")),
     spiritGain: snap((100 + t("spiritGain")) / 100),
-    mxpGain: snap((100 + t("mxpGain")) / 100),
+    mxpGain: snap((((100 + t("mxpGain")) / 100) * (100 + per.mxp * u.mxp)) / 100),
     drops: Object.fromEntries(DROP_IDS.map((d) => [d, snap(flat[d] + all)])) as Record<DropId, number>,
+    lootGain: snap(per.loot * u.loot),
     goldCrosshair: Math.min(100, t("goldCrosshair")),
   };
 }

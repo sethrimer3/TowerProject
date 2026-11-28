@@ -8,7 +8,7 @@ import { KIND_COLORS, stat, statLines, type TileInfo } from "./tile-info.ts";
 import { cellIcon, ingotIcon, itemSprite, mxpIcon, spiritIcon, uiSprite } from "./dom.ts";
 import { DROP_IDS, DROPS, UNDEAD, undeadRewards, undeadStats, type CatacombStrength } from "../catacombs/catalog.ts";
 import { CORRIDOR_ROW, hallCell, hallTargets, LORE_TORCH, SLOT_XS } from "../catacombs/hall.ts";
-import { hitFor, striking } from "../catacombs/combat.ts";
+import { hitFor, lootFactor, striking } from "../catacombs/combat.ts";
 import { magician } from "../catacombs/magic.ts";
 import { forecastFight, type CatacombForecast } from "../catacombs/forecast.ts";
 import { GOLD_CROSSHAIR_FACTOR, POTION_MHP } from "../catacombs/taps.ts";
@@ -38,7 +38,7 @@ function undeadInfo(c: CatacombSave, i: number): Omit<TileInfo, "color"> | null 
   const foe = undeadStats(slot.id, slot.strength, run.hall, c.number), m = striking(c), hero = magician(c), d = slot.drops ?? {};
   const r = undeadRewards(slot.id, slot.strength);
   const taken = Math.max(0, snap(foe.matk - m.mdef)), hit = hitFor(m, foe.mdef, false);
-  const mxp = snap(r.mxp * hero.mxpGain * (d.mxp ?? 1)), spirit = snap(r.spirit * hero.spiritGain * (d.loot ?? 1));
+  const mxp = snap(r.mxp * hero.mxpGain * (d.mxp ?? 1)), spirit = snap(r.spirit * hero.spiritGain * lootFactor(hero, d.loot));
   const hurt = (n: number) => ` (<span class="hit-hurt">-${enemyStat(n)}</span>)`;
   const body = statLines(
     stat(uiSprite("health", "stat-sprite"), "MHP", enemyStat(slot.mhp)),
@@ -47,7 +47,7 @@ function undeadInfo(c: CatacombSave, i: number): Omit<TileInfo, "color"> | null 
     stat(mxpIcon("mxp-icon stat-sprite"), "MXP", `<span class="hit-gold">${enemyStat(mxp)}</span>`),
     stat(spiritIcon(r.rarity), "Spirit", `<span class="hit-gold">${enemyStat(spirit)}</span>`),
   );
-  const drops = DROP_IDS.filter((id) => d[id]).map((id) => `<br><small>${DROPS[id].name}: ${dropText(id, d[id]!)}</small>`).join("");
+  const drops = DROP_IDS.filter((id) => d[id]).map((id) => `<br><small>${DROPS[id].name}: ${dropText(id, id === "loot" ? lootFactor(hero, d[id]) : d[id]!)}</small>`).join("");
   const mark = slot.mark === "gold" ? `<br><small>Gold crosshair: tap it for a free hit, ×${GOLD_CROSSHAIR_FACTOR}</small>`
     : slot.mark ? "<br><small>Crosshair: tap it for a free hit</small>" : "";
   return { title: `${STRENGTH_NAMES[slot.strength]} ${UNDEAD[slot.id].name}`.trim(), body: body + drops + mark + forecastLines(f, hero.critChance > 0) };

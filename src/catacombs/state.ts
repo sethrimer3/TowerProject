@@ -3,8 +3,8 @@ import { random, stream, type StreamName } from "../random.ts";
 import { DROP_IDS, DROPS, INGOTS, SPIRIT_RARITIES, type DropId, type IngotId, type SpiritRarity } from "./catalog.ts";
 import { CORRIDOR_ROW, ENTRANCE_X, rollSlots, type Slot } from "./hall.ts";
 import { magician, noPoints, type MagicPoints } from "./magic.ts";
-import { defaultAbilities, noBuffs, type AbilityId, type AbilityState } from "./abilities.ts";
-import type { SpiritUpgradeId } from "./spirit-upgrades.ts";
+import { defaultAbilities, noBuffs, type AbilityId, type AbilityState, type TapUnlock } from "./abilities.ts";
+import { noUpgrades, type SpiritUpgradeId } from "./spirit-upgrades.ts";
 
 /** A Catacomb run: its hall, that hall's six slots (null: empty), the
  * hero, the index of its next target (`hallTargets`; every earlier one is
@@ -55,6 +55,8 @@ export type CatacombSave = {
   buffs: Record<AbilityId, number>;
   /** The Spirit upgrades' levels. */
   upgrades: Record<SpiritUpgradeId, number>;
+  /** The tap unlocks (Spirit Potion, Zap) whose lesson has been dismissed. */
+  taught: TapUnlock[];
 };
 
 export const noRng = (): Record<CatacombStream, number | null> => ({ spawns: null, drops: null, crits: null, crosshairs: null, potions: null });
@@ -64,7 +66,7 @@ export const defaultCatacombs = (): CatacombSave => ({
   mxp: 0, points: noPoints(),
   spirit: Object.fromEntries(SPIRIT_RARITIES.map((r) => [r, 0])) as Record<SpiritRarity, number>,
   ingots: Object.fromEntries(INGOTS.map((i) => [i, 0])) as Record<IngotId, number>,
-  speed: 0, abilities: defaultAbilities(), buffs: noBuffs(), upgrades: { unlock: 0, matk: 0 },
+  speed: 0, abilities: defaultAbilities(), buffs: noBuffs(), upgrades: noUpgrades(), taught: [],
 });
 
 /** How far mulberry32's state moves a draw (random.ts), so the saved

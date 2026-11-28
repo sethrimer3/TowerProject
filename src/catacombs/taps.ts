@@ -7,6 +7,7 @@ import { SIDE_TILES } from "./hall.ts";
 import { magician } from "./magic.ts";
 import { defeat, hitFor, noGains, rollCrit, striking, type CatacombGains, type Paid } from "./combat.ts";
 import { drawing, type CatacombSave } from "./state.ts";
+import { isUnlocked } from "./abilities.ts";
 
 /** Each turn, each undead without a crosshair gains one this often (percent). */
 export const CROSSHAIR_CHANCE = 5;
@@ -22,22 +23,23 @@ export type TapEvent =
   | { kind: "crosshair"; slot: number; hit: number; crit: boolean; gold: boolean; killed: boolean; paid?: Paid }
   | { kind: "potion"; x: number; y: number; mhp: number };
 
-/** The end of a turn: each undead standing without a crosshair rolls for
- * one (and, once Fortune gives a chance, for it to be gold), then the hall
- * rolls for a potion on a side tile free of the hero and of potions. A
+/** The end of a turn: once Zap is unlocked, each undead standing without a
+ * crosshair rolls for one (and, once Fortune gives a chance, for it to be
+ * gold); once Spirit Potion is, the hall rolls for a potion on a side tile
+ * free of the hero and of potions. Neither draws before its unlock. A
  * crosshair stays until tapped or its undead is beaten; potions until the
  * hall is left. */
 export function rollTaps(c: CatacombSave) {
   const run = c.run;
   if (!run || run.fell) return;
   const gold = magician(c).goldCrosshair;
-  drawing(c, "crosshairs", (rng) => {
+  if (isUnlocked(c, "zap")) drawing(c, "crosshairs", (rng) => {
     for (const slot of run.slots) {
       if (!slot || slot.mark || rng() * 100 >= CROSSHAIR_CHANCE) continue;
       slot.mark = gold > 0 && rng() * 100 < gold ? "gold" : "crosshair";
     }
   });
-  drawing(c, "potions", (rng) => {
+  if (isUnlocked(c, "potion")) drawing(c, "potions", (rng) => {
     if (rng() * 100 >= POTION_CHANCE) return;
     const free = SIDE_TILES.filter(([x, y]) => !(run.hero.x === x && run.hero.y === y) && !run.potions.some(([px, py]) => px === x && py === y));
     if (free.length) run.potions.push([...free[Math.floor(rng() * free.length)]!]);

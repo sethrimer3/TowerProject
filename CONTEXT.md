@@ -1142,16 +1142,20 @@ A bonus an undead rolls as its hall is made, shown as a pip on it and paid when 
 _Avoid_: loot roll, bonus drop
 
 **Crosshair**:
-A mark that appears on an undead now and then; tapped, the undead takes a free hit without a turn passing. A **Gold Crosshair** hits three times as hard.
+A mark that appears on an undead now and then, once **Zap** is unlocked; tapped, the undead takes a free hit without a turn passing. A **Gold Crosshair** hits three times as hard.
 _Avoid_: target, weak spot
 
 **Potion**:
-A flask that appears on a hall's side tile now and then; tapped, it restores MHP; it is lost when the hall is left.
+A flask that appears on a hall's side tile now and then, once **Spirit Potion** is unlocked; tapped, it restores MHP; it is lost when the hall is left.
 _Avoid_: health pickup, flask
 
 **Ability**:
-One of the Magician's three limited-use spells (Spell Surge, Renewing Rush, Arcane Barrage), unlocked with Spirit, each a charge that comes back a cooldown of turns after it is cast, its buff lasting the next few attacks.
+One of the Magician's three limited-use spells (Spell Surge, Renewing Rush, Arcane Barrage), unlocked with Spirit by Unlock Ability, each a charge that comes back a cooldown of turns after it is cast, its buff lasting the next few attacks.
 _Avoid_: spell, skill, power
+
+**Tap unlock** (Spirit Potion, Zap):
+What Unlock Ability's first and third levels open: not a spell but the potions (Spirit Potion) or crosshairs (Zap) a watching player taps, each taught by a lesson over the hall.
+_Avoid_: passive ability
 
 **Spirit upgrade**:
 A purchase in the Catacomb screen's Spirit menu, each level priced in one rarity of Spirit.

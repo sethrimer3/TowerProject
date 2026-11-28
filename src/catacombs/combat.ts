@@ -40,6 +40,10 @@ export const hitFor = (m: Magician, mdef: number, crit: boolean, share = 1) =>
 /** Rolls whether a strike crits, on the saved MCrit stream (no draw at 0%). */
 export const rollCrit = (c: CatacombSave, m: Magician) => m.critChance > 0 && drawing(c, "crits", (rng) => rng() * 100 < m.critChance);
 
+/** What a Loot Drop of `amount` (none: 1) multiplies Spirit by: its amount
+ * and Loot Drop Gain's addition. */
+export const lootFactor = (m: Magician, amount: number | undefined) => (amount ? snap(amount + m.lootGain) : 1);
+
 /** What beating an undead paid, for the board's drops: its MXP and Spirit
  * (of `rarity`), and the MHP its MHP Drop restored. */
 export type Paid = { mxp: number; spirit: number; rarity: SpiritRarity; mhp: number };
@@ -51,7 +55,7 @@ export type Paid = { mxp: number; spirit: number; rarity: SpiritRarity; mhp: num
  * what it paid. */
 export function defeat(c: CatacombSave, i: number, gains: CatacombGains): Paid {
   const run = c.run!, slot = run.slots[i]!, r = undeadRewards(slot.id, slot.strength), m = magician(c), d = slot.drops ?? {};
-  const mxp = snap(r.mxp * m.mxpGain * (d.mxp ?? 1)), spirit = snap(r.spirit * m.spiritGain * (d.loot ?? 1));
+  const mxp = snap(r.mxp * m.mxpGain * (d.mxp ?? 1)), spirit = snap(r.spirit * m.spiritGain * lootFactor(m, d.loot));
   c.mxp = snap(c.mxp + mxp);
   gains.mxp = snap(gains.mxp + mxp);
   c.spirit[r.rarity] = snap(c.spirit[r.rarity] + spirit);

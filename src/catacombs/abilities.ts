@@ -1,10 +1,25 @@
 // The Catacombs' abilities (docs/CATACOMBS.md): three limited-use spells,
-// unlocked one at a time by the Spirit upgrade Unlock Ability, each with a
+// unlocked by the Spirit upgrade Unlock Ability among its two tap unlocks
+// (Spirit Potion and Zap, which let potions and crosshairs appear), each with a
 // charge that comes back a cooldown of turns after it is spent, and a buff
 // lasting the Magician's next few attacks (rounds of combat).
 import { snap } from "../exact.ts";
 import { magician } from "./magic.ts";
 import type { CatacombSave } from "./state.ts";
+
+/** What Unlock Ability opens, a level each, in order: Spirit Potion
+ * (potions appear), Spell Surge, Zap (crosshairs appear), Renewing Rush,
+ * then Arcane Barrage. */
+export const UNLOCK_ORDER = ["potion", "surge", "zap", "rush", "barrage"] as const;
+export type UnlockId = (typeof UNLOCK_ORDER)[number];
+/** The unlocks that aren't abilities: each lets a tap's pickup appear, and is taught by a lesson. */
+export const TAP_UNLOCKS = ["potion", "zap"] as const;
+export type TapUnlock = (typeof TAP_UNLOCKS)[number];
+export const UNLOCK_NAMES: Record<UnlockId, string> = { potion: "Spirit Potion", surge: "Spell Surge", zap: "Zap", rush: "Renewing Rush", barrage: "Arcane Barrage" };
+/** Whether Unlock Ability has opened `id`. */
+export const isUnlocked = (c: CatacombSave, id: UnlockId) => UNLOCK_ORDER.indexOf(id) < c.upgrades.unlock;
+/** The first tap unlock opened whose lesson hasn't been dismissed, or null. */
+export const pendingLesson = (c: CatacombSave): TapUnlock | null => TAP_UNLOCKS.find((id) => isUnlocked(c, id) && !c.taught.includes(id)) ?? null;
 
 /** The abilities, in the order Unlock Ability opens them. */
 export const ABILITY_IDS = ["surge", "rush", "barrage"] as const;
@@ -32,7 +47,7 @@ export const defaultAbilities = (): Record<AbilityId, AbilityState> =>
 export const noBuffs = (): Record<AbilityId, number> => ({ surge: 0, rush: 0, barrage: 0 });
 
 /** Whether Unlock Ability has opened ability `id`. */
-export const abilityUnlocked = (c: CatacombSave, id: AbilityId) => ABILITY_IDS.indexOf(id) < c.upgrades.unlock;
+export const abilityUnlocked = (c: CatacombSave, id: AbilityId) => isUnlocked(c, id);
 
 /** Whether ability `id` can be cast now: unlocked, a charge held, and a run under way. */
 export const canCast = (c: CatacombSave, id: AbilityId) => abilityUnlocked(c, id) && c.abilities[id].charges > 0 && !!c.run && !c.run.fell;

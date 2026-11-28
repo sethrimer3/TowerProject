@@ -143,7 +143,8 @@ function holdAround(keep: HTMLElement | null) {
 
 function drawLesson(game: Game, onBoard: boolean, dismissed: () => void, onUpgrades: boolean) {
   const lesson = onBoard ? game.boardLesson : null, frame = el("board-frame");
-  let note = frame.querySelector<HTMLElement>(".board-tip");
+  // The Catacomb screen's lessons are its own (catacomb-view.ts).
+  let note = frame.querySelector<HTMLElement>(".board-tip:not(.catacomb-lesson)");
   if (note && note.dataset.lesson !== lesson) {
     note.remove();
     note = null;
@@ -184,7 +185,7 @@ function drawLesson(game: Game, onBoard: boolean, dismissed: () => void, onUpgra
     frame.insertAdjacentHTML("beforeend", lesson !== "enter" && lesson !== "autoClimb" && lesson !== "autoClimbHint"
       ? `<div class="board-tip" role="status" data-lesson="${lesson}">${body}</div>`
       : `<button type="button" class="board-tip dismissable" data-lesson="${lesson}">${body}<small>Tap to dismiss</small></button>`);
-    note = frame.querySelector<HTMLElement>(".board-tip")!;
+    note = frame.querySelector<HTMLElement>(".board-tip:not(.catacomb-lesson)")!;
     note.onclick = () => {
       if (game.dismissLesson()) dismissed();
     };

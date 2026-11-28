@@ -665,7 +665,7 @@ const CATACOMBS_HOW: CodexEntry[] = [
   { id: "turns", icon: { kind: "kit", id: "hourglass" }, name: "Turns and the bank", brief: "A turn a second. Time away is banked, and haste spends it." },
   { id: "treasure", icon: { kind: "kit", id: "catacomb-ingot-ui-brass" }, name: "Treasure rooms", brief: "Every 5th hall and more hold Ingots, worth more each time." },
   { id: "drops", icon: { kind: "kit", id: "catacomb-buff-loot" }, name: "Drops", brief: "Drop marks are a crystal (MXP), pouch (Loot), boot (Speed) or heart (MHP). Beating the undead pays its drops." },
-  { id: "crosshairs", icon: { kind: "kit", id: "shield" }, name: "Crosshairs and potions", brief: "Tap a crosshair for a free hit, or a potion for 10 MHP. Neither spends a turn." },
+  { id: "crosshairs", icon: { kind: "kit", id: "shield" }, name: "Crosshairs and potions", brief: "Unlock Ability opens potions with Spirit Potion and crosshairs with Zap. Tap a crosshair for a free hit, or a potion for 10 MHP. Neither spends a turn." },
   { id: "abilities", icon: { kind: "kit", id: "book" }, name: "Abilities", brief: "Spirit unlocks three spells. Each recharges over turns, or casts itself on Auto." },
 ];
 

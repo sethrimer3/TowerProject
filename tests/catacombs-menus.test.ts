@@ -43,14 +43,14 @@ test("the Skills panel lists every skill and the points free; Spirit sells its u
   assert.match(menuPanelHtml(c, "forge", null), /Ingots to upgrade the Blacksmith's forge[\s\S]*Iron 4/);
   const spirit = menuPanelHtml(c, "spirit", null);
   assert.match(spirit, /No Spirit yet/);
-  assert.match(spirit, /Unlock Ability[\s\S]*Magic ATK \+1/);
+  assert.match(spirit, /Unlock Ability[\s\S]*MHP \+10[\s\S]*Magic ATK \+1[\s\S]*Magic Armor Pierce[\s\S]*MXP Gain[\s\S]*MCrit Chance[\s\S]*Max MHP \+20[\s\S]*Magic ATK \+2[\s\S]*Loot Drop Gain/);
   assert.match(menuPanelHtml(c, "academy", null), /boosts outside the Catacombs/);
 });
 
 test("a Spirit upgrade shows its level and price, off while short, MAX once maxed", () => {
   const c = defaultCatacombs();
-  assert.match(upgradeHtml(c, "unlock"), /0\/3[\s\S]*aria-label="Buy Unlock Ability for 10 Uncommon Spirit" disabled>.*spirit-uncommon.*<b>10</);
-  c.spirit.uncommon = 10;
+  assert.match(upgradeHtml(c, "unlock"), /0\/5[\s\S]*aria-label="Buy Unlock Ability for 10 Common Spirit" disabled>.*spirit-common.*<b>10</);
+  c.spirit.common = 10;
   assert.doesNotMatch(upgradeHtml(c, "unlock"), /disabled/);
   c.upgrades.matk = 25;
   assert.match(upgradeHtml(c, "matk"), /25\/25[\s\S]*disabled>MAX/);
@@ -60,8 +60,9 @@ test("abilities show once unlocked: Auto over each, Ready or the turns left unde
   const c = defaultCatacombs();
   seedAll(c, 1);
   enterCatacomb(c, 1);
-  assert.equal(abilitiesHtml(c), "");
-  c.upgrades.unlock = 2;
+  c.upgrades.unlock = 1;
+  assert.equal(abilitiesHtml(c), "", "Spirit Potion takes no slot");
+  c.upgrades.unlock = 4;
   c.abilities.rush = { charges: 0, cooldown: 42, auto: true };
   const html = abilitiesHtml(c);
   assert.match(html, /data-auto="surge" aria-pressed="false"[\s\S]*Spell Surge<\/button><small class="catacomb-cooldown">Ready/);
@@ -85,7 +86,10 @@ test("the stats table: the Magician, the drops, the run, Lore and every Spirit a
   assert.equal(rows["Speed Drop chance"], "0.2%: +10 to +110 attacks at ×2 attack speed");
   assert.equal(rows["Gold Crosshair chance"], "0.5%: ×3 damage");
   assert.equal(rows["Magic level"], "2");
-  assert.equal(rows["MXP to next level"], "10 / 240");
+  assert.equal(rows["MXP to next level"], "10 / 14");
+  assert.equal(rows["Loot Drop chance"], "0.2%: ×2 to ×5 Spirit from this undead");
+  c.upgrades.loot = 1;
+  assert.equal(Object.fromEntries(catacombStatRows(c, 0))["Loot Drop chance"], "0.2%: ×2.3 to ×5.3 Spirit from this undead");
   assert.equal(rows["Magic skill points"], "0 free of 1");
   assert.equal(rows["Catacomb"], "III");
   assert.equal(rows["Hall"], "1");

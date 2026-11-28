@@ -14,6 +14,7 @@ import { setHaste } from "../catacombs/clock.ts";
 import { HASTES, type Haste } from "../catacombs/state.ts";
 import { magician, magicLevel, mxpForLevel, pointsEarned, pointsSpent } from "../catacombs/magic.ts";
 import { tapCrosshair, takePotion, type TapEvent } from "../catacombs/taps.ts";
+import { pendingLesson, UNLOCK_NAMES, type TapUnlock } from "../catacombs/abilities.ts";
 import { CORRIDOR_ROW, HALL_SIZE, SLOT_XS } from "../catacombs/hall.ts";
 import { SPIRIT_RARITIES, UNDEAD, undeadStats, type SpiritRarity } from "../catacombs/catalog.ts";
 import type { TurnEvent } from "../catacombs/turn.ts";
@@ -48,6 +49,12 @@ export function turnLine(event: TurnEvent | null, slotName: (slot: number) => st
     case "fall": case "restart": return event.kind === "restart" && event.stalemate ? "Neither side can harm the other. Back to Hall 1." : "The Magician falls, and wakes at Hall 1.";
   }
 }
+
+/** The lesson each tap unlock teaches once Unlock Ability opens it, dismissed by a tap on its note. */
+export const CATACOMB_LESSONS: Record<TapUnlock, string> = {
+  potion: "Reveal health potions. Do yourself a favor: tap to collect them and restore your life.",
+  zap: "Target random enemies with a lightning attack. Tap foes in the crosshairs to zap them!",
+};
 
 /** How long a tapped plain tile's box shows before it is gone (2 s, then
  * a second's fade: a run's `tile-info-fade`). */
@@ -128,6 +135,7 @@ export class CatacombView {
     clearTimeout(this.flashTimer);
     const flash = document.getElementById("catacomb-flash");
     if (flash) flash.hidden = true;
+    document.querySelector(".catacomb-lesson")?.remove();
     // Nobody watches a paused Catacomb: it plays on, or spends the bank at its haste.
     this.unpause();
     document.documentElement.classList.remove("catacombs");
@@ -338,6 +346,23 @@ export class CatacombView {
     this.refreshOdds();
     this.showInspect();
     this.menus.render();
+    this.showLesson();
+  }
+
+  /** The waiting tap unlock's lesson (`pendingLesson`), a run's board
+   * lesson's note over the hall; a tap on it dismisses it for good. */
+  private showLesson() {
+    const lesson = pendingLesson(this.c), frame = el("board-frame");
+    let note = frame.querySelector<HTMLElement>(".catacomb-lesson");
+    if (note && note.dataset.lesson !== lesson) note.remove(), note = null;
+    if (!lesson || note) return;
+    frame.insertAdjacentHTML("beforeend", `<button type="button" class="board-tip dismissable catacomb-lesson" data-lesson="${lesson}">` +
+      `<b>${UNLOCK_NAMES[lesson]} unlocked.</b><p>${CATACOMB_LESSONS[lesson]}</p><small>Tap to dismiss</small></button>`);
+    frame.querySelector<HTMLElement>(".catacomb-lesson")!.onclick = () => {
+      if (!this.c.taught.includes(lesson)) this.c.taught.push(lesson);
+      this.ctx.save();
+      this.showLesson();
+    };
   }
 
   private toggleOdds() {

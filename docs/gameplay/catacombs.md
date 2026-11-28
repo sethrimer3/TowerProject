@@ -28,6 +28,7 @@ The Catacombs play on while you are elsewhere in the game.
 
 **Skills.** The Catacomb screen has four menus, tabs along the bottom in place of the hand: Skills, Spirit, Forge and Academy.
 Each Magic level past the first gives a magic skill point.
+Level 2 takes 12 MXP, and each level after takes a fifth more than the one before.
 In Skills, tap a skill to open it: − and + move a point out of it or into it, at any time, and its lines show what a point gives and what the skill gives in all.
 Each skill takes up to its cap of points, and each point gives three things:
 
@@ -53,6 +54,8 @@ An MHP Drop (red) gives back 30 to 100 MHP, never past your maximum.
 Every Drop's chance starts at 0% and grows with Skills.
 
 **Crosshairs and potions.** While you watch, you can tap the hall for a little extra.
+Neither appears until Unlock Ability opens it: potions with Spirit Potion, crosshairs with Zap.
+Each unlock shows a short lesson over the hall; tap it to put it away.
 Each turn, an undead may gain a crosshair, which turns slowly over it.
 Tap it (or the wall just above or below the undead) for a free hit: a thunderbolt strikes it, which can be an MCrit and spends no turn.
 A Gold Crosshair hits three times as hard; Fortune gives the chance of one.
@@ -68,9 +71,22 @@ An undead's box shows its MHP, its MAtk with what each of its strikes takes off 
 Under them come its Drops, its crosshair, and the forecast: what the fight would cost you, whether you survive it, and the hits it takes, without MCrits.
 Tap the same tile again to put the box away; a wall's or floor's goes by itself.
 
-**Spirit.** The Spirit menu spends Spirit on upgrades.
-Unlock Ability opens a new ability each level: Spell Surge for 10 Uncommon Spirit, Renewing Rush for 75 Rare and Arcane Barrage for 150 Epic.
-Magic ATK +1 gives +1 MAtk a level, 25 levels, from 50 Uncommon Spirit.
+**Spirit.** The Spirit menu spends Spirit on upgrades, each level priced in one rarity of Spirit.
+Unlock Ability opens something new each level: Spirit Potion for 10 Common Spirit, Spell Surge for 20 Uncommon, Zap for 100 Common, Renewing Rush for 75 Rare and Arcane Barrage for 150 Epic.
+
+| Upgrade | Each level | Levels | Spirit |
+|---|---|---|---|
+| MHP +10 | +10 Max MHP | 35 | Common, from 25 |
+| Magic ATK +1 | +1 MAtk | 25 | Uncommon, from 50 |
+| Magic Armor Pierce +1 | the undead you strike have 1 less MDef | 25 | Uncommon, from 75 |
+| MXP Gain +2% | +2% MXP | 25 | Uncommon, from 100 |
+| MCrit Chance +0.25% / MCrit Damage +1% | +0.25% MCrit chance, +1% MCrit factor | 25 | Uncommon, from 200 |
+| Max MHP +20 / MHP Drop Chance +0.05% | +20 Max MHP, +0.05% MHP Drop chance | 20 | Rare, from 200 |
+| Magic ATK +2 | +2 MAtk | 20 | Rare, from 300 |
+| Loot Drop Gain +0.30× | ×0.3 more Spirit from each Loot Drop | 10 | Rare, from 450 |
+
+MXP Gain multiplies Focus's MXP bonus; the others add to what Skills give.
+Magic Armor Pierce adds to Armor Penetration, so past an undead's MDef it does nothing more.
 
 **Abilities.** Each ability unlocked has a button over the menus.
 Tap it to cast; then the number under it counts down the turns until it is ready again.

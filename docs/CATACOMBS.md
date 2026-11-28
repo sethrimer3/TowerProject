@@ -22,7 +22,8 @@ The designer chose floor 20, ancestral as the seventh rarity, the XP curve in 7,
 6. **"The tower's gold bonus".**
    Default: the tier's Gold bonus only (`TIER_BONUS_TENTHS`: ×1, ×2, ×3.1, ×4.3 …, via `tierGold`), not every Gold multiplier; Lore stays fractional (`snap`), as `save.cells` already allows, and the HUD rounds down.
 7. **Magic XP curve.**
-   Decided: from level L to L + 1 takes 200 × 1.2^(L − 1) MXP, rounded (200, 240, 288, 346, 415 …; level 3 at 440 in all), one magic skill point per level.
+   Decided: from level L to L + 1 takes 12 × 1.2^(L − 1) MXP, rounded (12, 14, 17, 21, 25 …; level 3 at 26 in all), one magic skill point per level.
+   It was 200 × 1.2^(L − 1); the designer's table replaced it (question 37).
 8. **What a magic skill point buys.**
    First built as three stat boxes (Force, Ward, Vitality); the designer's five Magic skills replaced them (step 8, **Magic skills** below).
 9. **Strong, Elite and Boss drops.**
@@ -67,6 +68,14 @@ Step 8 (the designer's spawn table, set halls, Magic skills, drops, crosshairs, 
 34. **Ability cooldowns** count turns (a second each, hasted turns too), only while an ability is short of a charge; each holds one charge.
 35. **Speed Drops and buffs** are kept through a fall; a restart ends nothing but the run.
 36. **Randomness.** Drops, MCrits, crosshairs and potions each draw from their own saved stream, as spawns do, seeded once from `catacombDrops`, `catacombCrits`, `crosshairs` and `potions`.
+
+The designer's Spirit upgrades and level table settled these:
+
+37. **The MXP table** (levels 1 to 255) is 12 × 1.2^(level − 1), rounded, multiplied out in order; it matches the table's exact values and its rounded ones (828m at 100, 1.55s at 255). No level cap is set.
+38. **Spirit Potion and Zap** are unlocks, not abilities: they take no ability slot or cooldown, and before them no potion or crosshair appears, nor does either stream draw.
+39. **Stacking.** The Spirit upgrades' flat amounts, chances, Armor Penetration and MCrit damage add to the Skills' (MCrit damage onto the MCrit factor as Might's does); MXP Gain is a different kind of bonus from Focus's, so the two multiply.
+40. **Loot Drop Gain** adds 0.3 a level to a Loot Drop's factor as it pays (×2 to ×5 becomes ×2.3 to ×5.3); the rolled amount saved with the hall is unchanged.
+41. **MXP Gain's level 7** is 296 Uncommon Spirit as given, though the series would give 299.
 
 ## Unlock
 
@@ -316,7 +325,7 @@ The active part of a run: something to tap while watching, worth most early on.
 
 ## Abilities
 
-Three limited-use spells (`abilities.ts`), opened in order by Unlock Ability.
+Three limited-use spells (`abilities.ts`), opened by Unlock Ability's levels 2, 4 and 5 (levels 1 and 3 are Spirit Potion and Zap, which let potions and crosshairs appear).
 Each holds one charge; cast, its charge comes back after its cooldown in turns, and its buff lasts the next 5 attacks.
 
 | Ability | Effect | Cooldown |
@@ -330,12 +339,21 @@ Each holds one charge; cast, its charge comes back after its cooldown in turns, 
 
 ## Spirit upgrades
 
-The Spirit menu's purchases (`spirit-upgrades.ts`); more come later.
+The Spirit menu's purchases (`spirit-upgrades.ts`), in the menu's order; each level's price is in `spirit-upgrades.ts`.
 
-| Upgrade | Level | Price |
-|---|---|---|
-| Unlock Ability | 1, 2, 3 | 10 Uncommon, 75 Rare, 150 Epic Spirit |
-| Magic ATK +1 | 1 to 25 | 50, 60, 72, 86, 104, 124, 149, 179, 215, 258, 310, 372, 446, 535, 642, 770, 924, 1,109, 1,331, 1,597, 1,917, 2,300, 2,760, 3,312, 3,975 Uncommon Spirit (question 19) |
+| Upgrade | Levels | Each level | Price |
+|---|---|---|---|
+| Unlock Ability | 5 | Spirit Potion, Spell Surge, Zap, Renewing Rush, Arcane Barrage | 10 Common, 20 Uncommon, 100 Common, 75 Rare, 150 Epic Spirit |
+| MHP +10 | 35 | +10 Max MHP | 25 to 24,611 Common Spirit |
+| Magic ATK +1 | 25 | +1 MAtk | 50 to 3,975 Uncommon Spirit (question 19) |
+| Magic Armor Pierce +1 | 25 | +1 flat Armor Penetration | 75 to 5,962 Uncommon Spirit |
+| MXP Gain +2% | 25 | +2% MXP, its own factor | 100 to 7,950 Uncommon Spirit |
+| MCrit Chance +0.25% / MCrit Damage +1% | 25 | +0.25% MCrit chance, +0.01 MCrit factor | 200 to 15,899 Uncommon Spirit |
+| Max MHP +20 / MHP Drop Chance +0.05% | 20 | +20 Max MHP, +0.05% MHP Drop chance | 200 to 6,390 Rare Spirit |
+| Magic ATK +2 | 20 | +2 MAtk | 300 to 9,584 Rare Spirit |
+| Loot Drop Gain +0.30× | 10 | +0.3 on a Loot Drop's factor | 450 to 2,322 Rare Spirit |
+
+Unlocking Spirit Potion or Zap shows its lesson over the hall, a run's board-lesson note, until tapped (`taught` in the save).
 
 ## Save
 
