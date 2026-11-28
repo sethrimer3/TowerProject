@@ -6,7 +6,8 @@ const ui=JSON.parse(readFileSync(output+'/ui.json'));
 const source=readFileSync('src/sprites/assets.ts','utf8');
 const paths=JSON.parse(source.slice(source.indexOf('['),source.lastIndexOf(']')+1));
 const entries=paths.filter(path=>!ui.regions[path]).map(path=>{const p=decodePng(readFileSync('public/'+path));return {path,width:p.width,height:p.height}});
-entries.sort((a,b)=>b.height-a.height||b.width-a.width||a.path.localeCompare(b.path));
+// Append the new forest landmark without repacking existing artwork.
+entries.sort((a,b)=>Number(a.path.endsWith("/forest-mausoleum.png"))-Number(b.path.endsWith("/forest-mausoleum.png"))||b.height-a.height||b.width-a.width||a.path.localeCompare(b.path));
 const width=2048,padding=2;let x=padding,y=padding,rowHeight=0;
 for(const e of entries){if(e.width+padding*2>width)throw Error(`Sprite exceeds atlas width: ${e.path}`);if(x+e.width+padding>width){x=padding;y+=rowHeight+padding*2;rowHeight=0;}e.x=x;e.y=y;x+=e.width+padding*2;rowHeight=Math.max(rowHeight,e.height);}
 const height=2**Math.ceil(Math.log2(y+rowHeight+padding));

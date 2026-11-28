@@ -256,3 +256,11 @@ Its source pixels reveal along one continuous loop, with tiny hard-edged traveli
 After the complete trace, runtime turns every second visible source texel into an ivory square, scatters it outward, and curves it into the returned hero while the black curtain fades.
 The particles increasingly glow gold during absorption, with crisp square halos and thin stepped trails.
 The complete frame and shortened timing serve Reduce motion without particle movement, independent of the optional ambient Animations setting.
+
+## Catacombs
+
+The three retained source sheets in `assets/game-sprites/catacombs-sources/` supply 33 native subjects through `tools/prepare-catacomb-sprites.mjs`.
+They include seven front-facing undead, a 72 × 72 Mausoleum, fragment and seven rarity Spirit icons, four stacked board Ingots, four single-bar inventory icons, five menu subjects and four 12 × 12 enemy Drop marks.
+The exporter uses nearest-neighbor reduction, binary alpha and the shared 27-color palette with transparent padding and no baked labels.
+Spirit rarities vary in silhouette as well as color; ingot inventory marks distinguish the metals without relying only on hue.
+The UI and world packers append these assets without moving existing source rectangles.

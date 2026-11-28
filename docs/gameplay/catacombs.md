@@ -44,7 +44,7 @@ A point moved counts from the next turn; taking points out of Weaving can lower 
 The ≡ button lists every Catacomb stat in one table, with each Drop's chance and what it gives; tap anywhere to put it away.
 Forge and Academy open in later updates.
 
-**Drops.** As a hall is made, each undead may roll Drops, shown as coloured pips on it, and beating it pays them all.
+**Drops.** As a hall is made, each undead may roll Drops, shown as native crystal, pouch, boot or heart marks beside it, and beating it pays them all.
 An MXP Drop (purple) gives ×3 to ×5 MXP from that undead, and a Loot Drop (green) ×2 to ×5 Spirit.
 A Speed Drop (yellow) gives 10 to 110 attacks at double speed, which add up and are kept when you fall.
 An MHP Drop (red) gives back 30 to 100 MHP, never past your maximum.
@@ -76,3 +76,6 @@ The slim Auto button above it casts it by itself whenever it is ready.
 Above ×1, each extra turn spends a banked second; when the bank runs out the speed drops back to ×1.
 
 **Spirit and Ingots.** Each undead beaten drops Spirit of its rarity, and treasure rooms hold Ingots; both are kept for good and listed in the currencies table once the Catacombs are open.
+
+The Mausoleum, undead, Spirit, Ingots and menu tabs use native pixel artwork matching the main game.
+An undead's active Drops have distinct marks beside it: a purple crystal for MXP, green pouch for Loot, gold boot for Speed and red heart for MHP.

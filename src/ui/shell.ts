@@ -23,7 +23,7 @@ const ACTIONS_MENU = `<div id="run-menu" class="run-menu"><div class="run-menu-f
   `<button id="relics-button" class="mini-action relics-button" aria-label="Relics" title="Relics" hidden><span class="mini-icon">${relicIcon("epic")}</span><small>RELICS</small></button>` +
   `<button id="shrines-button" class="mini-action shrines-button" aria-label="Shrine Boons" title="Shrine Boons" hidden><span class="mini-icon">${shrineIcon()}</span><small>BOONS</small></button>` +
   `<button id="mail-button" class="mini-action mail-button" aria-label="Mail" title="Mail" hidden><span class="mini-icon">${mailIcon()}</span><small>MAIL</small></button>` +
-  `<button id="catacombs-button" class="mini-action catacombs-button" aria-label="Catacomb" title="Catacomb: the run under way" hidden><span class="mini-icon">${kitIcon("torch", "", "catacombs-icon")}</span><small>CATACOMB</small></button>` +
+  `<button id="catacombs-button" class="mini-action catacombs-button" aria-label="Catacomb" title="Catacomb: the run under way" hidden><span class="mini-icon">${kitIcon("catacomb-menu-catacombs", "", "catacombs-icon")}</span><small>CATACOMB</small></button>` +
   `<button id="end-run" class="mini-action danger run-menu-end" aria-label="End current climb" title="End Climb"><small>END CLIMB</small></button></div>` +
   `<button id="run-menu-toggle" class="mini-action" aria-label="Menu" aria-expanded="false" aria-controls="run-menu-items" title="Menu"><span class="mini-icon">${kitIcon("ui-menu", "", "menu-icon")}${kitIcon("ui-menu-close", "", "menu-icon menu-close-icon")}</span><small>MENU</small></button>` +
   `<button id="run-shop" class="mini-action" aria-label="Shop" title="Shop" hidden><span class="mini-icon">${CART_ICON}</span><small>SHOP</small></button></div>`;

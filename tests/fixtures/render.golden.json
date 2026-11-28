@@ -1,5 +1,5 @@
 {
-  "towerArea1.settled": "f3a765b69c5a5a4e43b6d3de",
+  "towerArea1.settled": "5209ae225021bb8d80ed8c33",
   "towerArea1.moving": "7ba7c276d990d5921309af06",
   "towerArea1.after": "df0ca46cf0155c0ad80cb395",
   "towerArea1.ripples": "8d794ef3a0e3da46e5754348",
@@ -24,17 +24,17 @@
   "reducedNoDecor.after": "db7c8660528b85ae73fff8e2",
   "reducedNoDecor.ripples": "f36c396c35fd35e6ad875c6d",
   "reducedNoDecor.later": "a0e751f58f953be4f251028c",
-  "decorCrates.settled": "b61317a74f8a51f039b1468d",
+  "decorCrates.settled": "e835440ec5b3cb5ccb53d071",
   "decorCrates.moving": "10345bd934621c3818aebfa3",
   "decorCrates.after": "3fbcc2a29f37190d1709ff22",
   "decorCrates.ripples": "f918c09e76722e5fa541e399",
   "decorCrates.later": "0db45e9f29dbfce6b0448023",
-  "decorPool.settled": "dbb0045a74bcade64de8c20c",
+  "decorPool.settled": "80deeca99657d3878ce4a78e",
   "decorPool.moving": "46b4d6a5f0c1730dce87ec48",
   "decorPool.after": "cba4658e0f13a18546831375",
   "decorPool.ripples": "143d54224bae9b70cd443f5d",
   "decorPool.later": "c0b8cbb547f38d4203fb1292",
-  "decorThicket.settled": "50f478536486769bb22482fc",
+  "decorThicket.settled": "7ceab095be121a689acf524f",
   "decorThicket.moving": "0d93a945158fe2c513e742bd",
   "decorThicket.after": "391dbc13221120df5afaf22c",
   "decorThicket.ripples": "921de76b33a2032622801420",
@@ -237,5 +237,9 @@
   "pixelLevelUp.fade": "eb7b97ff7f95dc24def06930",
   "pixelLevelUp.points": "1933058fa18997958abcd669",
   "pixelLevelUp.reducedMotion": "b94c8e650536734efae1f1ca",
-  "pixelLevelUp.expired": "b720ada8924bbad4131493fb"
+  "pixelLevelUp.expired": "b720ada8924bbad4131493fb",
+  "catacombSprites.mausoleum": "71a6a4143c62de55b1d3682a",
+  "catacombSprites.undeadAndBuffs": "e3f3f35356391787894e8df9",
+  "catacombSprites.demon": "442804e512f60f7acc2fede5",
+  "catacombSprites.collected": "21f76d7e07fcc02d6b3d89b0"
 }

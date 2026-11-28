@@ -12,10 +12,24 @@ for(const [id,a] of Object.entries(style)){
 }
 for(const folder of ['', 'legacy/'])for(const name of readdirSync(`public/assets/ui/frames/${folder}`).filter(n=>n.endsWith('.png'))){const path=`assets/ui/frames/${folder}${name}`,b=readFileSync(`public/${path}`);entries.push({path,width:b.readUInt32BE(16),height:b.readUInt32BE(20)});}
 // Append the large interlude after ordinary sprites, preserving their existing texel positions.
-entries.sort((a,b)=>Number(a.path==="assets/style/death-infinity.png")-Number(b.path==="assets/style/death-infinity.png")||b.height-a.height||b.width-a.width||a.path.localeCompare(b.path));
+// Append the new Catacombs subjects without moving existing atlas texels.
+entries.sort((a,b)=>Number(a.path.includes("/catacomb-"))-Number(b.path.includes("/catacomb-"))||Number(a.path==="assets/style/death-infinity.png")-Number(b.path==="assets/style/death-infinity.png")||b.height-a.height||b.width-a.width||a.path.localeCompare(b.path));
 const width=1024,padding=2;let x=padding,y=padding,rowHeight=0;
-for(const e of entries){if(x+e.width+padding>width){x=padding;y+=rowHeight+padding*2;rowHeight=0;}e.x=x;e.y=y;x+=e.width+padding*2;rowHeight=Math.max(rowHeight,e.height);}
-const height=2**Math.ceil(Math.log2(y+rowHeight+padding));
+const catacombEntries=entries.filter(e=>e.path.includes("/catacomb-"));
+const existing=entries.filter(e=>!e.path.includes("/catacomb-"));
+const place=e=>{if(x+e.width+padding>width){x=padding;y+=rowHeight+padding*2;rowHeight=0;}e.x=x;e.y=y;x+=e.width+padding*2;rowHeight=Math.max(rowHeight,e.height);};
+for(const e of existing)place(e);
+// Reuse the empty strip beside the final animation sheet. Existing pixels,
+// source rectangles and texture dimensions stay unchanged for this batch.
+const tail=existing.find(e=>e.path==="assets/style/death-infinity.png");
+const start=tail.x+tail.width+padding*2;
+let gx=start,gy=tail.y,gh=0,overflow=false;
+for(const e of catacombEntries){
+ if(gx+e.width+padding>width){gx=start;gy+=gh+padding*2;gh=0;}
+ if(!overflow && gy+e.height<=tail.y+tail.height){e.x=gx;e.y=gy;gx+=e.width+padding*2;gh=Math.max(gh,e.height);}
+ else {if(!overflow){overflow=true;x=padding;y=tail.y+tail.height+padding*2;rowHeight=0;}place(e);}
+}
+const height=2**Math.ceil(Math.log2(Math.max(...entries.map(e=>e.y+e.height))+padding));
 const pixels=Buffer.alloc(width*height*4);
 for(const e of entries){const input=decodePng(readFileSync(`public/${e.path}`));
  if(input.width!==e.width||input.height!==e.height)throw Error(`Manifest dimensions differ: ${e.path}`);

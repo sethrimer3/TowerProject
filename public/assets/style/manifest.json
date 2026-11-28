@@ -4424,6 +4424,204 @@
       "file": "scarab.png",
       "width": 24,
       "height": 24
+    },
+    "catacomb-undead-wisp": {
+      "file": "catacomb-undead-wisp.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-undead-ghost": {
+      "file": "catacomb-undead-ghost.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-undead-skeleton": {
+      "file": "catacomb-undead-skeleton.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-undead-ghoul": {
+      "file": "catacomb-undead-ghoul.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-undead-vampire": {
+      "file": "catacomb-undead-vampire.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-undead-lich": {
+      "file": "catacomb-undead-lich.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-undead-demon": {
+      "file": "catacomb-undead-demon.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "forest-mausoleum": {
+      "file": "forest-mausoleum.png",
+      "width": 72,
+      "height": 72,
+      "tile": true
+    },
+    "catacomb-spirit-fragments": {
+      "file": "catacomb-spirit-fragments.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-spirit-common": {
+      "file": "catacomb-spirit-common.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-spirit-uncommon": {
+      "file": "catacomb-spirit-uncommon.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-spirit-rare": {
+      "file": "catacomb-spirit-rare.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-spirit-epic": {
+      "file": "catacomb-spirit-epic.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-spirit-legendary": {
+      "file": "catacomb-spirit-legendary.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-spirit-mythic": {
+      "file": "catacomb-spirit-mythic.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-spirit-ancestral": {
+      "file": "catacomb-spirit-ancestral.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-ingot-brass": {
+      "file": "catacomb-ingot-brass.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-ingot-ui-brass": {
+      "file": "catacomb-ingot-ui-brass.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-ingot-iron": {
+      "file": "catacomb-ingot-iron.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-ingot-ui-iron": {
+      "file": "catacomb-ingot-ui-iron.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-ingot-steel": {
+      "file": "catacomb-ingot-steel.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-ingot-ui-steel": {
+      "file": "catacomb-ingot-ui-steel.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-ingot-nickel": {
+      "file": "catacomb-ingot-nickel.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-ingot-ui-nickel": {
+      "file": "catacomb-ingot-ui-nickel.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-menu-skills": {
+      "file": "catacomb-menu-skills.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-menu-spirit": {
+      "file": "catacomb-menu-spirit.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-menu-forge": {
+      "file": "catacomb-menu-forge.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-menu-academy": {
+      "file": "catacomb-menu-academy.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-menu-catacombs": {
+      "file": "catacomb-menu-catacombs.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
+    },
+    "catacomb-buff-mxp": {
+      "file": "catacomb-buff-mxp.png",
+      "width": 12,
+      "height": 12,
+      "tile": true
+    },
+    "catacomb-buff-loot": {
+      "file": "catacomb-buff-loot.png",
+      "width": 12,
+      "height": 12,
+      "tile": true
+    },
+    "catacomb-buff-speed": {
+      "file": "catacomb-buff-speed.png",
+      "width": 12,
+      "height": 12,
+      "tile": true
+    },
+    "catacomb-buff-mhp": {
+      "file": "catacomb-buff-mhp.png",
+      "width": 12,
+      "height": 12,
+      "tile": true
     }
   }
 }
