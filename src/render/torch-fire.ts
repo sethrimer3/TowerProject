@@ -1,3 +1,6 @@
+import { drawKit } from "../sprites/kit.ts";
+import { drawPixelOutline } from "../sprites/pixel-outline.ts";
+
 /** A torch's fire, ported from TowerDefense's city torches (`fireTongues` in
  * its src/defend/pixel-fx.ts): a bed of embers in the torch's bowl and
  * tongues rising off it, shrinking and cooling as they climb.
@@ -9,13 +12,17 @@ type Ctx = CanvasRenderingContext2D;
 
 /** Art pixels a tile (the sprite has 24), and the fire's colours, hottest first. */
 const ART = 48;
-const FIRE = ["#fff4c8", "#f6c75a", "#f08a34", "#c8452a"] as const;
+const FIRE = {
+  warm: ["#fff4c8", "#f6c75a", "#f08a34", "#c8452a"],
+  blue: ["#ccecff", "#88c5db", "#54879a", "#315363"],
+} as const;
+type FlameColor = keyof typeof FIRE;
 /** The tongues, how wide they spread from the bed, and how high they climb. */
 const TONGUES = 13, SPREAD = 7, TALL = 1.45;
 /** The bed's middle, in art pixels: over the middle of the bowl's rim. */
 const BED_X = 23, BED_Y = 19;
 /** The sprite rows above this hold the baked flame; the hardware starts here. */
-export const TORCH_HARDWARE_ROW = 10;
+const TORCH_HARDWARE_ROW = 10;
 
 /** A fixed number in [0, 1) for (a, b, c): each torch's tongues stay its own. */
 function hash01(a: number, b: number, c: number): number {
@@ -44,10 +51,11 @@ function puff(dot: ReturnType<typeof artPen>, x: number, y: number, r: number) {
 }
 
 /** The fire of the torch on tile (x, y), in tile space; `still` holds it as it is at time 0. */
-export function paintTorchFire(c: Ctx, x: number, y: number, now: number, still: boolean) {
+export function paintTorchFire(c: Ctx, x: number, y: number, now: number, still: boolean, color: FlameColor = "warm") {
+  const fire = FIRE[color];
   const dot = artPen(c), t = still ? 0 : now / 1000, seed = x * 7919 + y * 104729 + 17;
   c.save();
-  c.fillStyle = FIRE[3];
+  c.fillStyle = fire[3];
   dot(BED_X - 3, BED_Y, 7, 2);
   for (let k = 0; k < TONGUES; k++) {
     const u = (s: number) => hash01(seed, k, s);
@@ -55,8 +63,21 @@ export function paintTorchFire(c: Ctx, x: number, y: number, now: number, still:
     const fx = BED_X + 0.5 + (u(1842) - 0.5) * SPREAD * (1 - age) + Math.sin(t * 5 + k) * 1.2 * age;
     const fy = BED_Y - age * (8 + u(1843) * 4) * TALL;
     const r = Math.round((1 - age) * 2.2 - 0.3);
-    c.fillStyle = age < 0.18 ? FIRE[0] : age < 0.42 ? FIRE[1] : age < 0.7 ? FIRE[2] : FIRE[3];
+    c.fillStyle = age < 0.18 ? fire[0] : age < 0.42 ? fire[1] : age < 0.7 ? fire[2] : fire[3];
     puff(dot, Math.round(fx), Math.round(fy), Math.max(0, r));
   }
   c.restore();
+}
+
+
+/** The original metal hardware with a live flame in its bowl, in tile space. */
+export function paintLitTorch(c: Ctx, x: number, y: number, now: number, still: boolean, color: FlameColor = "warm") {
+  c.save();
+  c.beginPath();
+  c.rect(-2, TORCH_HARDWARE_ROW, 28, 26 - TORCH_HARDWARE_ROW);
+  c.clip();
+  drawPixelOutline(c, "torch", "black");
+  drawKit(c, "torch");
+  c.restore();
+  paintTorchFire(c, x, y, now, still, color);
 }

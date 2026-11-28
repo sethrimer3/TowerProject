@@ -1,3 +1,4 @@
+import { paintLitTorch } from "./render/torch-fire.ts";
 import { boardFont } from "./sprites/font.ts";
 import type { Mode, Tile } from "./entities.ts";
 import type { Board } from "./board.ts";
@@ -205,9 +206,16 @@ export function drawTournamentHall(c: CanvasRenderingContext2D, center: number, 
 }
 
 /** The native Mausoleum occupies the existing three-by-three forest footprint. */
-export function drawMausoleum(c: CanvasRenderingContext2D, center: number) {
-  drawKit(c, "forest-mausoleum", (center + MAUSOLEUM.dx) * 24,
-    (OUTSIDE_SIZE - MAUSOLEUM.y - MAUSOLEUM.height) * 24, 72, 72);
+export function drawMausoleum(c: CanvasRenderingContext2D, center: number, now: number, still: boolean) {
+  const x = (center + MAUSOLEUM.dx) * 24, y = (OUTSIDE_SIZE - MAUSOLEUM.y - MAUSOLEUM.height) * 24;
+  drawKit(c, "forest-mausoleum", x, y, 72, 72);
+  for (const column of [18, 54]) {
+    c.save();
+    c.translate(x + column - 9, y + 30);
+    c.scale(0.75, 0.75);
+    paintLitTorch(c, column, y, now, still, "blue");
+    c.restore();
+  }
 }
 
 export function drawProvingGrounds(c: CanvasRenderingContext2D, center: number) {

@@ -118,3 +118,6 @@ New atlas entries append after existing artwork, preserving old source rectangle
 `node tests/catacomb-sprites.mjs` checks literal texels for all 33 subjects in both atlas modes, real phone/desktop forest and menu layouts, all Codex portraits and read-only board rendering.
 `tests/catacomb-sprites.test.ts` checks native sizes, exact palette, binary alpha, transparent edges, unique art and currency helpers.
 The appended `catacombSprites` render scene shows the Mausoleum, every undead and buff mark, all four Ingot rooms and consumed pickups without moving existing scene seeds.
+
+The forest Mausoleum and Catacomb halls share blue pixel flames, held still with Reduce motion.
+The stairs tile and the Codex Halls entry share the native `catacomb-stairs-down` sprite, drawn by `tools/prepare-catacomb-stairs.mjs`.

@@ -1,3 +1,4 @@
+import { paintLitTorch } from "./torch-fire.ts";
 // Draws a Catacomb hall (docs/CATACOMBS.md) on the board's canvas: crypt
 // stone from the Tower's tiles, torches, the Lore tile, Ingots, the undead as
 // native PNGs, the hero, and what rises off the board as a run's does (its
@@ -5,7 +6,7 @@
 // drops; a tapped crosshair's Thunderbolt; and each one's sound.
 // Presentation only: it reads the run and never changes it.
 import type { Tile } from "../entities.ts";
-import { paintContents, paintHero, paintRingedSprite, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
+import { paintContents, paintHero, paintRingedSprite, paintTile, type BoardLook } from "./tile-painters.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 import {undeadSprite, ingotSprite, buffSprite, spiritSprite} from "../sprites/catacombs.ts";
 import { BoardPopups, type PopupFrame } from "./board-popups.ts";
@@ -204,8 +205,8 @@ export class CatacombBoard {
     const targets = hallTargets(hall, number, run.slots), left = new Set(targets.slice(run.target).map((t) => `${t.x},${t.y}`));
     for (let row = 0; row < N; row++) for (let x = 0; x < N; x++) {
       const k = hallCell(hall, x, row);
-      if (k === "stairs") at(row, x, () => paintContents(c, { kind: "stairs" }, { x, y: row, time: now, reduceMotion, styledSprites }));
-      else if (k === "torch") at(row, x, () => paintTorch(c, { x, y: row, lightRadius: 0, baseIntensity: 0, active: true }, now, reduceMotion));
+      if (k === "stairs") at(row, x, () => drawKit(c, "catacomb-stairs-down"));
+      else if (k === "torch") at(row, x, () => paintLitTorch(c, x, row, now, reduceMotion, "blue"));
       else if (k === "lore" && left.has(`${x},${row}`)) at(row, x, () => drawKit(c, "cell", 3, 3, 18, 18));
       else if ((k === "brass" || k === "iron" || k === "steel" || k === "nickel") && left.has(`${x},${row}`)) at(row, x, () => drawKit(c, ingotSprite(k)));
     }

@@ -1,6 +1,6 @@
 {
   "image": "assets/atlases/ui.png",
-  "revision": "10ad2361f92c61ec",
+  "revision": "8fb4a055f46a5e75",
   "width": 1024,
   "height": 1024,
   "padding": 2,
@@ -760,6 +760,12 @@
       "height": 24,
       "x": 830,
       "y": 826
+    },
+    "assets/style/catacomb-stairs-down.png": {
+      "width": 24,
+      "height": 24,
+      "x": 866,
+      "y": 854
     },
     "assets/style/catacomb-undead-demon.png": {
       "width": 24,

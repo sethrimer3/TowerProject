@@ -10,7 +10,7 @@ import { drawDungeonGround, dungeonDiagonals, dungeonMaterial, towerTileset } fr
 import { dungeonWallProfile } from "./wall-depth.ts";
 import { dungeonDetail } from "./dungeon-details.ts";
 import { drawAnimatedTorch, drawSquareDoor } from "../sprites/options.ts";
-import { paintTorchFire, TORCH_HARDWARE_ROW } from "./torch-fire.ts";
+import { paintLitTorch } from "./torch-fire.ts";
 import { drawPickupAnimation, drawSpriteFrame } from "../sprites/animations.ts";
 import { drawPixelOutline } from "../sprites/pixel-outline.ts";
 import { paintShadowRows, shadowRows } from "./enemy-shadow.ts";
@@ -303,12 +303,5 @@ export function paintTorch(c: CanvasRenderingContext2D, t: Torch, now: number, r
     if (!animated || !drawAnimatedTorch(c, t.x, t.y, now, reduceMotion, false)) drawKit(c, "torch");
     return;
   }
-  c.save();
-  c.beginPath();
-  c.rect(-2, TORCH_HARDWARE_ROW, 28, 26 - TORCH_HARDWARE_ROW);
-  c.clip();
-  drawPixelOutline(c, "torch", "black");
-  drawKit(c, "torch");
-  c.restore();
-  paintTorchFire(c, t.x, t.y, now, reduceMotion);
+  paintLitTorch(c, t.x, t.y, now, reduceMotion);
 }

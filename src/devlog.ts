@@ -37,6 +37,7 @@ export const DEVLOG: readonly DevlogEntry[] = [
   { date: "2026-11-28", text: "Tidier notes behind the board's wall art." },
   { date: "2026-11-28", text: "Torchlight, shadows and glows now move with an enemy as it lunges to attack." },
   { date: "2026-11-28", text: "Under Dev Mode, the mouse wheel or a pinch zooms the board past ×4, its pixels kept crisp." },
+  { date: "2026-11-27", text: "Blue torches light the Mausoleum and Catacombs, with stairs down and a sharper Golden Scarab." },
   { date: "2026-11-27", text: "Landscape now keeps the HUD and controls beside the board on ultrawide monitors." },
   { date: "2026-11-27", text: "Tapped tile outlines now follow zoom and pan, with readable text above the selected tile." },
   { date: "2026-11-27", text: "Crits and MCrits now multiply only the damage past DEF and MDef, so Piercing and Armor Penetration boost them." },

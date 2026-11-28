@@ -660,7 +660,7 @@ function environments(src: CodexSource): CodexCategory {
 
 /** How the Catacombs work, in a line each. */
 const CATACOMBS_HOW: CodexEntry[] = [
-  { id: "halls", icon: { kind: "kit", id: "stairs" }, name: "Halls", brief: "Each hall is a corridor of undead, a Lore tablet and stairs down." },
+  { id: "halls", icon: { kind: "kit", id: "catacomb-stairs-down" }, name: "Halls", brief: "Each hall is a corridor of undead, a Lore tablet and stairs down." },
   { id: "magic", icon: { kind: "kit", id: "catacomb-menu-skills" }, name: "Magic skills", brief: "Spend magic skill points on Might, Weaving, Resonance, Focus and Fortune." },
   { id: "turns", icon: { kind: "kit", id: "hourglass" }, name: "Turns and the bank", brief: "A turn a second. Time away is banked, and haste spends it." },
   { id: "treasure", icon: { kind: "kit", id: "catacomb-ingot-ui-brass" }, name: "Treasure rooms", brief: "Every 5th hall and more hold Ingots, worth more each time." },

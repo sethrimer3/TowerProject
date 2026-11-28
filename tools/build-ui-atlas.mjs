@@ -16,6 +16,8 @@ for(const folder of ['', 'legacy/'])for(const name of readdirSync(`public/assets
 entries.sort((a,b)=>Number(a.path.includes("/catacomb-"))-Number(b.path.includes("/catacomb-"))||Number(a.path==="assets/style/death-infinity.png")-Number(b.path==="assets/style/death-infinity.png")||b.height-a.height||b.width-a.width||a.path.localeCompare(b.path));
 const width=1024,padding=2;let x=padding,y=padding,rowHeight=0;
 const catacombEntries=entries.filter(e=>e.path.includes("/catacomb-"));
+// Keep the new stairs after the previously packed Catacombs sprites.
+catacombEntries.sort((a,b)=>Number(a.path.endsWith("/catacomb-stairs-down.png"))-Number(b.path.endsWith("/catacomb-stairs-down.png")));
 const existing=entries.filter(e=>!e.path.includes("/catacomb-"));
 const place=e=>{if(x+e.width+padding>width){x=padding;y+=rowHeight+padding*2;rowHeight=0;}e.x=x;e.y=y;x+=e.width+padding*2;rowHeight=Math.max(rowHeight,e.height);};
 for(const e of existing)place(e);

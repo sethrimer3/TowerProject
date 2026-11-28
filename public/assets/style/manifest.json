@@ -4622,6 +4622,12 @@
       "width": 12,
       "height": 12,
       "tile": true
+    },
+    "catacomb-stairs-down": {
+      "file": "catacomb-stairs-down.png",
+      "width": 24,
+      "height": 24,
+      "tile": true
     }
   }
 }

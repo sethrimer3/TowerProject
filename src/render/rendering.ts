@@ -723,7 +723,7 @@ export class Renderer {
     if (g.world instanceof OutsideWorld && g.world.blacksmith) drawBlacksmith(c, g.world.entranceX, f.look.styledSprites,
       f.now, g.save.settings.spriteAnimations && !f.look.reduceMotion);
     if (g.world instanceof OutsideWorld && g.world.hall) drawTournamentHall(c, g.world.entranceX, f.look.styledSprites);
-    if (g.world instanceof OutsideWorld && g.world.mausoleum) drawMausoleum(c, g.world.entranceX);
+    if (g.world instanceof OutsideWorld && g.world.mausoleum) drawMausoleum(c, g.world.entranceX, f.now, f.look.reduceMotion);
     c.restore();
   }
   private drawRoute(f: FrameContext) {

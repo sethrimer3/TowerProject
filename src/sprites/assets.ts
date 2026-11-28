@@ -141,6 +141,7 @@ export const SPRITE_ASSETS = [
   "assets/style/catacomb-spirit-mythic.png",
   "assets/style/catacomb-spirit-rare.png",
   "assets/style/catacomb-spirit-uncommon.png",
+  "assets/style/catacomb-stairs-down.png",
   "assets/style/catacomb-undead-demon.png",
   "assets/style/catacomb-undead-ghost.png",
   "assets/style/catacomb-undead-ghoul.png",
