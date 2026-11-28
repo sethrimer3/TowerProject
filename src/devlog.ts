@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-28", text: "Catacomb menus sit on the bottom tabs, undead get a run's HP bar, and the forest menu fills two rows." },
   { date: "2026-11-28", text: "The route line now traces out in fine gold lines to a sparking square; the tile outline is finer and faster." },
   { date: "2026-11-28", text: "Crates, barrels, plants, mushrooms and rocks are redrawn in finer pixels with a crisp black outline." },
   { date: "2026-11-28", text: "Enemy shadows are darker and now shade the floor beneath them instead of looking like a grey patch." },

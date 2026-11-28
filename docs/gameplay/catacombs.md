@@ -20,11 +20,12 @@ The Magician walks each hall left to right, a turn a second: a dash to the next 
 Deeper halls bring stronger undead: Skeletons from Hall 11, Ghouls from 25, Vampires from 49, Liches from 80 and Demons from 200.
 Some halls are always the same, such as Hall 45's six Wisps and Hall 395's one of each from Ghost to Demon.
 A fall starts the run again at Hall 1 with full MHP; MXP, Lore, Spirit and Ingots are kept.
-The HUD shows the Magician's MHP, MAtk and MDef, the Magic level and its MXP, unspent magic skill points in the portrait's corner, Lore in place of Silver, the hall in place of the floor, and the Lore bonus in place of the Gold bonus.
-The enemy box shows a Wisp here; tap it for every undead the hall can hold, its chance, stats and rewards.
+The HUD shows the Magician's MHP, MAtk and MDef, the Magic level and its MXP, unspent magic skill points in the portrait's corner, Lore in place of Silver, the hall in place of the floor, and the Spirit you hold in place of the Gold bonus.
+The enemy box shows a Wisp here; tap it for every undead the hall can hold, its chance, stats and rewards, and the Lore bonus.
+An undead's HP bar shows over it once it is struck, as in a climb.
 The Catacombs play on while you are elsewhere in the game.
 
-**Skills.** Under the hall, the Catacomb screen has four menus: Skills, Spirit, Forge and Academy.
+**Skills.** The Catacomb screen has four menus, tabs along the bottom in place of the hand: Skills, Spirit, Forge and Academy.
 Each Magic level past the first gives a magic skill point.
 In Skills, tap a skill to open it: − and + move a point out of it or into it, at any time, and its lines show what a point gives and what the skill gives in all.
 Each skill takes up to its cap of points, and each point gives three things:

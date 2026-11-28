@@ -4,7 +4,7 @@
 // Catacombs' turns run on the wall clock whether it shows or not (`frame`).
 import type { AppContext } from "./app.ts";
 import { closeRunMenu } from "./run-menu.ts";
-import { cellIcon, clockIcon, el, pointsIcon, text } from "./dom.ts";
+import { cellIcon, clockIcon, el, pointsIcon, spiritIcon, text, uiSprite } from "./dom.ts";
 import { catacombOddsHtml } from "./catacomb-odds.ts";
 import { CatacombMenus } from "./catacomb-menus.ts";
 import { shortStat } from "./hud.ts";
@@ -15,7 +15,7 @@ import { HASTES, type Haste } from "../catacombs/state.ts";
 import { magician, magicLevel, mxpForLevel, pointsEarned, pointsSpent } from "../catacombs/magic.ts";
 import { tapCrosshair, takePotion, type TapEvent } from "../catacombs/taps.ts";
 import { CORRIDOR_ROW, HALL_SIZE, SLOT_XS } from "../catacombs/hall.ts";
-import { loreBonus, UNDEAD, undeadStats } from "../catacombs/catalog.ts";
+import { SPIRIT_RARITIES, UNDEAD, undeadStats, type SpiritRarity } from "../catacombs/catalog.ts";
 import type { TurnEvent } from "../catacombs/turn.ts";
 import { tierNumeral } from "../tiers.ts";
 import { shortAmount, whole } from "../whole.ts";
@@ -47,6 +47,16 @@ export function turnLine(event: TurnEvent | null, slotName: (slot: number) => st
     case "fall": case "restart": return event.kind === "restart" && event.stalemate ? "Neither side can harm the other. Back to Hall 1." : "The Magician falls, and wakes at Hall 1.";
   }
 }
+
+/** The six Spirits the HUD shows: Common to Mythic, or Uncommon to
+ * Ancestral once any Ancestral Spirit is held. */
+export function shownSpirits(spirit: Record<SpiritRarity, number>): SpiritRarity[] {
+  return spirit.ancestral > 0 ? SPIRIT_RARITIES.slice(1) : SPIRIT_RARITIES.slice(0, 6);
+}
+
+/** The HUD's Spirit grid: each shown Spirit's icon and amount. */
+export const spiritGridHtml = (spirit: Record<SpiritRarity, number>) => shownSpirits(spirit)
+  .map((r) => `<span role="listitem" title="${r[0]!.toUpperCase()}${r.slice(1)} Spirit: ${Math.floor(spirit[r]).toLocaleString("en-US")}">${spiritIcon(r)}<b>${shortAmount(Math.floor(spirit[r]))}</b></span>`).join("");
 
 export class CatacombView {
   private board = new CatacombBoard(el("world") as HTMLCanvasElement);
@@ -118,7 +128,7 @@ export class CatacombView {
   draw(now: number) {
     const run = this.c.run;
     if (!this.active || !run) return false;
-    this.board.draw(run, this.c.number, now, this.ctx.game.save.settings.reduceMotion, usesGameSprites(this.ctx.game.save));
+    this.board.draw(run, this.c.number, now, this.ctx.game.save.settings.reduceMotion, usesGameSprites(this.ctx.game.save), this.ctx.game.save.settings.enemyBars);
     return true;
   }
 
@@ -156,9 +166,10 @@ export class CatacombView {
     document.querySelector(".purse")!.insertAdjacentHTML("beforeend",
       `<span class="catacomb-lore-stat catacomb-only" title="Lore Fragments: kept between climbs">${cellIcon()} <b id="catacomb-lore"></b></span>`);
     document.querySelector(".portrait-top")!.insertAdjacentHTML("beforeend", `<span id="magic-points" class="magic-points catacomb-only" title="Magic skill points to spend">${pointsIcon("points-icon magic-points-icon")}<b></b></span>`);
-    el("gold-bonus").insertAdjacentHTML("afterbegin", `<span class="catacomb-only">${cellIcon()}</span>`);
+    // The Spirit held, in the Gold bonus's place: two columns of three.
+    el("gold-bonus").insertAdjacentHTML("afterend", `<div id="catacomb-spirit" class="catacomb-spirit catacomb-only" role="list" aria-label="Spirit held"></div>`);
     el("run-shop").insertAdjacentHTML("beforebegin",
-      `<button id="switch-back" class="mini-action switch-back catacomb-only" aria-label="Switch back to where you were" title="Switch Back"><small>SWITCH BACK</small></button>`);
+      `<button id="switch-back" class="mini-action switch-back catacomb-only" aria-label="Switch back to where you were" title="Switch Back"><span class="mini-icon">${uiSprite("arrow-left", "ui-sprite switch-back-icon")}</span><small>SWITCH BACK</small></button>`);
     el("switch-back").onclick = () => this.close();
     el("board-frame").insertAdjacentHTML("beforeend",
       `<div id="catacomb-bank" class="catacomb-bank catacomb-only" hidden title="Banked seconds: each hasted turn spends one">${clockIcon()}<b id="catacomb-bank-time"></b>` +
@@ -200,10 +211,10 @@ export class CatacombView {
     text("height-label", "HALL");
     text("height", run.hall.toLocaleString("en-US"));
     el("height").parentElement!.title = `Deepest hall in Catacomb ${tierNumeral(number)}: ${(c.best[number] ?? run.hall).toLocaleString("en-US")}`;
-    // The Lore bonus in the Gold bonus's place, the Wisp here in the base enemy's.
-    el("gold-bonus").hidden = el("gold-bonus-divider").hidden = false;
-    text("gold-bonus-val", `×${loreBonus(number)}`);
-    el("gold-bonus").title = el("gold-bonus").ariaLabel = `Lore bonus: ×${loreBonus(number)}, Tower ${tierNumeral(number)}'s Gold bonus`;
+    // The Spirit held in the Gold bonus's place (the Lore bonus is in the undead table), the Wisp here in the base enemy's.
+    el("gold-bonus-divider").hidden = false;
+    const spirit = spiritGridHtml(c.spirit);
+    if (el("catacomb-spirit").innerHTML !== spirit) el("catacomb-spirit").innerHTML = spirit;
     const wisp = undeadStats("wisp", "normal", run.hall, number);
     el("base-enemy").hidden = el("base-enemy-divider").hidden = false;
     text("base-enemy-atk", shortStat(wisp.matk));

@@ -11,6 +11,7 @@ import { RARITY_TIERS } from "../equipment/balance.ts";
 import { iconPixels, materialPixels, pieceSpriteId } from "../ui/equipment-icons.ts";
 import { drawKit, INSPIRATION_SPRITE, kitImage } from "../sprites/kit.ts";
 import { tileCenter, toTileSpace, type FrameContext } from "./render-frame.ts";
+import { BAR_DRAIN_MS, BAR_FADE_MS, BAR_RISE, paintHpBar } from "./hp-bar.ts";
 
 /** How long each popup shows, and the fade that ends it (ms). */
 const POPUP_MS = 1000;
@@ -118,17 +119,6 @@ export function coinImage(coin: Coin): CanvasImageSource | null {
   }
   return silverCoin;
 }
-/** The enemy's HP bar: how long it takes to drain to each strike's HP (or
- * less, when the next strike lands sooner) and to fade once the enemy falls
- * (ms), its size and height over the enemy's tile (in tiles), and its
- * colours. */
-const BAR_DRAIN_MS = 200;
-const BAR_FADE_MS = 300;
-const BAR_WIDTH = 0.8;
-const BAR_HEIGHT = 0.1;
-const BAR_RISE = 0.6;
-const BAR_FILL = "#d8323a";
-const BAR_EMPTY = "#2a0d10";
 /** How long an arrow's HP bar stays drained before it fades (ms). */
 const ARROW_BAR_HOLD_MS = 1000;
 /** How far a strike leans into its target at the moment it lands, in tiles. */
@@ -663,17 +653,7 @@ function drawArrowBar(f: FrameContext, b: { x: number; y: number; from: number; 
 }
 /** An HP bar over the tile at `on`, filled to `share`. */
 function paintBar(f: FrameContext, on: { x: number; y: number }, share: number, alpha: number) {
-  const c = f.c, at = tileCenter(f, on.x, on.y + BAR_RISE),
-    w = f.s * BAR_WIDTH, h = Math.max(3, f.s * BAR_HEIGHT), x = at.x - w / 2, y = at.y - h / 2;
-  c.save();
-  c.globalAlpha = alpha;
-  c.fillStyle = "#000";
-  c.fillRect(x - 1, y - 1, w + 2, h + 2);
-  c.fillStyle = BAR_EMPTY;
-  c.fillRect(x, y, w, h);
-  c.fillStyle = BAR_FILL;
-  c.fillRect(x, y, w * Math.max(0, Math.min(1, share)), h);
-  c.restore();
+  paintHpBar(f.c, tileCenter(f, on.x, on.y + BAR_RISE), f.s, share, alpha);
 }
 
 /** How far the hero and the enemy lean into their strikes at `now`: whoever

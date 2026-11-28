@@ -106,7 +106,7 @@ The Catacomb screen is a view over the board, not a third `Mode`: `Game.mode` st
 | Level and XP bar | Magic level and a purple MXP bar; the unspent magic skill points with a purple training arrow (`pointsIcon` recoloured) in the portrait's top-right corner |
 | Wayfarer / Pathfinder / Archer | MAGICIAN |
 | TOWER VI · FLOOR 37 | CATACOMB VI · HALL 37 |
-| Gold bonus | Lore bonus (question 6); its tooltip says where the factor comes from |
+| Gold bonus | The Spirit held, two columns of three; the Lore bonus (question 6) moved to the undead table, which says where the factor comes from |
 | Base enemy (ATK, DEF, HP) | The Wisp at this number and hall (MAtk, MDef, MHP); pressed, the hall's enemy table |
 | Inspiration earned, best reward | hidden; the hall's tooltip gives the deepest hall in this number |
 | Auto, play/pause, speed | none: the Catacombs keep their own clock |

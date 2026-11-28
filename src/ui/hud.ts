@@ -255,9 +255,10 @@ export const renderShopDot = (game: Game) => {
 };
 /** The Tournament button, once the Tournament is open to the player: its
  * trophy over the phase, `2d5h` until the next opens, `OPEN`, `ENDING`, or
- * `CLAIM` with a dot while a final prize waits. In the forest's actions
- * column under the hamburger; inside a run, in the run's menu once the
- * player has entered the tournament, else gone (`renderRunMenu` places it).
+ * `CLAIM` with a dot while a final prize waits. In the forest under the
+ * hamburger, inside the menu's frame as a run's Shop is; inside a run, in
+ * the run's menu once the player has entered the tournament, else gone
+ * (`renderRunMenu` places it).
  * Refreshed every second too (main's tick), so the countdown runs. */
 export function renderTournamentButton(game: Game) {
   const button = el("tournament-button"), desk = game.tournament, inside = !game.run.outside;

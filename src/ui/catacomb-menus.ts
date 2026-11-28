@@ -1,6 +1,7 @@
-// The Catacomb screen's bottom row (docs/CATACOMBS.md): Skills, Spirit,
-// Forge and Academy in place of the hand and the Training bar, with the
-// abilities over them. Skills spends magic skill points, Spirit buys
+// The Catacomb screen's menus (docs/CATACOMBS.md): Skills, Spirit, Forge
+// and Academy as tabs in the tab bar, in place of the hand, with the open
+// menu's panel over them and the abilities over that, as a run's hand sits
+// over its tabs. Skills spends magic skill points, Spirit buys
 // upgrades with Spirit; Forge and Academy open in later updates.
 import { kitIcon } from "../sprites/kit.ts";
 import { catacombMenuSprite } from "../sprites/catacombs.ts";
@@ -91,16 +92,17 @@ export class CatacombMenus {
 
   constructor(private catacombs: () => CatacombSave, private changed: () => void) {}
 
-  /** Puts the row in place of the tab bar's (once). */
+  /** Puts the tabs in the tab bar and the panel over it (once). */
   mount() {
     if (el("catacomb-menus")) return;
-    document.querySelector("nav")!.insertAdjacentHTML("afterend",
+    const nav = document.querySelector("nav")!;
+    nav.insertAdjacentHTML("beforebegin",
       `<section id="catacomb-menus" class="catacomb-menus catacomb-only" aria-label="Catacomb menus">` +
-      `<div id="catacomb-abilities" class="catacomb-abilities" aria-label="Abilities"></div><div class="catacomb-tabs" role="tablist">` +
-      MENUS.map((m) => `<button type="button" role="tab" data-menu="${m.id}">${kitIcon(catacombMenuSprite(m.id), "", "catacomb-tab-icon")}<span>${m.name}</span></button>`).join("") +
-      `</div><div id="catacomb-panel" class="catacomb-panel" role="tabpanel"></div></section>`);
-    const row = el("catacomb-menus");
-    row.onclick = (e) => this.press(e.target as Element);
+      `<div id="catacomb-abilities" class="catacomb-abilities" aria-label="Abilities"></div>` +
+      `<div id="catacomb-panel" class="catacomb-panel" role="tabpanel"></div></section>`);
+    nav.insertAdjacentHTML("beforeend", `<div id="catacomb-tabs" class="catacomb-tabs catacomb-only" role="tablist" aria-label="Catacomb menus">` +
+      MENUS.map((m) => `<button type="button" role="tab" data-menu="${m.id}">${kitIcon(catacombMenuSprite(m.id), "", "catacomb-tab-icon")}<small>${m.name}</small></button>`).join("") + `</div>`);
+    el("catacomb-menus").onclick = el("catacomb-tabs").onclick = (e) => this.press(e.target as Element);
     // Hovering an ability, or holding it, shows what it does.
     const abilities = el("catacomb-abilities");
     abilities.addEventListener("pointerover", (e) => { if (e.pointerType === "mouse") this.tip(e.target as Element); });
@@ -149,7 +151,10 @@ export class CatacombMenus {
     this.shown = html;
     el("catacomb-panel").innerHTML = html;
     el("catacomb-panel").dataset.shows = this.menu;
-    for (const b of el("catacomb-menus").querySelectorAll<HTMLElement>("[role=tab][data-menu]")) b.setAttribute("aria-selected", String(b.dataset.menu === this.menu));
+    for (const b of el("catacomb-tabs").querySelectorAll<HTMLElement>("[role=tab][data-menu]")) {
+      b.setAttribute("aria-selected", String(b.dataset.menu === this.menu));
+      b.classList.toggle("selected", b.dataset.menu === this.menu);
+    }
   }
 
   /** An ability's tooltip, over its slot. */

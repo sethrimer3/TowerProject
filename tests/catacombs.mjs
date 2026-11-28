@@ -94,12 +94,29 @@ try {
   await page.locator(".catacomb-stats").click();
   await expect(page.locator(".catacomb-stats")).toHaveCount(0);
   // The menus still to come say what they will do.
+  const panelBox = async () => JSON.stringify(await page.locator("#catacomb-panel").boundingBox());
+  const skillsBox = await panelBox();
   await page.locator('[role=tab][data-menu="forge"]').click();
   await expect(page.locator("#catacomb-panel")).toContainText("Blacksmith's forge");
+  // The tabs are the tab bar's own buttons, at its foot, the panel over them as tall in every menu.
+  await expect(page.locator('nav #catacomb-tabs [role=tab][data-menu="forge"]')).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("nav [data-tab]").first()).toBeHidden();
+  if ((await panelBox()) !== skillsBox) throw new Error(`the panel moved between menus: ${skillsBox} -> ${await panelBox()}`);
+  const navTop = (await page.locator("nav").boundingBox()).y, panel = await page.locator("#catacomb-panel").boundingBox();
+  if (panel.y + panel.height > navTop) throw new Error("the panel is not over the tabs");
   await page.locator('[role=tab][data-menu="skills"]').click();
+  // Switch Back wears an arrow; the Spirit held stands in the Gold bonus's place, two columns of three.
+  await expect(page.locator("#switch-back .switch-back-icon")).toBeVisible();
+  await expect(page.locator("#gold-bonus")).toBeHidden();
+  await expect(page.locator("#catacomb-spirit > span")).toHaveCount(6);
   // The enemy box opens the hall's undead.
   await page.locator("#base-enemy").click();
   await expect(page.locator(".catacomb-odds h2")).toContainText("Undead in Hall");
+  // Its stats headed by icons, as the run's table is; the Lore bonus under it.
+  await expect(page.locator('.catacomb-odds thead th[aria-label="MAtk"] .stat-sprite')).toBeVisible();
+  await expect(page.locator(".catacomb-odds .odds-undead").first()).toBeVisible();
+  await expect(page.locator(".catacomb-odds")).toContainText("Lore bonus");
+  await expect(page.locator(".catacomb-odds")).not.toContainText("slots rolls once");
   await page.locator(".catacomb-odds .enemy-odds-x").click();
   await expect(page.locator(".catacomb-odds")).toHaveCount(0);
   // Switch Back: the climb's HUD, the floor it was on.
