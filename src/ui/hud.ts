@@ -390,7 +390,8 @@ const headingKey = (game: Game) => {
 const HAND_ICON = { play: "▶︎", pause: "❚❚" };
 
 /** Inside a run the button plays and pauses the hand, showing the play or
- * pause icon, with the hero's movement speed under it (*3x*: steps a
+ * pause icon (before Auto-Climb, while the hero waits for a card to be
+ * tapped, *WAITING* under the pause icon, its outline grey), with the hero's movement speed under it (*3x*: steps a
  * second) between the arrows that change it. In the forest it gives way to
  * Enter, under Goals, which goes straight in to start the run: in the
  * Delve's, into the tournament, wearing its price, a Ticket. */
@@ -406,11 +407,15 @@ function renderAutoButton(game: Game) {
     enter.title = cave ? "Enter the tournament · 1 Ticket" : "Enter";
   }
   el("stats").classList.toggle("outside", !inside);
-  const label = game.auto ? "Pause the hand" : "Play the hand";
-  const icon = game.auto ? HAND_ICON.pause : HAND_ICON.play,
+  // Before Auto-Climb the hero waits for a card to be tapped: the button
+  // says so, wearing the pause icon and a grey outline, rather than Play.
+  const waiting = inside && game.awaitsPress, paused = game.auto || waiting;
+  const label = waiting ? "Waiting: tap a card to move" : game.auto ? "Pause the hand" : "Play the hand";
+  const icon = paused ? HAND_ICON.pause : HAND_ICON.play,
     slot = button.querySelector<HTMLElement>(".mini-icon")!;
-  if (inside && slot.textContent !== icon) slot.innerHTML = kitIcon(game.auto ? "pause" : "play", icon, "hand-control-icon");
-  text("auto-state", game.auto ? "PLAYING" : "PAUSED");
+  if (inside && slot.textContent !== icon) slot.innerHTML = kitIcon(paused ? "pause" : "play", icon, "hand-control-icon");
+  text("auto-state", waiting ? "WAITING" : game.auto ? "PLAYING" : "PAUSED");
+  button.classList.toggle("waiting", waiting);
   renderSpeed(game, inside);
   // The speed lesson waits on the › arrow, not on play; the first run's
   // note, on its tap.

@@ -64,10 +64,11 @@ export function renderBatteryHud(game: Game) {
   if (shown("run-silver")) purse.push(stat("silver", textOf("run-silver"), "Silver"));
   purse.push(stat("gem", textOf("gems"), "Gems"));
   stats.push(`<span class="battery-purse">${purse.join("")}</span>`);
-  const playing = game.auto && !game.paused;
+  // Before Auto-Climb, waiting for a card to be tapped shows pause, not play.
+  const playing = game.auto && !game.paused, waiting = !outside && game.awaitsPress;
   const presses = outside
     ? [back(), press("enter-run", "enter", "Enter"), press("auto-settings", "cog", "Settings")]
-    : [back(), press("auto", playing ? "pause" : "play", playing ? "Pause" : "Play"), press("auto-settings", "cog", "Settings")];
+    : [back(), press("auto", playing || waiting ? "pause" : "play", waiting ? "Waiting: tap a card to move" : playing ? "Pause" : "Play"), press("auto-settings", "cog", "Settings")];
   // No card can act: the HUD's End Climb shows, and a red warning sign
   // stands first in the row and presses it.
   const end = document.getElementById("stuck-end-run");

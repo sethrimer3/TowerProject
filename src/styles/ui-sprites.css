@@ -220,6 +220,9 @@ html.ui-sprites:where(:not(.legacy-borders)) button:disabled:not(#_) {
   filter: none;
   opacity: 1;
 }
+/* Play/pause waiting for a card to be tapped wears the greyed frame; its
+   label stays readable. */
+html.ui-sprites #auto.waiting:not(#_) { --ui-face: var(--ui-disabled); }
 html.ui-sprites :is(.mini-action, .training-reset):not(#_) {
   border-width: 3px;
   border-image-width: 3px;
