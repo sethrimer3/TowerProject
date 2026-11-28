@@ -142,9 +142,9 @@ export class BoardOverlay {
   track() {
     if (!this.highlighted) return;
     this.drawTrace();
-    const { x, y } = this.highlighted, r = this.renderer, n = r.density;
-    const onScreen = x + 0.5 >= r.left && x + 0.5 <= r.left + n && y + 0.5 >= r.bottom && y + 0.5 <= r.bottom + n;
-    const { left, top, s } = this.tileRect(x, y);
+    const { x, y } = this.highlighted;
+    const { left, top, s, frameRect } = this.tileRect(x, y);
+    const onScreen = left + s > 0 && left < frameRect.width && top + s > 0 && top < frameRect.height;
     const key = `${onScreen}:${left.toFixed(1)}:${top.toFixed(1)}:${s}`;
     if (key === this.placed) return;
     this.placed = key;
@@ -327,14 +327,17 @@ export class BoardOverlay {
 
   private tileRect(x: number, y: number) {
     const r = this.renderer,
-      frameRect = el("board-frame").getBoundingClientRect(),
+      frame = el("board-frame"), frameRect = frame.getBoundingClientRect(),
       canvasRect = r.canvas.getBoundingClientRect(),
-      s = r.size;
+      // Match position()'s displayed canvas, including zoom and pan. The
+      // overlay stays in frame pixels so its text never inherits the zoom.
+      s = canvasRect.width / r.density || r.size;
     return {
-      left: canvasRect.left - frameRect.left + (x - r.left) * s,
-      top: canvasRect.top - frameRect.top + (r.density - 1 - (y - r.bottom)) * s,
+      left: canvasRect.left - frameRect.left - frame.clientLeft + (x - r.left) * s,
+      top: canvasRect.top - frameRect.top - frame.clientTop + (r.density - 1 - (y - r.bottom)) * s,
       s,
-      frameRect,
+      frameRect: { left: frameRect.left + frame.clientLeft, top: frameRect.top + frame.clientTop,
+        width: frame.clientWidth, height: frame.clientHeight },
     };
   }
 
@@ -383,7 +386,7 @@ export class BoardOverlay {
     const trace = this.trace, canvas = el("tile-highlight").querySelector("canvas");
     if (!trace || !canvas) return;
     if (this.legacyGlow()) return this.startTrace();
-    const s = this.renderer.size, dpr = window.devicePixelRatio || 1, cell = (s * dpr) / TILE_CELLS;
+    const s = this.tileRect(0, 0).s, dpr = window.devicePixelRatio || 1, cell = (s * dpr) / TILE_CELLS;
     const reduce = this.game.save.settings.reduceMotion, t = (performance.now() - trace.start) / 1000;
     const still = reduce || traceSettled(trace.plan, t), size = `${s}:${dpr}`;
     if (still && trace.still && size === trace.size) return;

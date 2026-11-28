@@ -1304,6 +1304,7 @@ html.reduce-motion .tile-trace { animation: none; }
 .inspect-box {
   position: absolute;
   z-index: 5;
+  width: max-content;
   max-width: 80%;
   background: #10151fe0;
   border: 1px solid #454e5f;

@@ -156,7 +156,9 @@ The view still shows `n` tiles, so tap mapping and the overlays are unchanged.
 **Dev zoom** (`render/dev-zoom.ts`, for everyone for now, not in Battery saver or under the test flag `__noDevZoom`): `Renderer.zoomStep` (the wheel, a notch a step) and `zoomPinch` (a two-finger spread, in place of Cinematic mode's pinch) pick a step, `devZoom`, in screen pixels an art pixel: from the first whole number past the board's own (`artScreenPixels`) to the first past ×4 (`zoomSteps`).
 Both zoom about the pointer or the fingers' midpoint (`anchorOffset`), the pinch keeping the board point first under the fingers under them as they move, and `panBy` moves the view as a one-finger or mouse drag on the zoomed board does (`input.ts` drops that gesture's tap).
 While zoomed, `beginFrame` draws the whole board as with Pixel-perfect scaling, at `zoomLook`'s whole canvas pixels an art pixel (capped at `ZOOM_CANVAS_MAX` across), and `placeZoom` scales and offsets the canvas by CSS (`zoomX`, `zoomY`), kept inside the board on whole screen pixels (`clampOffset`), the frame (`.board.dev-zoom`) cropping it.
-`position` reads the canvas's shown box, so taps still land on the right tile.
+`position` and `BoardOverlay.tileRect` read the canvas's shown box, so taps, tile outlines and their trace canvases share the displayed tile size and pan offset.
+The overlay measures from the frame's inner border, hides offscreen selections, and positions the inspect box above the displayed tile (below when necessary) without scaling its UI text.
+`node tests/zoom-overlay.mjs` exercises real pointer selection, both highlight styles, fixed-size text, pan, zoom reset and resize on phone/desktop and in the Delve.
 `tests/dev-zoom.test.ts` covers the steps, the anchoring and the clamp, and `tests/dev-zoom.mjs` (in `test:browser`) the wheel, the anchoring, the drag and the pinch.
 
 The sprite modules (the PNG kit, `sprites/kit.ts`, and every `sprites/*.ts` it feeds, with the board's and the interface's sprites) are in `src/sprites/`, since the interface uses them as much as the board.
