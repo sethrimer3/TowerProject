@@ -1,17 +1,17 @@
-// The route line's traced look (RoutePath draws it on the board): three
+// The route line's traced look (RoutePath draws it on the board): five
 // lines side by side, each a third of an art pixel wide, drawn out from the
 // hero along the route as the tapped tile's outline is (tile-trace.ts).
 // Each line runs at its own random speed, never slower than twice the
-// hero's steps a second nor than the tile's trace. Each cell starts pale
-// at the head and settles to a shade of gold. Where the route ends, a
-// square a little wider than the lines appears as the first line arrives,
-// popping a few tiny gold sparks that fade at once. The old glowing line
+// hero's steps a second nor than ten times the tile's trace. Each cell
+// starts pale at the head and settles to a shade of gold. At every turn,
+// and where the route ends, a square seven lines wide appears as the first
+// line arrives; the end's pops a few tiny gold sparks that fade at once. The old glowing line
 // stays as the fallback (`legacyHighlight`).
 
 import { settling, TRACE_TILES_PER_S, type Rgb } from "./tile-trace.ts";
 
 /** How many lines draw the route, side by side. */
-export const ROUTE_LINES = 3;
+export const ROUTE_LINES = 5;
 /** Third-of-a-pixel cells along a tile: 24 art pixels, three cells each. */
 export const ROUTE_CELLS = 72;
 /** How much faster than the slowest allowed a line may run (up to +35%). */
@@ -19,8 +19,11 @@ const SPEED_SPREAD = 0.35;
 /** A cell's settle time from pale to gold, and its spread either way. */
 const SETTLE_S = 0.3;
 const SETTLE_SPREAD = 0.35;
-/** The end square's side, in cells: a little wider than the three lines. */
-const END_CELLS = 5;
+/** The side of the squares at the route's turns and end, in cells: seven
+ * lines wide. */
+const END_CELLS = 7;
+/** How many times the tile trace's speed the route line draws, at least. */
+const ROUTE_SPEEDUP = 10;
 /** The end square's sparks: how many, how far they fly (cells), how long
  * they live, and their size (half an art pixel). */
 const SPARKS = 6;
@@ -42,7 +45,20 @@ export type RouteCell = { at: number; ox: number; oy: number; d: number };
 
 /** A walk's trace: each line's cells and speed (tiles a second), the
  * route's length in cells, and the seed its cells' shades come from. */
-export type RoutePlan = { lines: RouteCell[][]; speeds: number[]; length: number; seed: number };
+export type RoutePlan = { lines: RouteCell[][]; speeds: number[]; length: number; seed: number; turns: number[] };
+
+/** The route's turns: the vertices where a step turns 90° from the last
+ * (a wrap round the world is no turn). */
+export function routeTurns(route: readonly Point[]): number[] {
+  const step = (i: number) => ({ x: route[i + 1].x - route[i].x, y: route[i + 1].y - route[i].y });
+  const unit = (u: Point) => Math.abs(u.x) + Math.abs(u.y) === 1;
+  const turns: number[] = [];
+  for (let i = 1; i + 1 < route.length; i++) {
+    const a = step(i - 1), b = step(i);
+    if (unit(a) && unit(b) && a.x * b.x + a.y * b.y === 0) turns.push(i);
+  }
+  return turns;
+}
 
 /** A fixed number in [0, 1) for each (seed, a, b): a cell's own shade or
  * settle time, the same every frame. */
@@ -57,9 +73,10 @@ export function cellNoise(seed: number, a: number, b: number) {
 }
 
 /** The slowest a line may draw, in tiles a second: twice the hero's steps
- * a second (`moveRate`), and never slower than the tapped tile's trace. */
+ * a second (`moveRate`), and never slower than ten times the tapped
+ * tile's trace. */
 export function slowestSpeed(moveRate: number) {
-  return Math.max(2 * moveRate, TRACE_TILES_PER_S);
+  return Math.max(2 * moveRate, ROUTE_SPEEDUP * TRACE_TILES_PER_S);
 }
 
 /** A route's cells, line by line: each line offset a cell to either side
@@ -116,13 +133,15 @@ const normal = (u: Point) => ({ x: -u.y, y: u.x });
 export function planRoute(route: readonly Point[], moveRate: number, rng: () => number): RoutePlan {
   const slowest = slowestSpeed(moveRate);
   const speeds = Array.from({ length: ROUTE_LINES }, () => slowest * (1 + SPEED_SPREAD * rng()));
-  return { lines: routeCells(route), speeds, length: (route.length - 1) * ROUTE_CELLS, seed: Math.floor(rng() * 4294967296) };
+  return { lines: routeCells(route), speeds, length: (route.length - 1) * ROUTE_CELLS, seed: Math.floor(rng() * 4294967296), turns: routeTurns(route) };
 }
 
 /** When line `line`'s head reaches `d` cells along. */
 const reachedAt = (plan: RoutePlan, line: number, d: number) => d / (plan.speeds[line] * ROUTE_CELLS);
+/** When the first line reaches `d` cells along: a turn's or the end's square appears then. */
+const firstAt = (plan: RoutePlan, d: number) => Math.min(...plan.speeds.map((_, line) => reachedAt(plan, line, d)));
 /** When the first line reaches the route's end, and the square appears. */
-export const endsAt = (plan: RoutePlan) => Math.min(...plan.speeds.map((_, line) => reachedAt(plan, line, plan.length)));
+export const endsAt = (plan: RoutePlan) => firstAt(plan, plan.length);
 
 /** A cell's settle time and shade (-1 to 1), fixed by the plan's seed. */
 function cellLook(plan: RoutePlan, line: number, k: number) {
@@ -180,6 +199,10 @@ export function drawRouteTrace(c: CanvasRenderingContext2D, plan: RoutePlan, t: 
       const p = at(cl.at);
       add(color, p.x + cl.ox * cell, p.y + cl.oy * cell, cell);
     }
+  }
+  for (const turn of plan.turns) {
+    const turnAge = t - firstAt(plan, turn * ROUTE_CELLS), p = at(turn);
+    if (turn * ROUTE_CELLS >= consumed && turnAge >= 0) add(settling(Math.ceil((turnAge / SETTLE_S) * MIX_STEPS) / MIX_STEPS, 0.5), p.x, p.y, END_CELLS * cell);
   }
   const age = t - endsAt(plan), last = at(plan.length / ROUTE_CELLS);
   if (age >= 0) add(settling(Math.ceil((age / SETTLE_S) * MIX_STEPS) / MIX_STEPS, 0.5), last.x, last.y, END_CELLS * cell);
