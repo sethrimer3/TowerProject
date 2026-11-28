@@ -67,7 +67,7 @@ import { volleyOver } from "../volley.ts";
 import { drawShields } from "./shield-art.ts";
 import { drawChestMarks } from "./chest-marks.ts";
 import type { Dash, ShownTurn } from "../shown.ts";
-import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
+import { contentsAt, darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { ART_PX, artPixelScale, onArtGrid } from "./pixel-scale.ts";
 import { artScreenPixels, stepZoom, zoomForScale, zoomLook, zoomOffset, zoomSteps } from "./dev-zoom.ts";
 import { gameLook } from "../theme-collection.ts";
@@ -443,6 +443,7 @@ export class Renderer {
       c, now, dt, dpr, width: box.width, n, s, left: snap(this.left), bottom: snap(this.bottom),
       playerX: snap(this.playerX + lunge.hero.dx), playerY: snap(this.playerY + lunge.hero.dy), heroFacing: g.facing,
       world: this.inFlight.board(g.world), look, heroIdleFrame, darkness: darknessOf(g), torches: [], walls: [], glows: [],
+      lunge: this.enemyLunge,
     };
     f.torches = outside ? [] : this.visibleTorches();
     f.walls = outside ? [] : this.visibleWallTiles();
@@ -637,9 +638,9 @@ export class Renderer {
     forEachViewTile(f, (x, y) => {
       const t = f.world.tile(x, y);
       if (t.kind === "wall" || t.kind === "floor") return;
-      const lunge = this.enemyLunge, leaning = x === lunge.x && y === lunge.y;
+      const at = contentsAt(f, x, y);
       ctx.save();
-      toTileSpace(ctx, f, leaning ? x + lunge.dx : x, leaning ? y + lunge.dy : y);
+      toTileSpace(ctx, f, at.x, at.y);
       this.tile(ctx, f, t, x, y, 1);
       ctx.restore();
     });

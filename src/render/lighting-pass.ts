@@ -9,7 +9,7 @@ import { doorColor, doorId } from "../doors.ts";
 import type { Tile } from "../entities.ts";
 import { CHEST_LOOK } from "./chest-marks.ts";
 import {
-  forEachViewTile, screenX, screenY, sized, tileCenter, type FrameContext, type GlowSource, type Rect,
+  contentsAt, forEachViewTile, screenX, screenY, sized, tileCenter, type FrameContext, type GlowSource, type Rect,
 } from "./render-frame.ts";
 
 export interface AtmosphereConfig {
@@ -169,13 +169,13 @@ export class LightingPass {
   }
 
   /** Doors, stairs, items, and enemies in view, with their glow settings. */
-  glowSources(f: Pick<FrameContext, "world" | "n" | "left" | "bottom" | "now" | "look">): GlowSource[] {
+  glowSources(f: Pick<FrameContext, "world" | "n" | "left" | "bottom" | "now" | "look" | "lunge">): GlowSource[] {
     const pulse = LIGHTING_CONFIG.objectGlow.pulse, out: GlowSource[] = [];
     forEachViewTile(f, (x, y) => {
       // Slow, per-object breathing so a room of glows doesn't pulse in unison.
       const breathe = f.look.reduceMotion ? 1 : 1 - pulse + pulse * Math.sin(f.now / 650 + x * 1.7 + y * 2.3);
       const glow = tileGlow(f.world.tile(x, y), breathe);
-      if (glow) out.push({ x, y, ...glow });
+      if (glow) out.push({ ...contentsAt(f, x, y), ...glow });
     });
     return out;
   }

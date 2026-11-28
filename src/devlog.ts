@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-28", text: "Torchlight, shadows and glows now move with an enemy as it lunges to attack." },
   { date: "2026-11-28", text: "Under Dev Mode, the mouse wheel or a pinch zooms the board past ×4, its pixels kept crisp." },
   { date: "2026-11-27", text: "Bundle training speeds are now ×1.5 and ×2; the Codex Story adds Training and Archives chapters." },
   { date: "2026-11-27", text: "The Divine Portal is now a golden pixel-art portal with a turning rim and sparks circling it." },

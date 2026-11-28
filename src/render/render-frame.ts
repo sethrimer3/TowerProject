@@ -45,7 +45,11 @@ export type FrameContext = BoardView & {
   walls: [number, number][];
   /** Glowing objects in view (tile contents, then decor). */
   glows: GlowSource[];
+  /** The enemy struck leaning into its lunge: its tile and how far its sprite leans. */
+  lunge?: Lunge;
 };
+/** A tile whose contents lean `dx`, `dy` tiles off it this frame. */
+export type Lunge = { x: number; y: number; dx: number; dy: number };
 
 /** 0 at the default brightness, 1 at the darkest setting (dungeon only). */
 export function darknessOf(game: Game) {
@@ -61,6 +65,14 @@ export const screenY = (f: FrameContext, wy: number) => (f.n - (wy - f.bottom)) 
 export const tileOrigin = (f: FrameContext, x: number, y: number) => ({ x: (x - f.left) * f.s, y: (f.n - 1 - (y - f.bottom)) * f.s });
 /** Screen position of a tile's center. */
 export const tileCenter = (f: FrameContext, x: number, y: number) => ({ x: (x - f.left + 0.5) * f.s, y: (f.n - 0.5 - (y - f.bottom)) * f.s });
+
+/** Where a tile's contents are drawn this frame: its own tile, or leaning
+ * off it while the enemy there lunges. Their torchlight, shadow and glow
+ * follow the same spot. */
+export function contentsAt(f: Pick<FrameContext, "lunge">, x: number, y: number) {
+  const l = f.lunge;
+  return l && l.x === x && l.y === y ? { x: x + l.dx, y: y + l.dy } : { x, y };
+}
 
 /** Visits every tile in view plus a one-tile margin, bottom row first. */
 export function forEachViewTile(view: Pick<BoardView, "n" | "left" | "bottom">, visit: (x: number, y: number) => void) {

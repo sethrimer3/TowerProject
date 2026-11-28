@@ -380,3 +380,14 @@ test("a torch keeps its light while its fresh copy waits to bake (a door opened 
   (pass as unknown as { bakeBudget: number }).bakeBudget = 0;
   assert.ok(other.torches.filter((t) => t.active).every((t) => pass.torchBake(h, t) === null), "a new floor bakes its own");
 });
+
+test("a lunging enemy's glow leans with its sprite, and no other tile's moves", () => {
+  const enemy = { kind: "enemy", enemy: { strength: "normal" } };
+  const world = { tile: (x: number, y: number) => (x === 3 && y === 2 ? enemy : x === 5 && y === 2 ? enemy : { kind: "floor" }) } as unknown as BoardTiles;
+  const look = { reduceMotion: true } as BoardLook;
+  const view = { world, n: 9, left: 0, bottom: 0, now: 0, look };
+  const still = new LightingPass().glowSources(view).map((g) => [g.x, g.y]);
+  const leaning = new LightingPass().glowSources({ ...view, lunge: { x: 3, y: 2, dx: -0.25, dy: 0 } }).map((g) => [g.x, g.y]);
+  assert.deepEqual(still, [[3, 2], [5, 2]]);
+  assert.deepEqual(leaning, [[2.75, 2], [5, 2]]);
+});

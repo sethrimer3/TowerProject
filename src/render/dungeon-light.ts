@@ -2,7 +2,7 @@ import { LIGHTING_CONFIG } from "./lighting.ts";
 import { LightingPass, type AtmosphereConfig } from "./lighting-pass.ts";
 import { EntityLighting, type ShadowCaster } from "./entity-lighting.ts";
 import { TerrainShadows } from "./terrain-shadows.ts";
-import { forEachViewTile, tileOrigin, tileTransform, type FrameContext, type GlowSource, type Rect } from "./render-frame.ts";
+import { contentsAt, forEachViewTile, tileOrigin, tileTransform, type FrameContext, type GlowSource, type Rect } from "./render-frame.ts";
 
 /** A box in world pixels (24 per tile; y grows downward, so row y spans
  * -24·y to -24·y + 24). */
@@ -167,6 +167,7 @@ function occupiedRegion(f: FrameContext): Rect | null {
   forEachViewTile(f, (x, y) => {
     const kind = f.world.tile(x, y).kind;
     if (kind === "wall" || kind === "floor") return;
+    ({ x, y } = contentsAt(f, x, y));
     occupied.push({ x: (x - f.left - 0.15) * f.s, y: (f.n - 1 - (y - f.bottom) - 0.15) * f.s, w: 1.3 * f.s, h: 1.3 * f.s });
   });
   if (!occupied.length) return null;

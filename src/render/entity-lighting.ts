@@ -4,7 +4,7 @@ import { insidePolygon, torchReaches } from "./floor-relief.ts";
 import { lightFalloff } from "./torch-light.ts";
 import { paintContents, paintHero, paintTorch } from "./tile-painters.ts";
 import { spriteRevision } from "../sprites/kit.ts";
-import { forEachViewTile, tileOrigin, toTileSpace, type FrameContext } from "./render-frame.ts";
+import { contentsAt, forEachViewTile, tileOrigin, toTileSpace, type FrameContext } from "./render-frame.ts";
 
 /** Tile kinds that stand up off the floor and so cast torch shadows. */
 const SHADOW_CASTERS = new Set<Tile["kind"]>(["key", "potion", "attack", "defense", "reward", "treasure", "enemy"]);
@@ -174,8 +174,10 @@ export class EntityLighting {
     forEachViewTile(f, (x, y) => {
       const t = f.world.tile(x, y);
       if (!SHADOW_CASTERS.has(t.kind)) return;
+      // A lunging enemy carries its shadow and torchlit edge with it.
+      const at = contentsAt(f, x, y);
       casters.push({
-        x, y,
+        x: at.x, y: at.y,
         key: `${legacyEnemies}|${t.enemy?.profile}|${t.enemy?.aggro}|${t.enemy?.shielded}|${t.kind}|${t.color}|${t.tier}|${t.enemy?.name ?? ""}|${t.enemy?.tier}|${t.enemy?.strength}|${styledSprites ? `|kit|${t.enemy?.fast}|${t.enemy?.ranged}|${t.enemy?.flying}|${t.enemy?.armored}` : ""}`,
         draw: (c) => paintContents(c, t, { x, y, time: f.now, reduceMotion, styledSprites, squareDoors, legacyEnemies, outline: false }),
       });
