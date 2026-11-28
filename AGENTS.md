@@ -136,6 +136,10 @@ Read the area's doc before changing code there or answering questions about it; 
 - Percent bonuses from the same kind of source (cards, badges, equipment, themes, research levels, copies of one standard boon) add into one factor, and the kinds' factors multiply: sum(cards) × sum(badges) × sum(equipment) × ….
   Only two exceptions multiply within their kind, on purpose: the Gold bundles (each its own Gold and training factor, as the Shop says) and Shrine boons of different types (a trade-off's benefit and cost multiply each other and the standard boons' totals).
   Anything else that should compound says so where it is defined.
+- Damage is ATK less DEF first, then the damage bonuses: a bonus to ATK or MAtk (training, cards, boss and enemy-kind ATK, Shot ATK, Dash Combo, Power Strike, Overseer's beams, Shock Multiplier, the Hunting Wolf's tag, an arcanum's ATK Mult, Spell Surge's MAtk) raises ATK before DEF comes off, and a bonus to damage (critical hits and Super Criticals, the arcana's crit average, MCrits, Gold Crosshairs, Arcane Barrage's share) multiplies only what gets past DEF.
+  So ATK at or under DEF does nothing without Piercing, Armor Break or Armor Penetration, however it crits.
+  A multiplier is either kind; what decides is whether it is named and shown as ATK or as damage.
+  Bombs and Necrotic Frost's decay ignore DEF, on purpose.
 - Gem purchases (anything paid in Gems: hand slots, trainers, archivists, finishing training, resets) always look active and prominent, never `disabled` or greyed out for lack of Gems.
   A button short of Gems gets the `short` class, which turns only its price red, and a press while short opens `askForGems(ctx, price)` (`ui/dialogs.ts`), which says how many more Gems the price needs and offers the Shop (on the Shop page itself, a Gem-priced offer short of Gems points to the Gem packs instead).
   Only a purchase that can't happen at all (sold out, all hired, locked) may look unavailable.

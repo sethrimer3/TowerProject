@@ -14,7 +14,7 @@ export type AbilityId = (typeof ABILITY_IDS)[number];
 export const ABILITIES: Record<AbilityId, { name: string; cooldown: number; attacks: number; brief: string }> = {
   surge: { name: "Spell Surge", cooldown: 60, attacks: 5, brief: "Next 5 attacks: +20% MAtk and +100% MCrit damage." },
   rush: { name: "Renewing Rush", cooldown: 120, attacks: 5, brief: "Next 5 attacks: +100% attack speed. Restores 50 MHP on cast." },
-  barrage: { name: "Arcane Barrage", cooldown: 90, attacks: 5, brief: "Next 5 attacks: every undead in the hall also takes a hit at 20% MAtk." },
+  barrage: { name: "Arcane Barrage", cooldown: 90, attacks: 5, brief: "Next 5 attacks: every undead in the hall also takes 20% of a hit." },
 };
 /** The charges each ability holds (upgrades to raise it: Later). */
 export const MAX_CHARGES = 1;

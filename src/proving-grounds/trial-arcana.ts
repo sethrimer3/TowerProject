@@ -79,9 +79,10 @@ export function noteStrike(s: TrialState, x: number, y: number) {
   if (hit) a.struck = { x, y, foe: hit.foe };
 }
 
-/** An arcanum's hit on `t`: its share of ATK, Overseer's beams and all, less its DEF. At least 1, as the hero's own hits. */
+/** An arcanum's hit on `t`: its share of ATK, Overseer's beams and all, less its DEF, then
+ * multiplied by the crits' average. At least 1, as the hero's own hits. */
 function strike(s: TrialState, t: Target, boost: number, kind: TrialStrike["kind"], from: Spot, tick: number, strikes: TrialStrike[], splash = false) {
-  const damage = Math.max(1, Math.round(heroAttackOn(s, t, t.key) * boost - t.defense));
+  const past = heroAttackOn(s, t, t.key) * boost - t.defense, damage = Math.max(1, Math.round(past > 0 ? past * (s.arcana?.spells?.crit ?? 1) : past));
   t.take(damage);
   strikes.push({ kind, from, to: { x: t.x, y: t.y }, damage, tick, ...(splash ? { splash: true as const } : {}) });
 }
@@ -177,7 +178,7 @@ function frostTurn(s: TrialState, a: NonNullable<TrialState["arcana"]>, rule: No
     if (s.status !== "active") break;
     const touching = fieldsOn(area, t.x - hero.x, t.y - hero.y), on = a.necro?.[t.key];
     if (!touching.length && !on) continue;
-    const { necro, units } = decayed(on, touching), damage = Math.max(1, Math.round(heroAttackOn(s, t, t.key) * rule.boost * units));
+    const { necro, units } = decayed(on, touching), damage = Math.max(1, Math.round(heroAttackOn(s, t, t.key) * rule.boost * (a.spells?.crit ?? 1) * units));
     kept[t.key] = necro;
     t.take(damage);
     strikes.push({ kind: "necro", from: { x: t.x, y: t.y }, to: { x: t.x, y: t.y }, damage, tick: TURN_TICKS });

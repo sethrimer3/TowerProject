@@ -14,7 +14,7 @@ import type { GearTotals } from "./equipment/gear-rows.ts";
 import type { Board } from "./board.ts";
 import { isStunned, point, type ByFoe, type Enemy, type Player, type Tile } from "./entities.ts";
 import type { Save } from "./save/shape.ts";
-import { attackAgainst, taggedDamage, breaksArmor, critAgainst, facing, guaranteedCrits, guarded, isBoss, landsSuperCrit, shieldThorn, stealCeiling, thornDamage } from "./combat.ts";
+import { attackAgainst, taggedDamage, breaksArmor, critAgainst, facing, guaranteedCrits, guarded, isBoss, landsSuperCrit, multiplied, shieldThorn, stealCeiling, thornDamage } from "./combat.ts";
 import { critRule } from "./progression/loadout.ts";
 import { foeAttack } from "./cards/foe-cards.ts";
 import { trainedAmount } from "./progression/training.ts";
@@ -446,13 +446,14 @@ function rebound(board: VolleyTurn["board"], wrap: number, p: Player, { x, y }: 
 }
 
 /** An arcanum's strike on the enemy at `to`, if one stands there: Arcanum Damage
- * (`boost`, its crits averaged and none rolled) as an arrow's less DEF, with no
- * Lifesteal and no Armor Break. Marked as what struck it (`how`), its kill too. */
+ * (`boost`) as an arrow's less DEF, then multiplied by the crits' average
+ * (`Player.arcaneCrit`, none rolled), with no Lifesteal and no Armor Break.
+ * Marked as what struck it (`how`), its kill too. */
 export function arcaneStrike(board: Pick<Board, "tile" | "clear" | "wound">, p: Player, to: { x: number; y: number }, boost: number, how: Pick<Shot, "from" | "tick" | "ricochet" | "thunderbolt" | "splash" | "phantasm" | "familiar">, shots: Shot[], kills: VolleyKill[]) {
   const tile = board.tile(to.x, to.y), enemy = foeOn(tile);
   if (!enemy) return;
   const { armorBreak: _, ...striker } = p;
-  const damage = Math.max(0, arrowDamage(striker, enemy, 0, 1, boost)), left = snap(Math.max(0, enemy.hp - damage));
+  const damage = Math.max(0, multiplied(arrowDamage(striker, enemy, 0, 1, boost), p.arcaneCrit ?? 1)), left = snap(Math.max(0, enemy.hp - damage));
   const landed: Shot = { by: "hero", ...how, to, damage, before: enemy.hp, hp: left, full: snap(enemy.hp + (tile.wound ?? 0)) };
   shots.push(landed);
   if (left > 0) board.wound?.(to.x, to.y, damage);
@@ -615,7 +616,7 @@ export function necroDecay({ board, wrap, hero, beams, changes }: Pick<VolleyTur
     const touching = area ? fieldsOn(area, dx, dy) : [];
     if (!touching.length && !enemy.necro) continue;
     const { necro, units } = decayed(enemy.necro, touching);
-    const damage = guarded(snap(attackAgainst(hero, enemy) * boost * units * beamFactor(beams, TURN_TICKS, dx, dy)), enemy), left = snap(Math.max(0, enemy.hp - damage));
+    const damage = guarded(snap(attackAgainst(hero, enemy) * boost * (hero.arcaneCrit ?? 1) * units * beamFactor(beams, TURN_TICKS, dx, dy)), enemy), left = snap(Math.max(0, enemy.hp - damage));
     const landed: Shot = { by: "hero", from: to, to, damage, tick: TURN_TICKS, before: enemy.hp, hp: left, full: snap(enemy.hp + (tile.wound ?? 0)), necro: true };
     if (damage > 0) shots.push(landed);
     if (left > 0) {

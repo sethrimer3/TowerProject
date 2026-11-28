@@ -2,7 +2,7 @@
 // each striking what it touches and disappearing until the next activation.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ARCANA, ARCANUM_IDS, arcanumBoost } from "../src/arcana/arcana.ts";
+import { ARCANA, ARCANUM_IDS, arcanumBoost, arcanumCrit } from "../src/arcana/arcana.ts";
 import { COOLDOWN_CAP, ghostDirection, ghostOffset, inBlast, phantasmCooldown, phantasmEffects, stepPhantasm, touchesTile, validPhantasm } from "../src/arcana/phantasm.ts";
 import { pointing } from "../src/exact.ts";
 import { Game } from "../src/state.ts";
@@ -198,10 +198,11 @@ test("in a run: the first activation waits out the cooldown, then a strike at Ar
 test("Arcanum Damage averages crits, as the card shows", () => {
   const g = arena([]);
   const held = g.arcana.held.find((h) => h.id === "phantasm")!;
-  assert.deepEqual(g.arcana.cardValue(held), { damage: 100 * arcanumBoost(10, g.crit) });
-  assert.equal(g.arcana.phantasmRule()!.boost, arcanumBoost(10, g.crit));
+  assert.deepEqual(g.arcana.cardValue(held), { damage: 100 * arcanumBoost(10) * arcanumCrit(g.crit) });
+  assert.equal(g.arcana.phantasmRule()!.boost, arcanumBoost(10));
+  assert.equal(g.striker.arcaneCrit, arcanumCrit(g.crit) === 1 ? undefined : arcanumCrit(g.crit));
   const crit = { chance: 50, factor: 2, superCrit: { chance: 10, factor: 5 } };
-  assert.equal(arcanumBoost(10, crit), 10 * (1 + 2 * 0.5) * (1 + 5 * 0.1 * 0.5));
+  assert.equal(arcanumCrit(crit), (1 + 2 * 0.5) * (1 + 5 * 0.1 * 0.5));
 });
 
 test("the hidden toggle only hides the ghosts' strikes", () => {

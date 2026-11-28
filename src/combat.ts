@@ -189,8 +189,8 @@ export const breaksArmor = (player: Player, enemy: Enemy) => !!player.armorBreak
 export const brokenAfter = (player: Player, enemy: Enemy, broken = enemy.broken ?? 0) => (breaksArmor(player, enemy) ? snap(broken + player.armorBreak!) : broken);
 /** The hero's critical strikes: each strike is critical with `chance` percent
  * (100 or more: that many applications are certain, and the rest rolls for
- * one more), and every application adds `factor` − 1 times the hero's ATK to
- * the strike, so one application multiplies it by `factor`. A critical
+ * one more), and every application adds `factor` − 1 times the strike's
+ * damage past DEF, so one application multiplies it by `factor`. A critical
  * strike is then a Super Critical hit with `superCrit.chance` percent, its
  * multiplier multiplied by `superCrit.factor`. */
 export type CritRule = { chance: number; factor: number; cards?: { chance: number; factor: number }; superCrit?: { chance: number; factor: number } };
@@ -208,7 +208,7 @@ export function critAgainst(crit: CritRule | undefined, player: Player, enemy: E
     cards,
   };
 }
-/** What a strike with `applications` critical applications multiplies ATK by. */
+/** What a strike with `applications` critical applications multiplies its damage past DEF by. */
 export const critMultiplier = (factor: number, applications: number) => (applications ? snap(1 + applications * (factor - 1)) : 1);
 /** The hero's critical rolls in one fight: the `factor` and how many
  * applications strike number `strike` (from 0, the hero's own) has, and
@@ -245,23 +245,24 @@ export function chainedCrits(crits: Crits, length: number, carried: number): Cri
 export const landsSuperCrit = (crit: CritRule, roll: number) => !!crit.superCrit && roll * 100 < crit.superCrit.chance;
 /** How many applications of its critical factor `chance` percent always lands. */
 export const guaranteedCrits = (chance: number) => Math.floor(chance / 100);
-/** `player` striking with the applications `crit` is certain to land: its
- * own when it has none. The worst a fight can go for the hero. */
+/** `player` striking with the applications `crit` is certain to land
+ * (`hitFactor`): its own when it has none. The worst a fight can go for the hero. */
 export function atWorst(player: Player, crit?: CritRule): Player {
   const k = crit ? guaranteedCrits(crit.chance) : 0;
-  return k ? { ...player, attack: snap(player.attack * critMultiplier(crit!.factor, k)) } : player;
+  return k ? { ...player, hitFactor: critMultiplier(crit!.factor, k) } : player;
 }
+/** `damage` past DEF multiplied by a strike's damage `multiplier` (its crits'):
+ * nothing past DEF stays nothing, so no crit gets ATK past a DEF it can't pass. */
+export const multiplied = (damage: number, multiplier: number) => (multiplier === 1 || damage <= 0 ? damage : snap(damage * multiplier));
 /** `damage` past `enemy`'s DEF (0 or less: none) as it lands: cut by the
  * percent a Shielded enemy's bubble guards it with (enemies/shielded.ts), as a
  * parry cuts the enemy's. The cut never stops a strike that gets past DEF. */
 export const guarded = (damage: number, enemy: Enemy) => (enemy.guard && damage > 0 ? snap((damage * (100 - enemy.guard)) / 100) : damage);
-/** What each of the hero's strikes takes off `enemy`'s HP (0 or less: none),
- * its ATK multiplied by `multiplier` (a critical strike's), with `broken`
- * percent of the enemy's DEF taken off. */
-export const heroHit = (player: Player, enemy: Enemy, multiplier = 1, broken?: number) => {
-  const attack = attackAgainst(player, enemy);
-  return guarded(snap((multiplier === 1 ? attack : snap(attack * multiplier)) - defenseAgainst(player, enemy, broken)), enemy);
-};
+/** What each of the hero's strikes takes off `enemy`'s HP (0 or less: none):
+ * its ATK less the enemy's DEF (`broken` percent of it taken off), then
+ * multiplied by `multiplier` (a critical strike's; `hitFactor` in a prediction). */
+export const heroHit = (player: Player, enemy: Enemy, multiplier = player.hitFactor ?? 1, broken?: number) =>
+  guarded(multiplied(snap(attackAgainst(player, enemy) - defenseAgainst(player, enemy, broken)), multiplier), enemy);
 /** What the hero's strike number `k` (from 0) of a fight takes off `enemy`'s
  * HP: the same every time, unless Armor Break takes more of its DEF off before each. */
 function strikeHits(player: Player, enemy: Enemy): (k: number) => number {
@@ -270,7 +271,7 @@ function strikeHits(player: Player, enemy: Enemy): (k: number) => number {
     return () => hit;
   }
   const from = enemy.broken ?? 0, rate = player.armorBreak!;
-  return (k) => Math.max(0, heroHit(player, enemy, 1, snap(from + (k + 1) * rate)));
+  return (k) => Math.max(0, heroHit(player, enemy, undefined, snap(from + (k + 1) * rate)));
 }
 /** The strikes of a fight that are added up one by one when Armor Break makes
  * each different. By then its lowest rank has taken all of any enemy's DEF off, so
@@ -437,7 +438,7 @@ export function attackForFewerHits(player: Player, enemy: Enemy): number | null 
   const { impervious, turns } = predict(player, enemy);
   if (impervious || turns <= 1) return null;
   const fewer = (more: number) => predict({ ...player, attack: snap(player.attack + more) }, enemy).turns < turns;
-  const each = enemy.guard ? (enemy.hp * 100) / ((turns - 1) * (100 - enemy.guard)) : enemy.hp / (turns - 1);
+  const each = (enemy.guard ? (enemy.hp * 100) / ((turns - 1) * (100 - enemy.guard)) : enemy.hp / (turns - 1)) / (player.hitFactor ?? 1);
   let more = Math.max(1, Math.ceil(snap(each + defenseAgainst(player, enemy) - player.attack)));
   if (breaksArmor(player, enemy)) {
     // That guess is for hits that stay the same, far off when Armor Break makes them rise.

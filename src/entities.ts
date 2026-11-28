@@ -232,6 +232,14 @@ export type Player = {
    * fight and are shot carry it (`Game.fighterAt`, `Game.striker`), so previews
    * and planners count the plain hero, the worst case. */
   dilationGuard?: number;
+  /** What every strike's damage past DEF is multiplied by in a prediction: the
+   * critical applications certain to land (`atWorst`) or assumed (the crit
+   * forecast). Only those copies of the hero carry it; a fight rolls its own. */
+  hitFactor?: number;
+  /** What an arcanum's strikes are multiplied by past DEF: the crits' average
+   * (`arcanumCrit`), as Arcanum Damage never rolls a crit. Like `shock`, only
+   * the copies of the hero that strike carry it (`Game.striker`). */
+  arcaneCrit?: number;
   /** A Hunting Wolf is hatched, so an enemy's `tagged` multiplies this hero's
    * damage (`taggedDamage`). Like `shock`, only the copies of the hero that
    * strike carry it; previews and planners count the plain hero, the worst case. */

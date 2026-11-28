@@ -1,6 +1,6 @@
 import { relicAmount, relicCut, relicFactor } from "../economy/relic-effects.ts";
 import {
-  arcanum, arcanumBoost, arcanumPrice, augmentedValues, chargeBolts, chargeZap, drawOptions, FROST_AUGMENT, GOLDEN_AUGMENT, investedIn, LENT_LEVELS, levelsOf, nextDraw, nextStep, OFFER_SIZE, ownedArcana, redrawOptions, rerollOpen, rerollPrice, RUN_TOGGLES, settleBolts, settleZap, tickCooldowns, unownedArcana, valuesAt,
+  arcanum, arcanumBoost, arcanumCrit, arcanumPrice, augmentedValues, chargeBolts, chargeZap, drawOptions, FROST_AUGMENT, GOLDEN_AUGMENT, investedIn, LENT_LEVELS, levelsOf, nextDraw, nextStep, OFFER_SIZE, ownedArcana, redrawOptions, rerollOpen, rerollPrice, RUN_TOGGLES, settleBolts, settleZap, tickCooldowns, unownedArcana, valuesAt,
   type ArcanumId, type AttributeLevels, type AttributeValues,
 } from "../arcana/arcana.ts";
 import { clearLifespring, lifespringEffects, springAmplify, stepLifespring } from "../arcana/lifespring.ts";
@@ -220,16 +220,20 @@ export class ArcanaDesk {
     } else r.off = r.off.filter((o) => o !== id);
     return true;
   }
-  /** What an arcanum's damage `multiplier` multiplies the hero's ATK by:
-   * raised by crits, by the worn Helmet's Arcanum Damage and by relics'. */
+  /** What an arcanum's damage `multiplier` multiplies the hero's ATK by,
+   * before DEF: raised by the worn Helmet's Arcanum Damage and by relics'. */
   private boost(multiplier: number) {
     const worn = wornEffects(this.save, this.host.mode).arcanumDamage;
-    return arcanumBoost(multiplier, this.host.crit, (100 + worn) / 100) * relicFactor(this.save, "arcanumDamage");
+    return arcanumBoost(multiplier, (100 + worn) / 100) * relicFactor(this.save, "arcanumDamage");
+  }
+  /** What the arcana's strikes are multiplied by past DEF: the hero's crits' average. */
+  get critAverage() {
+    return arcanumCrit(this.host.crit);
   }
   /** What the arcanum's card reads: its damage with the hero's ATK and crits, or its own effect. */
   cardValue({ id, levels }: HeldArcanum) {
     const def = arcanum(id), values = this.valuesOf({ id, levels });
-    if (def.damage) return { damage: this.host.run.player.attack * this.boost(def.damage(values)) * (id === "thunderbolt" ? relicFactor(this.save, "thunderbolt") : 1) };
+    if (def.damage) return { damage: this.host.run.player.attack * this.boost(def.damage(values)) * this.critAverage * (id === "thunderbolt" ? relicFactor(this.save, "thunderbolt") : 1) };
     return { text: def.effect?.(values) ?? "" };
   }
   /** An arcanum's cooldown as its card shows it: the turns left of how many,

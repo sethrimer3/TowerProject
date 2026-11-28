@@ -54,7 +54,7 @@ An effect happens where its familiar was as the turn began, and reaches every en
 It flies five slowly turning petals round the floor, 100 turns a circuit.
 When it fires, flames burst out from it and every enemy in range is struck at once and set burning.
 
-- The strike is your ATK times Damage, your critical and Super Critical chances averaged in as Arcana's damage does, less the enemy's DEF. It never heals by Lifesteal or breaks armor.
+- The strike is your ATK times Damage, less the enemy's DEF, then your critical and Super Critical chances averaged in as Arcana's damage does. It never heals by Lifesteal or breaks armor.
 - A burned enemy takes that again every turn until it falls or you leave the floor, and its ATK is cut by Damage Reduction, in its fights and shots alike.
 - A burned enemy wears a small flame at the top of its tile.
 - Your Attack Range doesn't widen the Dragon's.

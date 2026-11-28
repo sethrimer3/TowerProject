@@ -102,10 +102,10 @@ test("each hit takes its share of the original DEF off before its damage, past 0
   assert.equal(defenseAgainst(hero(), { ...brute, broken: 150 }), -20);
 });
 
-test("a critical hit multiplies ATK and leaves the break as it is", () => {
+test("a critical hit multiplies what gets past the broken DEF, and leaves the break as it is", () => {
   const crits = { factor: 2, applications: () => 1 };
   const fight = bout(hero({ armorBreak: 50 }), brute, undefined, crits);
-  assert.deepEqual(heroStrikes(fight.strikes).map((s) => s.damage).slice(0, 2), [180, 200]);
+  assert.deepEqual(heroStrikes(fight.strikes).map((s) => s.damage).slice(0, 2), [160, 200]);
 });
 
 test("Piercing takes its share of the original DEF, and the break comes off after, so negative DEF isn't pierced back", () => {

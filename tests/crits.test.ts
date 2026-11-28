@@ -93,7 +93,7 @@ test("a Silver rank counts at once in the run's card, and the rows' first prices
   }
 });
 
-test("a strike that crits multiplies ATK before DEF, and carries its applications", () => {
+test("a strike that crits multiplies what gets past DEF, and carries its applications", () => {
   const enemy: Enemy = { ...brute, defense: 4, attack: 1, hp: 100 };
   const plain = bout(hero(), enemy);
   assert.deepEqual(plain.strikes.filter((s) => s.by === "hero").map((s) => s.damage).slice(0, 2), [8, 8]);
@@ -102,8 +102,8 @@ test("a strike that crits multiplies ATK before DEF, and carries its application
   const crits: Crits = { factor: 2, applications: (n) => (n === 0 ? 1 : n === 2 ? 2 : 0) };
   const fight = bout(hero(), enemy, undefined, crits);
   const mine = fight.strikes.filter((s) => s.by === "hero");
-  assert.deepEqual(mine.slice(0, 4).map((s) => [s.damage, s.crit]), [[20, 1], [8, undefined], [32, 2], [8, undefined]]);
-  assert.equal(mine[0].hp, 80);
+  assert.deepEqual(mine.slice(0, 4).map((s) => [s.damage, s.crit]), [[16, 1], [8, undefined], [24, 2], [8, undefined]]);
+  assert.equal(mine[0].hp, 84);
   // Summary rounds keep the mark.
   const rounds = summarize(fight, 0).strikes.filter((s) => s.by === "hero");
   assert.equal(rounds[0].crit, 3, "the summed hero strike carries every application it held");

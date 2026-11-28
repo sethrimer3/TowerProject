@@ -78,8 +78,8 @@ function act(c: CatacombSave, gains: CatacombGains): TurnEvent {
 function round(c: CatacombSave, i: number, gains: CatacombGains): TurnEvent {
   const run = c.run!, m = striking(c), slot = run.slots[i]!, foe = undeadStats(slot.id, slot.strength, run.hall, c.number);
   const enemyHit = Math.max(0, snap(foe.matk - m.mdef));
-  // Neither can hurt the other, even at the best MCrit: the run ends and starts over at once.
-  if (enemyHit === 0 && hitFor(m, foe.mdef, m.critChance > 0) === 0 && c.buffs.barrage === 0) return restart(c, gains, true);
+  // Neither can hurt the other (no MCrit or Barrage gets MAtk past MDef): the run ends and starts over at once.
+  if (enemyHit === 0 && hitFor(m, foe.mdef, false) === 0) return restart(c, gains, true);
   const strikes = strikesNow(c);
   let heroHit = 0, crit = false;
   for (let k = 0; k < strikes && slot.mhp > 0; k++) {

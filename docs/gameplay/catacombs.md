@@ -37,7 +37,8 @@ Each skill takes up to its cap of points, and each point gives three things:
 | Focus | +5% MXP, +0.3% MXP Drop chance, +3% Armor Penetration | 25 |
 | Fortune | +2% MCrit chance, +0.2% to every Drop chance, +0.5% Gold Crosshair chance | 25 |
 
-An MCrit multiplies MAtk by the MCrit factor, ×1.5 to start, before MDef.
+An MCrit multiplies what gets past MDef by the MCrit factor, ×1.5 to start.
+MAtk at or under an undead's MDef does nothing, however it crits, until Armor Penetration lowers the MDef.
 Armor Penetration ignores a share of an undead's MDef, then a flat amount.
 A point moved counts from the next turn; taking points out of Weaving can lower your MHP, but putting them back never heals.
 The ≡ button lists every Catacomb stat in one table, with each Drop's chance and what it gives; tap anywhere to put it away.
@@ -69,7 +70,7 @@ The slim Auto button above it casts it by itself whenever it is ready.
 |---|---|---|
 | Spell Surge | +20% MAtk and +100% MCrit damage | 60 turns |
 | Renewing Rush | +100% attack speed, and 50 MHP when cast | 120 turns |
-| Arcane Barrage | every undead in the hall also takes a hit at 20% MAtk | 90 turns |
+| Arcane Barrage | every undead in the hall also takes 20% of a hit past its MDef | 90 turns |
 
 **Banked time.** Time the game is closed is banked, a second at a time, and the Welcome Back dialog says how many turns, and shown over the hall's top right with a speed choice: ×1, ×5, ×10 or ×100.
 Above ×1, each extra turn spends a banked second; when the bank runs out the speed drops back to ×1.

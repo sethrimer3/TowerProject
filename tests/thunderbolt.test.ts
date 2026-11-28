@@ -3,7 +3,7 @@
 // the Proving Grounds' trials, where all but Aurum Bloom work.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ARCANA, arcanumBoost, boltTargets, decodeArcanaRun, tickCooldowns } from "../src/arcana/arcana.ts";
+import { ARCANA, arcanumBoost, arcanumCrit, boltTargets, decodeArcanaRun, tickCooldowns } from "../src/arcana/arcana.ts";
 import { Game } from "../src/state.ts";
 import { defaults } from "../src/save/save.ts";
 import { random } from "../src/random.ts";
@@ -120,7 +120,7 @@ test("a new trigger adds to the bolts still to strike", () => {
   assert.equal(g.save.tower.runArcana.bolts, 8);
 });
 
-test("a bolt deals Arcanum Damage less DEF, with the beams', and heals and breaks nothing", () => {
+test("a bolt deals Arcanum Damage less DEF, its crits' average after, with the beams', and heals and breaks nothing", () => {
   const tiles: Record<string, Tile> = { "3,3": { kind: "enemy", enemy: { ...brute, defense: 50 } } };
   const board = {
     tile: (x: number, y: number) => tiles[`${x},${y}`] ?? { kind: "floor" },
@@ -128,12 +128,12 @@ test("a bolt deals Arcanum Damage less DEF, with the beams', and heals and break
     wound() {},
     floorEnemies: () => [{ x: 3, y: 3 }],
   } as unknown as VolleyTurn["board"];
-  const hero = { x: 0, y: 3, hp: 10, maxHp: 100, attack: 100, defense: 0, keys: {}, lifesteal: 50, armorBreak: 5 } as unknown as Player;
-  const plain = thunderbolts({ board, wrap: 0, hero, seed: 1 }, { boost: arcanumBoost(10, { chance: 50, factor: 2 }), bolts: 1, strike: 1 });
-  assert.equal(plain.shots[0]!.damage, 2000 - 50, "100 x 10 x (1 + 2 x 50%), less DEF");
+  const hero = { x: 0, y: 3, hp: 10, maxHp: 100, attack: 100, defense: 0, keys: {}, lifesteal: 50, armorBreak: 5, arcaneCrit: arcanumCrit({ chance: 50, factor: 2 }) } as unknown as Player;
+  const plain = thunderbolts({ board, wrap: 0, hero, seed: 1 }, { boost: arcanumBoost(10), bolts: 1, strike: 1 });
+  assert.equal(plain.shots[0]!.damage, (1000 - 50) * 2, "100 x 10 less DEF, x (1 + 2 x 50%)");
   assert.equal(hero.hp, 10);
   assert.equal(plain.left, 0);
-  const beamed = thunderbolts({ board, wrap: 0, hero, seed: 1, beams: { count: 4, width: 90, bonus: 8, turns: 0 } }, { boost: 10, bolts: 1, strike: 1 });
+  const beamed = thunderbolts({ board, wrap: 0, hero: { ...hero, arcaneCrit: 1 }, seed: 1, beams: { count: 4, width: 90, bonus: 8, turns: 0 } }, { boost: 10, bolts: 1, strike: 1 });
   assert.equal(beamed.shots[0]!.damage, 8000 - 50);
 });
 

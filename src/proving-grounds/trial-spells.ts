@@ -15,6 +15,8 @@ import type { TrialState } from "./trial.ts";
 
 /** The arcana held and on, as the desk gives them. */
 export type TrialSpells = {
+  /** What the arcana's strikes are multiplied by past DEF: the hero's crits' average (`arcanumCrit`); 1 when absent. */
+  crit?: number;
   /** `shock`: Ricochet Shock's chance a strike shocks its foe, in hundredths of a percent. */
   ricochet?: { boost: number; rebounds: number; chance: number; shock?: number };
   /** Shock Multiplier, once Ricochet Shock is researched: what the hero's ATK is multiplied by on a shocked foe. */

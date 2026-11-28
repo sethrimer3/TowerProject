@@ -54,10 +54,10 @@ Step 8 (the designer's spawn table, set halls, Magic skills, drops, crosshairs, 
 21. **The "Luck" skill** that opens Gold Crosshairs is Fortune, whose third effect is the Gold Crosshair chance.
 22. **"(n pts)" in the skill table** means percentage points: a chance or factor adds that many points a point (Might's +3% MCrit factor takes ×1.5 to ×1.53).
 23. **Might's MAtk +1%** multiplies the whole MAtk (base, Might's flat points and Magic ATK +1).
-24. **MCrits** multiply MAtk before MDef, as the Tower's crits do; Spell Surge's +100% MCrit damage adds 1 to the factor.
+24. **MCrits** multiply what gets past MDef ((MAtk − MDef) × factor), as the Tower's crits do; Spell Surge's +100% MCrit damage adds 1 to the factor, and its +20% MAtk comes before MDef.
 25. **Armor Penetration** takes the percent of MDef first, then the flat amount, never below 0.
 26. **Attack speed** is strikes a round: one, plus one while Speed Drop attacks are left, plus one while Renewing Rush lasts (bonuses add, so ×3 with both). An "attack" is a round; each round spends one of each buff and one Speed Drop attack.
-27. **Arcane Barrage** hits every undead standing, the one being fought too, after the Magician's strikes; it never MCrits. A barrage kill pays as any other.
+27. **Arcane Barrage** hits every undead standing, the one being fought too, after the Magician's strikes, for 20% of a hit past that undead's MDef (0.2 × (MAtk − MDef)); it never MCrits. A barrage kill pays as any other.
 28. **Crosshairs** stay on their undead until tapped, the undead is beaten, or the hall is left (lasting one turn, they could not be tapped at ×100). They roll after each turn, on each undead without one. A tap may hit any marked undead, not only the one being fought, and benefits from Spell Surge without spending its attacks.
 29. **Potions** lie on the corridor's side rows (7 and 9), not the slots' walls nor the column to the treasure rooms; several can lie at once, one a tile.
 30. **Drops and amounts** are rolled together as the hall is made and saved with it, so a reload never rerolls them.
@@ -321,7 +321,7 @@ Each holds one charge; cast, its charge comes back after its cooldown in turns, 
 |---|---|---|
 | Spell Surge | Next 5 attacks: +20% MAtk, +100% MCrit damage | 60 |
 | Renewing Rush | Next 5 attacks: +100% attack speed; +50 MHP on cast | 120 |
-| Arcane Barrage | Next 5 attacks: hits at 20% MAtk to every undead too | 90 |
+| Arcane Barrage | Next 5 attacks: every undead also takes 20% of a hit past its MDef | 90 |
 
 - Each unlocked ability's button sits over the menus, the turns until its charge (or *Ready*) under it, and a tooltip on hover or hold.
 - A slim **Auto** toggle above each, saved, casts it by itself at the start of any turn it is ready.

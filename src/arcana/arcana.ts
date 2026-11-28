@@ -367,13 +367,18 @@ export function nextStep(id: ArcanumId, attribute: number, level: number) {
   return step ? { value: step[0], cost: step[1] } : null;
 }
 
-/** What an arcanum multiplies the hero's ATK by, with the equipment's factors:
- * Arcanum Damage = Multiplier × Equipment × Hero ATK × (1 + Critical Factor ×
- * Critical Chance) × (1 + Super Crit Mult × Super Crit Chance × Critical Chance).
- * Its crits are this average, never rolled. */
-export function arcanumBoost(multiplier: number, crit: CritRule | undefined, equipment = 1) {
+/** What an arcanum multiplies the hero's ATK by, before DEF, with the
+ * equipment's factors: Arcanum Damage = (Multiplier × Equipment × Hero ATK −
+ * DEF) × `arcanumCrit`. */
+export function arcanumBoost(multiplier: number, equipment = 1) {
+  return multiplier * equipment;
+}
+/** What an arcanum's strike is multiplied by past DEF: its crits' average,
+ * (1 + Critical Factor × Critical Chance) × (1 + Super Crit Mult × Super Crit
+ * Chance × Critical Chance), never rolled. */
+export function arcanumCrit(crit: CritRule | undefined) {
   const chance = (crit?.chance ?? 0) / 100, superCrit = crit?.superCrit;
-  return multiplier * equipment * (1 + (crit?.factor ?? 0) * chance) * (1 + (superCrit ? superCrit.factor * (superCrit.chance / 100) * chance : 0));
+  return (1 + (crit?.factor ?? 0) * chance) * (1 + (superCrit ? superCrit.factor * (superCrit.chance / 100) * chance : 0));
 }
 
 /** Each cooldown one turn on: those of `active` that ran out fired, and

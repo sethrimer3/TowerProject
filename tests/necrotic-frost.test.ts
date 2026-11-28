@@ -3,7 +3,7 @@
 // touch, growing every turn until it falls.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ARCANA, arcanumBoost } from "../src/arcana/arcana.ts";
+import { ARCANA, arcanumBoost, arcanumCrit } from "../src/arcana/arcana.ts";
 import { clearFrost, decayed, fieldsOn, frostArea, frostEffects, frostSlowAt, stepFrost, validFrost, validNecro, type FrostField, type FrostRun } from "../src/arcana/necrotic-frost.ts";
 import { SLOWDOWN_CAP, togetherSlow } from "../src/arcana/time-dilation.ts";
 import type { Enemy, Player, Tile } from "../src/entities.ts";
@@ -154,9 +154,10 @@ test("a run: the card's bar and Arcanum Damage; the first field when the cooldow
   assert.equal(g.run.necroticFrost.fields![0]!.left, 40);
 });
 
-test("crits average into its boost, and a Shielded enemy's bubble and Overseer's beams count", () => {
+test("crits average into its damage, and a Shielded enemy's bubble and Overseer's beams count", () => {
   const crit = { chance: 50, factor: 3, superCrit: { chance: 20, factor: 10 } } as never;
-  assert.equal(arcanumBoost(10, crit), 10 * (1 + 3 * 0.5) * (1 + 10 * 0.2 * 0.5));
+  assert.equal(arcanumBoost(10), 10);
+  assert.equal(arcanumCrit(crit), (1 + 3 * 0.5) * (1 + 10 * 0.2 * 0.5));
 
   const tile = (e: Enemy): Tile => ({ kind: "enemy", enemy: e });
   const hero = { x: 0, y: 0, attack: 100 } as Player;

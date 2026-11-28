@@ -1328,11 +1328,12 @@ export class Game {
   }
   /** The hero as it strikes (arrows, Bombs and the arcana): with Ricochet Shock
    * researched, a copy carrying Shock Multiplier (`Player.shock`), which
-   * `attackAgainst` reads on a shocked enemy. Previews and planners take the
+   * `attackAgainst` reads on a shocked enemy, and with crits, the arcana's
+   * average of them (`Player.arcaneCrit`). Previews and planners take the
    * plain hero, the worst case. */
   get striker(): Player {
-    const shock = this.arcana.shock, guard = this.dilationGuard, tags = !!this.save.familiars.wolf;
-    return shock || guard || tags ? { ...this.run.player, ...(shock ? { shock: shock.factor } : {}), ...(guard ? { dilationGuard: guard } : {}), ...(tags ? { tags: true as const } : {}) } : this.run.player;
+    const shock = this.arcana.shock, guard = this.dilationGuard, tags = !!this.save.familiars.wolf, crit = this.arcana.critAverage;
+    return shock || guard || tags || crit !== 1 ? { ...this.run.player, ...(shock ? { shock: shock.factor } : {}), ...(guard ? { dilationGuard: guard } : {}), ...(tags ? { tags: true as const } : {}), ...(crit !== 1 ? { arcaneCrit: crit } : {}) } : this.run.player;
   }
   /** The percent Time Dilation's Damage Reduction cuts what strikes the hero by
    * (`Player.dilationGuard`): while its field stands, once researched; else 0. */
@@ -2939,9 +2940,9 @@ export class Game {
     return shots;
   }
   /** What the Dragon multiplies the hero's ATK by: its Damage (in tenths) as
-   * Arcanum Damage is worked out, the crits averaged. */
+   * Arcanum Damage is worked out, the crits averaged past DEF (`striker`). */
   private dragonDamage(tenths: number) {
-    return arcanumBoost(tenths / 10, this.crit);
+    return arcanumBoost(tenths / 10);
   }
   /** The burns as the turn ends, while the Dragon is on: pays what they fell and returns their shots. */
   private burnTurn(beams: Beams | undefined): Shot[] {

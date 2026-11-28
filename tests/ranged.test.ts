@@ -99,13 +99,13 @@ test("reach is Euclidean: a knight's move is within a Ranged enemy's 2.5 tiles, 
   assert.deepEqual(enemiesWithin(board, { x: 9, y: 2 }, 250, 10).map((e) => [e.x, e.y]), [[1, 2]]);
 });
 
-test("a shot takes DEF then the shroud, cut by Parry %; an arrow is one strike less DEF, crits counted", () => {
+test("a shot takes DEF then the shroud, cut by Parry %; an arrow is one strike less DEF, crits multiplying what is left", () => {
   const archer = { ...brute, ranged: true as const };
   assert.deepEqual(shotDamage(hero({ defense: 10, shroud: 5 }), archer), { damage: 15, shrouded: 5 });
   assert.deepEqual(shotDamage(hero({ defense: 10, shroud: 50 }), archer), { damage: 0, shrouded: 20 });
   assert.deepEqual(shotDamage(hero({ parry: 50 }), archer), { damage: 15, shrouded: 0 });
   assert.equal(arrowDamage(hero({ attack: 40 }), { ...brute, defense: 15 }), 25);
-  assert.equal(arrowDamage(hero({ attack: 40 }), { ...brute, defense: 15 }, 1, 1.5), 45);
+  assert.equal(arrowDamage(hero({ attack: 40 }), { ...brute, defense: 15 }, 1, 1.5), 37.5);
   assert.equal(wounded({ kind: "enemy", enemy: brute, wound: 25 }).enemy!.hp, 35);
 });
 
@@ -297,12 +297,12 @@ test("ATK / m: 0.01 a tile for the first rank, each later rank 0.00004 less, 1.2
   assert.deepEqual(prices, [50, 589, 60_929, 1_000_039, 998_422_519]);
 });
 
-test("an arrow's ATK is multiplied by ATK / m for the distance, Charged Shot for the turns waited, and a critical hit, each on the others", () => {
+test("an arrow's ATK is multiplied by ATK / m for the distance, Charged Shot for the turns waited, each on the others, and a critical hit on what gets past DEF", () => {
   assert.equal(arrowBoost(0, 9, 0, 0), 1);
   assert.equal(arrowBoost(1000, 9, 0, 0), 1.03, "3 tiles at 0.01 a tile");
   assert.equal(arrowBoost(1000, 5, 0, 0), snap(1 + Math.sqrt(5) / 100), "Euclidean: a knight's move is √5 away");
   assert.equal(arrowBoost(1000, 9, 10, 2), snap(1.03 * 1.2));
-  assert.equal(arrowDamage(hero({ attack: 100 }), { ...brute, defense: 20 }, 1, 2, 1.5), 280, "100 × 1.5 × 2 − 20");
+  assert.equal(arrowDamage(hero({ attack: 100 }), { ...brute, defense: 20 }, 1, 2, 1.5), 260, "(100 × 1.5 − 20) × 2");
 });
 
 test("ATK / m lets the Archer hurt, and so target, an enemy its plain arrows can't", () => {

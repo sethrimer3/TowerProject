@@ -10,7 +10,7 @@ import type { Enemy, Mode, Player, Tile } from "../src/entities.ts";
 import type { FamiliarId, FamiliarLevels } from "../src/familiars/catalog.ts";
 import { familiarTile, lingerMark, lingerWorn } from "../src/familiars/marks.ts";
 import { foesIn } from "../src/familiars/strikes.ts";
-import { arcanumBoost } from "../src/arcana/arcana.ts";
+import { arcanumBoost, arcanumCrit } from "../src/arcana/arcana.ts";
 import { random } from "../src/random.ts";
 import { decode, defaults } from "../src/save/save.ts";
 import { Game } from "../src/state.ts";
@@ -74,14 +74,14 @@ test("its radius is Range alone: Attack Range doesn't widen it", () => {
   assert.ok(raw(g, 9, 8).burn, "3.8 tiles at level 2");
 });
 
-test("its damage is Arcanum Damage's: crits averaged, through DEF", () => {
+test("its damage is Arcanum Damage's: through DEF, crits averaged past it", () => {
   const g = game({ dragon: [2, 0, 0, 0] });
   g.save.upgrades.critical = 1;
   Object.assign(g.save.training, { critChance: 40, critFactor: 30 });
   place(g, 12, 8, { defense: 70 });
   due(g, "dragon");
   hold(g);
-  const expected = 100 * arcanumBoost(24, g.crit) - 70;
+  const expected = (100 * arcanumBoost(24) - 70) * arcanumCrit(g.crit);
   assert.ok(Math.abs(100_000 - at(g, 12, 8)!.hp - expected) < 1e-3, `${100_000 - at(g, 12, 8)!.hp} against ${expected}`);
 });
 

@@ -90,15 +90,15 @@ test("attack speed: a Speed Drop's attacks strike twice a round, kept through a 
   assert.equal(strikesNow(c), 3);
 });
 
-test("MCrits multiply MAtk before MDef, and Armor Penetration takes percent then flat from MDef", () => {
+test("MCrits multiply what gets past MDef, and Armor Penetration takes percent then flat from MDef", () => {
   const c = fresh();
   c.mxp = mxpForLevel(80);
   c.points.weaving = 50;
   c.points.fortune = 25;
   besideOne(c, slot("ghost"));
-  // 100% MCrit: 10 × 1.5 − 5 MDef.
+  // 100% MCrit: (10 − 5 MDef) × 1.5.
   const e = catacombTurn(c) as { heroHit: number; crit: boolean };
-  assert.deepEqual([e.heroHit, e.crit], [10, true]);
+  assert.deepEqual([e.heroHit, e.crit], [7.5, true]);
   c.points = { might: 0, weaving: 0, resonance: 1, focus: 10, fortune: 0 };
   // MDef 5 × 70% − 2 = 1.5.
   assert.equal((catacombTurn(c) as { heroHit: number }).heroHit, 8.5);
@@ -194,11 +194,11 @@ test("Spell Surge: +20% MAtk and +100% MCrit damage for 5 attacks", () => {
   c.mxp = mxpForLevel(80);
   c.points.weaving = 50;
   c.points.fortune = 25;
-  // 100% MCrit: 12 × (1.5 + 1) − 5.
-  assert.equal((catacombTurn(c) as { heroHit: number }).heroHit, 25);
+  // 100% MCrit: (12 − 5) × (1.5 + 1).
+  assert.equal((catacombTurn(c) as { heroHit: number }).heroHit, 17.5);
   for (let i = 0; i < 3; i++) catacombTurn(c);
   assert.equal(c.buffs.surge, 0);
-  assert.equal((catacombTurn(c) as { heroHit: number }).heroHit, 10, "back to plain: 10 × 1.5 − 5");
+  assert.equal((catacombTurn(c) as { heroHit: number }).heroHit, 7.5, "back to plain: (10 − 5) × 1.5");
 });
 
 test("Renewing Rush: 50 MHP on cast, never past the maximum, and a strike more for 5 attacks", () => {
@@ -215,15 +215,15 @@ test("Renewing Rush: 50 MHP on cast, never past the maximum, and a strike more f
   assert.equal(c.run!.hero.mhp, 1000);
 });
 
-test("Arcane Barrage: every undead also takes 20% MAtk for 5 attacks, and the beaten pay", () => {
+test("Arcane Barrage: every undead also takes 20% of a hit past its MDef for 5 attacks, and the beaten pay", () => {
   const c = fresh();
   c.upgrades.unlock = 3;
   c.run!.slots = [slot("ghost"), slot("wisp"), null, null, { ...slot("wisp"), mhp: 2 }, null];
   c.run!.hero.x = 1;
   castAbility(c, "barrage");
   const e = catacombTurn(c) as { heroHit: number; barrage: { slot: number; hit: number; killed: boolean }[] };
-  // The target: 10 − 5, then the barrage's 2 − 5 MDef, nothing.
-  assert.equal(e.heroHit, 5);
+  // The target: 10 − 5, then the barrage's 20% of that.
+  assert.equal(e.heroHit, 6);
   assert.deepEqual(e.barrage, [{ slot: 1, hit: 2, killed: false }, { slot: 4, hit: 2, killed: true }]);
   assert.equal(c.run!.slots[1]!.mhp, 98);
   assert.equal(c.run!.slots[4], null);

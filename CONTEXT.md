@@ -516,7 +516,7 @@ Tower II's floor 10 checkpoint unlock: Damage Visual's numbers coloured by the s
 _Avoid_: damage gradient
 
 **Critical hit**:
-A hero strike that lands with its ATK multiplied by the **critical factor** (Crit x training and research, ×1.2 to start) before the enemy's DEF comes off. Each strike is critical with the **critical chance** (Crit % training and research, Critical skill): a fixed roll per run, floor, tile and strike, so taking a fight back and fighting it again lands the same crits. At 100% or more that many applications are certain and the rest rolls for one more; applications add to the strike's ATK (ATK × (1 + n × (factor − 1))). Fights are forecast by expected damage: the damage line shows the mean and, in the inspect panel, the range 90% of fights fall in and the chance to survive; Survivable and LETHAL stay certain (worst and best case).
+A hero strike whose damage past the enemy's DEF is multiplied by the **critical factor** (Crit x training and research, ×1.2 to start), so a crit never gets ATK past a DEF it can't pass. Each strike is critical with the **critical chance** (Crit % training and research, Critical skill): a fixed roll per run, floor, tile and strike, so taking a fight back and fighting it again lands the same crits. At 100% or more that many applications are certain and the rest rolls for one more; applications add to the strike's damage ((ATK − DEF) × (1 + n × (factor − 1))). Fights are forecast by expected damage: the damage line shows the mean and, in the inspect panel, the range 90% of fights fall in and the chance to survive; Survivable and LETHAL stay certain (worst and best case).
 Predictions count critical strikes only once the Critical Prediction skill is owned; before it they show the fight without crits.
 
 **Super Critical hit**:
@@ -1130,7 +1130,7 @@ One of the Magician's attributes (Might, Weaving, Resonance, Focus, Fortune), ea
 _Avoid_: stat box, talent
 
 **MCrit**:
-A Magician's critical strike: MCrit chance to land, its MAtk times the MCrit factor (×1.5 to start) before MDef.
+A Magician's critical strike: MCrit chance to land, its MAtk less MDef times the MCrit factor (×1.5 to start).
 _Avoid_: magic crit, spell crit
 
 **Armor Penetration**:

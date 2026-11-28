@@ -34,14 +34,15 @@ One a timed event: `save.arcana.respecEvent` keeps `eventAt`'s number on the Sho
 The Arcana tab's **Respec Arcanum** button (`#arcana-respec`) stands under Select Arcanum while any arcanum is owned, disabled inside a run or once the event's respec is spent, its Gem price red while short (`askForGems`); it opens a choice of the arcana owned, each with what it returns, then a confirm.
 With Dev free purchases nothing is paid, and the Arcana tab shows from the start (`arcanaOpen`), so a choice and every upgrade can be pressed from a fresh save.
 
-**Arcanum Damage** (`arcanumBoost`): Multiplier × Equipment × Hero ATK × (1 + Critical Factor × Critical Chance) × (1 + Super Crit Mult × Super Crit Chance × Critical Chance).
-It is this average, never rolled, and is what a damaging arcanum's card shows.
+**Arcanum Damage**: (Multiplier × Equipment × Hero ATK − DEF) × (1 + Critical Factor × Critical Chance) × (1 + Super Crit Mult × Super Crit Chance × Critical Chance).
+`arcanumBoost` is the part on ATK (Multiplier × Equipment, before DEF), what each arcanum's rule carries as its `boost`; `arcanumCrit` is the crits' average, never rolled, which multiplies what gets past DEF: `ArcanaDesk.critAverage`, carried on `Game.striker` as `Player.arcaneCrit` and on a trial's `TrialSpells.crit`.
+A damaging arcanum's card shows ATK × `boost` × the average, no DEF taken.
 No equipment raises it yet: the factor is `arcanumBoost`'s `equipment`, 1 by default.
 
 **Ricochet Shot** (`ricochet` in `volley.ts`, given `VolleyTurn.ricochet` by `ArcanaDesk.ricochet`).
 Each arrow that lands, whatever damage it did, rolls `chance` on a `tileRandom` (`RICOCHET_SALT`, by turn, shot and tile), so a replay agrees.
 It then strikes the `rebounds` closest other enemies on the floor (`Board.floorEnemies`: the Tower floor's, or in the Delve the hero's area on its equivalent floor), any distance, by Euclidean distance from the enemy struck, round the wrap.
-A strike is `arrowDamage` with Arcanum Damage's boost, so it passes through DEF, Piercing, the enemy cards' ATK and a Shielded enemy's bubble, as an arrow does; it heals no Lifesteal and breaks no armor, and rolls no crit.
+A strike is `arrowDamage` with Arcanum Damage's boost, so it passes through DEF, Piercing, the enemy cards' ATK and a Shielded enemy's bubble, as an arrow does, then `arcaneCrit` multiplies it; it heals no Lifesteal and breaks no armor, and rolls no crit.
 Only arrows and fights spring ricochets, so one never sets off another.
 Its `Shot` carries `ricochet`: it lands as its arrow does (`leavesAt` equals `landsAt`), its number and HP bar rise like an arrow's, and `drawRicochet` in `render/volley-art.ts` flashes a white line from the enemy struck for `RICOCHET_FLASH_MS`, for which `volleyOver` waits.
 A kill is a `VolleyKill` marked `ricochet`, never an instakill, and pays through `finds.kill`.
@@ -183,7 +184,7 @@ It slows through what Time Dilation's does, all of it by position: `Game.slowdow
 **An effect** per field on each enemy: `Tile.necro` (`Necro`, field id to its ticks), in `run.changes` beside `wound` and moving with an Aggroed enemy, read onto the enemy as `Enemy.necro` by `wounded`, never saved on it; `enemyTitle` then says "Necro", and `tile-info.ts` adds a line.
 **A turn's decay** (`necroDecay`, called from `Game.decayNecro` last of all in `endTurn`, after the volley, `aggroTurn`, the ghosts and Lifespring, so it reaches what stepped up): the enemies in reach of a field and every `necro` tile of `run.changes`, wherever it stands.
 `decayed` starts the effect of each field touching it and ticks every effect once; `units`, the sum of the ticks, is how many steps it takes: 1, 2, 3 for one field.
-A step is `attackAgainst` the enemy × Arcanum Damage's boost (the crits' average) × Overseer's beam at `TURN_TICKS`, through DEF (no `defenseAgainst`), cut by a Shielded enemy's bubble (`guarded`), with no Lifesteal and no Armor Break; wounding a Flying enemy makes it Aggroed, as any wound does.
+A step is `attackAgainst` the enemy × Arcanum Damage's boost × the crits' average (`arcaneCrit`) × Overseer's beam at `TURN_TICKS`, through DEF (no `defenseAgainst`), cut by a Shielded enemy's bubble (`guarded`), with no Lifesteal and no Armor Break; wounding a Flying enemy makes it Aggroed, as any wound does.
 An enemy takes one `Shot`, however many effects are on it.
 A kill is a `VolleyKill` marked `necro`, paid through `finds.kill`.
 A floor climbed from is gone, its `run.changes` with it, so its enemies' decay ends there.

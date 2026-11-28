@@ -37,9 +37,10 @@ An arcanum with a cooldown starts it over when switched back on.
 Once you have Phantasm, an alpha slider there, 0 to 1, sets how solid its ghosts are drawn: 0.5 at first, and at 0 you don't see them at all.
 Pressing a card anywhere else shows its stats and what modifies them.
 
-**Arcanum Damage** = Arcanum Multiplier × Hero ATK × Equipment × (1 + Critical Factor × Critical Chance) × (1 + Super Crit Mult × Super Crit Chance × Critical Chance).
-It is an average: an arcanum never rolls a critical hit of its own.
-It is ATK like any other, so the enemy's DEF still counts.
+**Arcanum Damage** = (Arcanum Multiplier × Hero ATK × Equipment − the enemy's DEF) × (1 + Critical Factor × Critical Chance) × (1 + Super Crit Mult × Super Crit Chance × Critical Chance).
+The Multiplier and Equipment raise ATK, so the enemy's DEF comes off after them.
+Your crits then multiply what gets past DEF, as they do your own strikes.
+They count at their average: an arcanum never rolls a critical hit of its own.
 
 In a [Proving Grounds](proving-grounds.md) trial, every arcanum you own works except Aurum Bloom, on the boss, its parts and its minions or summoned enemies, with its own toggles and cooldowns for the attempt (see [In a trial](#in-a-trial)).
 

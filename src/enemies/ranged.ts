@@ -20,7 +20,7 @@
  * mid-turn. Each tile's roll is a fixed number of the run seed, the floor
  * and the tile (`RANGED_SALT`). */
 import { isStunned, type Enemy, type Player, type Tile } from "../entities.ts";
-import { attackAgainst, brokenAfter, critMultiplier, defenseAgainst, facing, guarded, strikeCut, struckDamage, lessened } from "../combat.ts";
+import { attackAgainst, brokenAfter, critMultiplier, defenseAgainst, facing, guarded, multiplied, strikeCut, struckDamage, lessened } from "../combat.ts";
 import { fastShare, mayBeFast } from "./fast.ts";
 import { snap } from "../exact.ts";
 import { AMBER_MOST } from "../equipment/powers.ts";
@@ -246,14 +246,14 @@ export function shotDamage(player: Player, enemy: Enemy) {
 
 /** What the Archer's arrow takes off `enemy`: one of its strikes, raised
  * against a boss and by the hand's cards (`cards`, the Shot ATK percent
- * added to the enemy cards'), multiplied by its `boost` (`arrowBoost`) and by
- * `applications` of the critical `factor` and a Super Critical's `superFactor`, less the enemy's DEF (Piercing
- * ignoring some, and Armor Break, this arrow's first, taking more off), cut by
+ * added to the enemy cards'), multiplied by its `boost` (`arrowBoost`), less the enemy's DEF (Piercing
+ * ignoring some, and Armor Break, this arrow's first, taking more off), then
+ * multiplied by `applications` of the critical `factor` and a Super Critical's `superFactor`, cut by
  * a Shielded enemy's bubble; 0 or less does nothing. */
 export function arrowDamage(player: Player, enemy: Enemy, applications = 0, factor = 1, boost = 1, cards = 0, superFactor = 1) {
   const attack = boost === 1 ? attackAgainst(player, enemy, cards) : snap(attackAgainst(player, enemy, cards) * boost);
-  const raised = applications ? snap(attack * critMultiplier(factor, applications) * superFactor) : attack;
-  return guarded(snap(raised - defenseAgainst(player, enemy, brokenAfter(player, enemy))), enemy);
+  const past = snap(attack - defenseAgainst(player, enemy, brokenAfter(player, enemy)));
+  return guarded(applications ? multiplied(past, snap(critMultiplier(factor, applications) * superFactor)) : past, enemy);
 }
 
 /** What an arrow's ATK is multiplied by before any critical hit: ATK / m

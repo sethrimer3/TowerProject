@@ -537,7 +537,7 @@ const TRAIT_NAMES: Record<Trait, string> = { fast: "Fast", ranged: "Ranged", shi
 /** How a fight plays out and how its damage is counted (combat.ts), in the player's words. */
 const FIGHT_BASICS: CodexEntry[] = [
   { id: "order", icon: { kind: "kit", id: "sword" }, name: "Taking turns", brief: "Step into an enemy to fight it. You strike first, then it strikes back, round after round, until one of you falls." },
-  { id: "damage", icon: { kind: "kit", id: "shield" }, name: "Damage", brief: "Each strike deals the striker's ATK minus the target's DEF, never less than 0. A fight's damage to you is every strike the enemy lands before it falls." },
+  { id: "damage", icon: { kind: "kit", id: "shield" }, name: "Damage", brief: "Each strike deals the striker's ATK minus the target's DEF, never less than 0. A critical hit multiplies what gets past DEF. A fight's damage to you is every strike the enemy lands before it falls." },
   { id: "rising", icon: { kind: "kit", id: "heart" }, name: "Rising ATK", brief: "After every round the enemy's ATK rises by 1%, so even high DEF can't hold one off forever." },
   { id: "forecast", icon: { kind: "kit", id: "scroll" }, name: "Before you fight", brief: "Tap an enemy to see its HP, ATK and DEF, and how much damage it would deal you." },
 ];

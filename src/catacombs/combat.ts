@@ -31,10 +31,11 @@ export function striking(c: CatacombSave): Magician {
  * first, then the flat. */
 export const pierced = (mdef: number, m: Magician) => Math.max(0, snap((mdef * (100 - m.armorPenPercent)) / 100 - m.armorPen));
 
-/** A strike's damage on MDef `mdef`: MAtk, times the MCrit factor if it
- * crits (before MDef, as the Tower's crits), less the MDef left. */
+/** A strike's damage on MDef `mdef`: MAtk less the MDef left, then times
+ * the MCrit factor if it crits and `share` (Arcane Barrage's), as the Tower's
+ * crits multiply what gets past DEF. MAtk at or under the MDef does nothing. */
 export const hitFor = (m: Magician, mdef: number, crit: boolean, share = 1) =>
-  Math.max(0, snap(m.matk * share * (crit ? m.critFactor : 1) - pierced(mdef, m)));
+  snap(Math.max(0, snap(m.matk - pierced(mdef, m))) * share * (crit ? m.critFactor : 1));
 
 /** Rolls whether a strike crits, on the saved MCrit stream (no draw at 0%). */
 export const rollCrit = (c: CatacombSave, m: Magician) => m.critChance > 0 && drawing(c, "crits", (rng) => rng() * 100 < m.critChance);

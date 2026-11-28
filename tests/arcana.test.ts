@@ -2,7 +2,7 @@
 // page, held by a run, set off by their triggers; Ricochet Shot on arrows.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ARCANA, ARCANUM_IDS, ARCANUM_PRICES, arcanaOpen, arcanumBoost, decodeArcana, decodeArcanaRun, drawOptions, LENT_LEVELS, redrawOptions, rerollPrice, tickCooldowns, valuesAt, type ArcanumId } from "../src/arcana/arcana.ts";
+import { ARCANA, ARCANUM_IDS, ARCANUM_PRICES, arcanaOpen, arcanumBoost, arcanumCrit, decodeArcana, decodeArcanaRun, drawOptions, LENT_LEVELS, redrawOptions, rerollPrice, tickCooldowns, valuesAt, type ArcanumId } from "../src/arcana/arcana.ts";
 import { Game } from "../src/state.ts";
 import { decode, defaults } from "../src/save/save.ts";
 import { ARCANUM_RESPEC_GEMS } from "../src/economy/gems.ts";
@@ -167,10 +167,12 @@ test("the saved arcana decode defensively", () => {
   assert.deepEqual(decodeArcanaRun({ toggles: 41, off: ["ricochetShot", "gone"], timers: { ricochetShot: 0 } }), { toggles: 0, off: ["ricochetShot"], timers: {} });
 });
 
-test("Arcanum Damage's formula", () => {
-  assert.equal(arcanumBoost(3, undefined), 3);
-  // 3 × 2 (equipment) × (1 + 2 × 0.5) × (1 + 4 × 0.25 × 0.5)
-  assert.equal(arcanumBoost(3, { chance: 50, factor: 2, superCrit: { chance: 25, factor: 4 } }, 2), 3 * 2 * 2 * 1.5);
+test("Arcanum Damage's formula: Multiplier × Equipment on ATK, the crits' average past DEF", () => {
+  assert.equal(arcanumBoost(3), 3);
+  assert.equal(arcanumBoost(3, 2), 6);
+  assert.equal(arcanumCrit(undefined), 1);
+  // (1 + 2 × 0.5) × (1 + 4 × 0.25 × 0.5)
+  assert.equal(arcanumCrit({ chance: 50, factor: 2, superCrit: { chance: 25, factor: 4 } }), 2 * 1.5);
 });
 
 test("a cooldown restarts the moment it runs out, whatever the arcanum is doing", () => {

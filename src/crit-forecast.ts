@@ -52,7 +52,7 @@ export function forecast(player: Player, enemy: Enemy, crit: CritRule, played = 
   const k = guaranteedCrits(crit.chance), extra = snap((crit.chance - 100 * k) / 100);
   const worst = predict(atWorst(player, crit), enemy, played);
   const topMultiplier = snap(critMultiplier(crit.factor, k + (extra > 0 ? 1 : 0)) * (crit.superCrit?.factor ?? 1));
-  const best = predict({ ...player, attack: snap(player.attack * topMultiplier) }, enemy, played);
+  const best = predict({ ...player, hitFactor: topMultiplier }, enemy, played);
   if (worst.impervious || (worst.turns === best.turns && !worst.thornKill === !best.thornKill)) {
     const net = worst.impervious ? worst.damage : netDamage(player, worst);
     return { worst, best, expected: net, p10: net, p90: net, turns: worst.turns, survive: worst.survivable ? 1 : 0, instakill: instakills(worst) ? 1 : 0 };
@@ -65,7 +65,7 @@ export function forecast(player: Player, enemy: Enemy, crit: CritRule, played = 
   const hits = crit.superCrit || breaks ? strikeOutcomes(player, enemy, crit, k, extra, breaks ? brokenAt(1) : undefined) : null;
   const hitsAt = (t: number) => (breaks ? strikeOutcomes(player, enemy, crit, k, extra, brokenAt(t)) : hits!);
   // Their average hit over a fight of the length an average strike's ATK makes it.
-  const mean = breaks ? enemy.hp / predict({ ...player, attack: snap(player.attack * meanMultiplier(crit, k, extra)) }, enemy, played).turns : hits ? meanHit(hits) : low + extra * step;
+  const mean = breaks ? enemy.hp / predict({ ...player, hitFactor: meanMultiplier(crit, k, extra) }, enemy, played).turns : hits ? meanHit(hits) : low + extra * step;
   const odds = hits
     ? mixedOdds(enemy.hp, hitsAt, worst.turns, best.turns, thorn ? Infinity : Math.min(MIXED_TURNS, played), thorn, opening, mean, hitSpread(hits), thornsOver)
     : turnOdds(enemy.hp, low, step, extra, worst.turns, best.turns, thorn ? Infinity : Math.min(EXACT_TURNS, played), thorn, opening, thornsOver);
@@ -200,8 +200,8 @@ type Hit = { damage: number; chance: number };
  * With `broken`, Armor Break has that percent of the enemy's DEF off for it. */
 function strikeOutcomes(player: Player, enemy: Enemy, crit: CritRule, k: number, extra: number, broken?: number): Hit[] {
   const hit = (multiplier: number) => {
-    const raised = { ...player, attack: snap(player.attack * multiplier) };
-    return broken === undefined ? predict(raised, enemy, 1).hit : Math.max(0, heroHit(raised, enemy, 1, broken));
+    const raised = { ...player, hitFactor: multiplier };
+    return broken === undefined ? predict(raised, enemy, 1).hit : Math.max(0, heroHit(raised, enemy, multiplier, broken));
   };
   const lands = Math.min(1, (crit.superCrit?.chance ?? 0) / 100), out: Hit[] = [];
   for (const [applications, chance] of [[k, 1 - extra], [k + 1, extra]] as const) {
@@ -217,7 +217,7 @@ const hitSpread = (hits: Hit[]) => {
   const mean = meanHit(hits);
   return Math.sqrt(hits.reduce((sum, h) => sum + (h.damage - mean) * (h.damage - mean) * h.chance, 0));
 };
-/** What `crit` multiplies a strike's ATK by on average, `k` applications
+/** What `crit` multiplies a strike's damage past DEF by on average, `k` applications
  * certain and `extra` the chance of one more. */
 function meanMultiplier(crit: CritRule, k: number, extra: number) {
   const lands = Math.min(1, (crit.superCrit?.chance ?? 0) / 100), superFactor = crit.superCrit?.factor ?? 1;
