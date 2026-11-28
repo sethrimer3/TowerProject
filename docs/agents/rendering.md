@@ -178,7 +178,8 @@ What the game hands the board to show of its moves (`Gain`, `Heal`, `Facing`, `D
 Blocked-step and feedback text, then the skull over a hero struck down (`render/effects/struck-down.ts`), the revival's fire and the level-up burst (`render/effects/level-up.ts`), go last.
 The passes live in their own modules.
 `render/tile-painters.ts` holds the tile art (one painter per tile kind, plus the hero and torch sprites), and every painter draws onto the context it's given.
-A wall tile gets a corner brick (`drawCornerBricks`) in each inner room corner only where its art runs a mortar edge for the brick to meet: the area1 sprites and the procedural walls; the other biomes' wall sprites go without, and only the area1 sprites wrap a quoin round their outer corners (`drawArea1Quoins`).
+A wall tile's corners come from the native wall sprites' own corner pieces (`dungeon-corners.png`, above).
+No procedural corner brick or quoin is painted over them.
 Items, the torch and the hero wear a coloured outline (`withOutline`); an enemy is baked once per name, tier, `strength` and whether it is Fast or Ranged (`bakeEnemy`, an arrow at the top right for Ranged, the Fast mark below it when both: a one-pixel black outline, then `ENEMY_LOOK`'s bands outside it and rank chevrons over it (`rankChevrons` in `render/rank-chevrons.ts`, `RANK_CHEVRONS`: a weak enemy's one pointing down, one for strong, two for elite, three for a boss, four for a Greater Boss), and a Fast enemy's cyan fast-forward mark at the top right, `fastMark`; the Neon enemy draws one too), and its dark-room glow in `render/lighting.ts` is keyed by strength too.
 Only opaque bands cast torch shadows.
 Ground uses the dedicated native dungeon PNGs through `render/tile-painters.ts`.

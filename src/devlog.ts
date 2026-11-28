@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-28", text: "Tidier notes behind the board's wall art." },
   { date: "2026-11-28", text: "Torchlight, shadows and glows now move with an enemy as it lunges to attack." },
   { date: "2026-11-28", text: "Under Dev Mode, the mouse wheel or a pinch zooms the board past ×4, its pixels kept crisp." },
   { date: "2026-11-27", text: "Crits and MCrits now multiply only the damage past DEF and MDef, so Piercing and Armor Penetration boost them." },
