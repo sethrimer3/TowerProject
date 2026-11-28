@@ -169,7 +169,8 @@ test("a turn dashes, then fights rounds with the hero striking first", () => {
   // 10 MAtk into a Wisp's 100 MHP: ten rounds, the last unanswered.
   const round = { kind: "round", slot: 0, heroHit: 10, crit: false, strikes: 1 };
   for (let i = 0; i < 9; i++) assert.deepEqual(catacombTurn(c), { ...round, enemyHit: 10, killed: false });
-  assert.deepEqual(catacombTurn(c), { ...round, enemyHit: 0, killed: true });
+  // The last round says what the Wisp paid, for the board's drops.
+  assert.deepEqual(catacombTurn(c), { ...round, enemyHit: 0, killed: true, paid: { mxp: 1, spirit: 1, rarity: "common", mhp: 0 } });
   assert.equal(c.run!.hero.mhp, 910);
   assert.equal(c.mxp, 1);
   assert.equal(c.spirit.common, 1);

@@ -339,6 +339,12 @@ function playSample(ac: AudioContext, s: Sample): boolean {
 
 /** Plays a cue now, unless its kind of sound is off, the browser has none,
  * or the same cue just played. */
+/** Plays `cue` `delay` ms from now (now at 0): a blow landing after its swing. */
+export function playAfter(cue: Cue, delay = 0) {
+  if (delay > 0) setTimeout(() => play(cue), delay);
+  else play(cue);
+}
+
 export function play(cue: Cue) {
   if (!enabled(CUE_KIND[cue])) return;
   const now = performance.now();

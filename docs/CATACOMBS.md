@@ -115,7 +115,7 @@ The Catacomb screen is a view over the board, not a third `Mode`: `Game.mode` st
 | Provisions, Familiars, Arcana, Equipment, Shrine | hidden |
 
 - The **enemy table** (`ui/catacomb-odds.ts`, styled as `enemy-odds-box.ts`'s) lists each type that can appear in the current hall: its chance per slot, MHP, MAtk, MDef, MXP and Spirit rarity, with a row for the hall's Strong, Elite or Boss when it has one.
-- The **bank** sits over the board's top-right wall tiles while a second is banked or haste is on: a clock icon, the time (`45s`, `12m 05s`, `3h 12m`) and a dropdown, ×1 ×5 ×10 ×100 (`select#catacomb-haste`).
+- The **bank** sits over the board's top-right wall tiles while a second is banked or haste is on: a clock icon, the time (`45s`, `12m 05s`, `3h 12m`) and a dropdown, ×1 ×2 ×5 ×10 ×25 ×100 (`select#catacomb-haste`).
 - A **stats table** button left of the Skills row opens every Catacomb stat in one table (MHP, MAtk, MDef, MCrit, Armor Penetration, the gains, each Drop's chance and effect, Magic level, MXP to next, points spent and free, Lore bonus, current hall, best hall, number), dismissed by a tap anywhere.
 
 ## A hall

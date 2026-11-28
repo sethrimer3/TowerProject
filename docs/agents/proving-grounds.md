@@ -148,6 +148,8 @@ Progress and reward receipts remain independent per trial ID while sharing the s
 
 ## Rendering and tests
 
+`trial-fx.ts` (`TrialFx`) raises what a run's board raises, through the run's own `BoardPopups` over the trial's view: a trial saves turns, not what they showed, so it reads each new turn against the last (`observe`) and raises each round's strike and answer (and shots), a mimic's strike, each spell's number as it lands (a Thunderbolt's after it falls), the hero's damage a round didn't already raise, heals, and each shard, potion, coin and key rising from its tile, with a run's sounds (`punch`, `bodyFall`, `arrowHit`, `lightningZap`, the shards', `potion`, `key`).
+`TrialRenderer` draws it over the board; `drawCombatRoundOverlay` keeps only the coins' arcs and the shots.
 `elemental-art.ts` owns the elemental body, ghost palette and teleport particles; `render.ts` reuses Classic stone, hero, potion and torch art, adds pixel Light Elemental and light slime sprites, and follows the drawn player over 17×17 tiles through `camera.ts`'s `TrialCamera`.
 The same Movement transition setting as Delve enables Smooth by default, with Fast, Off and Reduce motion honored live.
 Smooth/Fast reuse the Delve's dead zone, critically damped spring, edge margin and eight-step look-ahead; arena bounds allow a four-tile border around 25×25 to keep the player clear of overlaid controls, and staging is centered because it fits entirely inside the view.

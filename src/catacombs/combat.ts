@@ -40,11 +40,16 @@ export const hitFor = (m: Magician, mdef: number, crit: boolean, share = 1) =>
 /** Rolls whether a strike crits, on the saved MCrit stream (no draw at 0%). */
 export const rollCrit = (c: CatacombSave, m: Magician) => m.critChance > 0 && drawing(c, "crits", (rng) => rng() * 100 < m.critChance);
 
+/** What beating an undead paid, for the board's drops: its MXP and Spirit
+ * (of `rarity`), and the MHP its MHP Drop restored. */
+export type Paid = { mxp: number; spirit: number; rarity: SpiritRarity; mhp: number };
+
 /** Slot `i`'s undead is beaten: it pays its MXP and Spirit (times its
  * strength, the Magician's gains and its MXP and Loot Drops), its Speed
  * Drop's attacks and its MHP Drop, and leaves its slot. Its slot is never
- * before the run's next target, so the target index still holds. */
-export function defeat(c: CatacombSave, i: number, gains: CatacombGains) {
+ * before the run's next target, so the target index still holds. Returns
+ * what it paid. */
+export function defeat(c: CatacombSave, i: number, gains: CatacombGains): Paid {
   const run = c.run!, slot = run.slots[i]!, r = undeadRewards(slot.id, slot.strength), m = magician(c), d = slot.drops ?? {};
   const mxp = snap(r.mxp * m.mxpGain * (d.mxp ?? 1)), spirit = snap(r.spirit * m.spiritGain * (d.loot ?? 1));
   c.mxp = snap(c.mxp + mxp);
@@ -52,7 +57,9 @@ export function defeat(c: CatacombSave, i: number, gains: CatacombGains) {
   c.spirit[r.rarity] = snap(c.spirit[r.rarity] + spirit);
   gains.spirit[r.rarity] = snap(gains.spirit[r.rarity] + spirit);
   if (d.speed) { c.speed += d.speed; gains.speed += d.speed; }
+  const before = run.hero.mhp;
   if (d.mhp) run.hero.mhp = Math.min(m.mhp, snap(run.hero.mhp + d.mhp));
   gains.kills++;
   run.slots[i] = null;
+  return { mxp, spirit, rarity: r.rarity, mhp: snap(run.hero.mhp - before) };
 }

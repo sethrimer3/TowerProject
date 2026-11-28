@@ -176,8 +176,8 @@ While iterating, run only the tests for the area you touched, then `npm test` on
 | Divine Portal and Relics (`divine.ts`, `tower/divine-room.ts`) | `tests/divine.test.ts tests/game-commands.test.ts tests/codex.test.ts tests/save.test.ts tests/sounds.test.ts` |
 | Board drawing, camera, lighting, decor art | `tests/render-calls.test.ts tests/camera.test.ts tests/lighting-passes.test.ts tests/art-modules.test.ts tests/decor.test.ts tests/themed-boards.test.ts` |
 | Outside and weather | `tests/outside*.test.ts tests/outdoor-art.test.ts tests/torch-light.test.ts` |
-| Catacombs (`src/catacombs/`, `game/catacomb-desk.ts`, `ui/catacomb-*.ts`, `render/catacomb-board.ts`) | `tests/catacombs-*.test.ts tests/engine-independence.test.ts tests/random-streams.test.ts tests/codex.test.ts tests/save.test.ts` (and `node tests/catacombs.mjs` with the dev server) |
-| Sound and ambience (`sound.ts`, `sound-files.ts`, `ambience.ts`, `render/board-sounds.ts`) | `tests/sounds.test.ts tests/outdoor-art.test.ts tests/settings.test.ts tests/save.test.ts` |
+| Catacombs (`src/catacombs/`, `game/catacomb-desk.ts`, `ui/catacomb-*.ts`, `render/catacomb-board.ts`) | `tests/catacombs-*.test.ts tests/board-fx.test.ts tests/engine-independence.test.ts tests/random-streams.test.ts tests/codex.test.ts tests/save.test.ts` (and `node tests/catacombs.mjs` with the dev server) |
+| Sound and ambience (`sound.ts`, `sound-files.ts`, `ambience.ts`, `render/board-sounds.ts`) | `tests/sounds.test.ts tests/board-fx.test.ts tests/outdoor-art.test.ts tests/settings.test.ts tests/save.test.ts` |
 
 ## Agent docs
 

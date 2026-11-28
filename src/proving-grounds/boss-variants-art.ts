@@ -189,27 +189,6 @@ export function drawCombatRoundOverlay(
     c.stroke();
   }
 
-  // 3. Melee slash & floating damage numbers.
-  if (round.heroDamage > 0) {
-    const tx = px(round.to.x) + 12;
-    const ty = py(round.to.y) + 6 - t * 10;
-    c.font = "bold 9px sans-serif";
-    c.textAlign = "center";
-    c.fillStyle = "#000";
-    c.fillText(`-${round.heroDamage}`, tx + 1, ty + 1);
-    c.fillStyle = "#ffe066";
-    c.fillText(`-${round.heroDamage}`, tx, ty);
-  }
-  if (round.enemyDamage > 0) {
-    const hx = px(round.from.x) + 12;
-    const hy = py(round.from.y) + 6 - t * 10;
-    c.font = "bold 9px sans-serif";
-    c.textAlign = "center";
-    c.fillStyle = "#000";
-    c.fillText(`-${round.enemyDamage}`, hx + 1, hy + 1);
-    c.fillStyle = "#ff6b6b";
-    c.fillText(`-${round.enemyDamage}`, hx, hy);
-  }
-
+  // The round's numbers rise as a run's do (`TrialFx`).
   c.restore();
 }

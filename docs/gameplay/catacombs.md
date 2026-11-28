@@ -53,10 +53,14 @@ Every Drop's chance starts at 0% and grows with Skills.
 
 **Crosshairs and potions.** While you watch, you can tap the hall for a little extra.
 Each turn, an undead may gain a crosshair.
-Tap it (or the wall just above or below the undead) for a free hit, which can be an MCrit and spends no turn.
+Tap it (or the wall just above or below the undead) for a free hit: a thunderbolt strikes it, which can be an MCrit and spends no turn.
 A Gold Crosshair hits three times as hard; Fortune gives the chance of one.
 Each turn, a potion may also appear on a tile beside the corridor.
 Tap it for 10 MHP; it is lost if you leave the hall first.
+
+An undead's Drops show as small icons in a row over it, each edged in light green.
+The Lore tablet and the Ingots are edged in gold, as treasure is in a climb.
+Numbers, heals and drops rise off the hall as they do in a climb, with the same sounds.
 
 **What a tile holds.** Tap any tile of the hall to see what is there, in the same box a climb shows.
 An undead's box shows its MHP, its MAtk with what each of its strikes takes off you, its MDef with what each of your strikes takes off it, and the MXP and Spirit it pays.
@@ -78,7 +82,7 @@ The slim Auto button above it casts it by itself whenever it is ready.
 | Renewing Rush | +100% attack speed, and 50 MHP when cast | 120 turns |
 | Arcane Barrage | every undead in the hall also takes 20% of a hit past its MDef | 90 turns |
 
-**Banked time.** Time the game is closed is banked, a second at a time, and the Welcome Back dialog says how many turns, and shown over the hall's top right with a speed choice: ×0 (Pause), ×1, ×5, ×10 or ×100.
+**Banked time.** Time the game is closed is banked, a second at a time, and the Welcome Back dialog says how many turns, and shown over the hall's top right with a speed choice: ×0 (Pause), ×1, ×2, ×5, ×10, ×25 or ×100.
 Above ×1, each extra turn spends a banked second; when the bank runs out the speed drops back to ×1.
 At ×0 no turn is played, and each second goes to the bank instead.
 Leaving the Catacomb screen while paused sets it playing at ×1; a faster speed keeps spending the bank while you are away.

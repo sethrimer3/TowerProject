@@ -62,9 +62,9 @@ export const screenX = (f: FrameContext, wx: number) => (wx - f.left) * f.s;
 /** Screen y of a world row's top edge (world y grows upward). */
 export const screenY = (f: FrameContext, wy: number) => (f.n - (wy - f.bottom)) * f.s;
 /** Screen position of a tile's top-left corner, for tile-space drawing. */
-export const tileOrigin = (f: FrameContext, x: number, y: number) => ({ x: (x - f.left) * f.s, y: (f.n - 1 - (y - f.bottom)) * f.s });
+export const tileOrigin = (f: BoardView, x: number, y: number) => ({ x: (x - f.left) * f.s, y: (f.n - 1 - (y - f.bottom)) * f.s });
 /** Screen position of a tile's center. */
-export const tileCenter = (f: FrameContext, x: number, y: number) => ({ x: (x - f.left + 0.5) * f.s, y: (f.n - 0.5 - (y - f.bottom)) * f.s });
+export const tileCenter = (f: BoardView, x: number, y: number) => ({ x: (x - f.left + 0.5) * f.s, y: (f.n - 0.5 - (y - f.bottom)) * f.s });
 
 /** Where a tile's contents are drawn this frame: its own tile, or leaning
  * off it while the enemy there lunges. Their torchlight, shadow and glow
@@ -85,7 +85,7 @@ export function forEachViewTile(view: Pick<BoardView, "n" | "left" | "bottom">, 
 }
 
 /** Sets `ctx` to draw in 24x24 tile space at a (possibly fractional) tile. */
-export function toTileSpace(ctx: CanvasRenderingContext2D, f: FrameContext, x: number, y: number) {
+export function toTileSpace(ctx: CanvasRenderingContext2D, f: BoardView, x: number, y: number) {
   const o = tileOrigin(f, x, y);
   ctx.translate(o.x, o.y);
   ctx.scale(f.s / 24, f.s / 24);

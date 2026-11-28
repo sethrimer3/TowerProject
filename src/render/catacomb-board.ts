@@ -1,12 +1,23 @@
 // Draws a Catacomb hall (docs/CATACOMBS.md) on the board's canvas: crypt
 // stone from the Tower's tiles, torches, the Lore tile, Ingots, the undead as
-// native PNGs, the hero, and a popup for each strike.
+// native PNGs, the hero, and what rises off the board as a run's does (its
+// `BoardPopups`): each strike's number, a potion's heal, a pickup and a kill's
+// drops; a tapped crosshair's Thunderbolt; and each one's sound.
 // Presentation only: it reads the run and never changes it.
 import type { Tile } from "../entities.ts";
 import { paintContents, paintHero, paintRingedSprite, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
-import {undeadSprite, ingotSprite, buffSprite} from "../sprites/catacombs.ts";
+import {undeadSprite, ingotSprite, buffSprite, spiritSprite} from "../sprites/catacombs.ts";
+import { BoardPopups, type PopupFrame } from "./board-popups.ts";
+import { paintThunderbolt, paintThunderlight } from "./effects/thunderbolt.ts";
+import { THUNDERBOLT_FALL_MS, THUNDERBOLT_FLASH_MS } from "../volley.ts";
+import { playAfter, type Cue } from "../sound.ts";
+import { popupAmount } from "../whole.ts";
+import type { Gain } from "../shown.ts";
+import type { Paid } from "../catacombs/combat.ts";
+import type { SpiritRarity } from "../catacombs/catalog.ts";
 import { drawKit, kitUrl } from "../sprites/kit.ts";
+import { drawPixelOutline } from "../sprites/pixel-outline.ts";
 import { BAR_DRAIN_MS, BAR_FADE_MS, BAR_RISE, paintHpBar } from "./hp-bar.ts";
 import { HALL_SIZE, hallCell, type HallCell } from "../catacombs/hall.ts";
 import { hallTargets, SLOT_XS, CORRIDOR_ROW } from "../catacombs/hall.ts";
@@ -16,10 +27,22 @@ import type { TurnEvent } from "../catacombs/turn.ts";
 import type { TapEvent } from "../catacombs/taps.ts";
 
 const N = HALL_SIZE, S = 24;
-/** How long the hero takes to cross to a turn's tile (ms), and a strike's popup to rise and fade. */
-const MOVE_MS = 140, POPUP_MS = 700;
+/** How long the hero takes to cross to a turn's tile (ms). */
+const MOVE_MS = 140;
+/** A round's lean: the hero into its strike, and the undead into its own
+ * this long after (ms), each as far as a run's (tiles) at its height. */
+const LUNGE_MS = 200, LUNGE = 0.3, STRIKE_BACK_MS = 220;
+/** A kill's drops rise once its number has begun to fade, as a run's do (ms). */
+const DROP_HOLD_MS = 750;
+/** Each Drop mark's width over an undead (tile units), one pixel of it a gap. */
+const DROP_MARK = 10;
 
-const CRIT_COLOR = "#ffd23a", GOLD_COLOR = "#ffc93a";
+const GOLD_COLOR = "#ffc93a";
+/** The amounts beside a drop's sprite: MXP's purple, each Spirit its rarity's colour, an Ingot's steel. */
+const MXP_COLOR = "#c99aff", INGOT_COLOR = "#d7e3ef";
+const SPIRIT_COLORS: Record<SpiritRarity, string> = {
+  common: "#9fb4c8", uncommon: "#5fd27a", rare: "#4aa3ff", epic: "#b46cff", legendary: "#ffb23a", mythic: "#ff4a6a", ancestral: "#3affe0",
+};
 
 /** A crosshair over an undead, pulsing: red-white, or gold. */
 function paintCrosshair(c: CanvasRenderingContext2D, gold: boolean, now: number, reduceMotion: boolean) {
@@ -38,33 +61,77 @@ function paintCrosshair(c: CanvasRenderingContext2D, gold: boolean, now: number,
 /** Native portrait URL for callers outside the shared icon renderer. */
 export const undeadIconUrl = (id: UndeadId) => kitUrl(undeadSprite(id));
 
-/** A strike's number rising off a tile. */
-type Popup = { x: number; y: number; text: string; color: string; at: number };
+/** A hall tile in the popups' terms: their world y grows upward, the hall's rows count down. */
+const up = (p: { x: number; y: number }) => ({ x: p.x, y: N - 1 - p.y });
+const slotTile = (slot: number) => up({ x: SLOT_XS[slot]!, y: CORRIDOR_ROW });
+/** A beaten undead's drops over its tile: its MXP, its Spirit above. */
+function drops(slot: number, paid: Paid): Gain[] {
+  const { x, y } = slotTile(slot);
+  return [
+    { x, y, text: `+${popupAmount(paid.mxp)} MXP`, art: { kit: buffSprite("mxp"), color: MXP_COLOR }, drop: { row: 0, with: false } },
+    { x, y, text: `+${popupAmount(paid.spirit)} Spirit`, art: { kit: spiritSprite(paid.rarity), color: SPIRIT_COLORS[paid.rarity] }, drop: { row: 1, with: true } },
+  ];
+}
+/** How far a strike leans `t` ms after it swings: out and back over `LUNGE_MS`, in tiles. */
+const lunge = (t: number) => (t >= 0 && t < LUNGE_MS ? LUNGE * Math.sin((Math.PI * t) / LUNGE_MS) : 0);
 /** An undead's HP bar as shown: draining from `from` to `to` since `at`,
  * of its `full` MHP; `gone` once it is banished, fading after the drain. */
 type Bar = { from: number; to: number; at: number; full: number; gone?: boolean };
 /** The MHP a bar shows at `now`, partway through its drain. */
-const shownHp = (b: Bar, now: number) => b.from + (b.to - b.from) * Math.min(1, (now - b.at) / BAR_DRAIN_MS);
+const shownHp = (b: Bar, now: number) => b.from + (b.to - b.from) * Math.max(0, Math.min(1, (now - b.at) / BAR_DRAIN_MS));
 
 export class CatacombBoard {
   private from: { x: number; y: number } | null = null;
   private to: { x: number; y: number } | null = null;
   private movedAt = -Infinity;
-  private popups: Popup[] = [];
+  /** The numbers and rewards rising: a run's own. */
+  private popups = new BoardPopups();
   private hitAt = -Infinity;
   private hitSlot = -1;
+  /** When the hero last struck, and when the undead strikes back. */
+  private struckAt = -Infinity;
+  private struckBackAt = -Infinity;
   /** Each slot's HP bar, as a run's fights show theirs. */
   private bars: (Bar | null)[] = [];
+  /** Thunderbolts falling on tapped crosshairs: the slot, when it began, and a salt for its kinks. */
+  private bolts: { slot: number; at: number; salt: number }[] = [];
+  /** When each slot's last Thunderbolt lands: its bar drains from then. */
+  private lands: number[] = [];
 
-  constructor(private canvas: HTMLCanvasElement) {}
+  /** `cue` plays a sound, `delay` ms from now: the game's own unless a test listens instead. */
+  constructor(private canvas: HTMLCanvasElement, private cue: (cue: Cue, delay?: number) => void = playAfter) {}
 
-  /** A tap just made: a crosshair's hit, or a potion's MHP. */
-  tapped(event: TapEvent, now: number) {
+  /** Which numbers and bars the Settings show: a run's rows. */
+  settings(shown: { hitNumbers: boolean; hpGains: boolean; enemyBars: boolean }) {
+    this.popups.settings(shown);
+  }
+
+  /** A tap just made: a crosshair calls a Thunderbolt down on its undead, its
+   * number rising as it lands (a crit's in the crit's glow, a gold
+   * crosshair's ringed in gold) with its drops if it fell; a potion rises
+   * from its tile and its heal over the hero. */
+  tapped(event: TapEvent, now: number, hero: { x: number; y: number }) {
     if (event.kind === "crosshair") {
-      this.popups.push({ x: SLOT_XS[event.slot]!, y: CORRIDOR_ROW, text: `-${short(event.hit)}`, color: event.gold ? GOLD_COLOR : event.crit ? CRIT_COLOR : "#ffffff", at: now });
-      this.hitAt = now;
+      const lands = now + THUNDERBOLT_FALL_MS;
+      this.bolts.push({ slot: event.slot, at: now, salt: Math.floor(now) % 97 });
+      this.lands[event.slot] = lands;
+      this.popups.hit(slotTile(event.slot), event.hit, "hero", lands, { crit: event.crit, pronounced: event.gold });
+      if (event.paid) this.paid(event.slot, event.paid, lands, hero);
+      this.hitAt = lands;
       this.hitSlot = event.slot;
-    } else this.popups.push({ x: event.x, y: event.y, text: `+${short(event.mhp)}`, color: "#ff8a94", at: now });
+      this.cue("lightningZap");
+      if (event.killed) this.cue("bodyFall", THUNDERBOLT_FALL_MS);
+    } else {
+      this.popups.reward({ x: event.x, y: N - 1 - event.y, text: "Potion", art: { tile: { kind: "potion", color: "red" } } }, now);
+      this.popups.potionHeal(up(hero), event.mhp, now);
+      this.cue("potion");
+    }
+  }
+
+  /** A beaten undead's drops, rising once its number fades, and its MHP Drop's heal over the hero. */
+  private paid(slot: number, paid: Paid, at: number, hero: { x: number; y: number }) {
+    for (const gain of drops(slot, paid)) this.popups.reward(gain, at + DROP_HOLD_MS);
+    if (paid.mhp) this.popups.potionHeal(up(hero), paid.mhp, at);
   }
 
   /** A turn just taken: the hero's move to tween and the strike's popups. */
@@ -78,16 +145,33 @@ export class CatacombBoard {
       this.to = at;
       this.movedAt = now;
     }
+    // A round: the hero leans in and strikes, Barrage strikes the rest, and the undead, standing, strikes back.
     if (event?.kind === "round") {
-      const x = SLOT_XS[event.slot]!;
-      this.popups.push({ x, y: CORRIDOR_ROW, text: event.heroHit ? `-${short(event.heroHit)}` : "0", color: !event.heroHit ? "#8a8a8a" : event.crit ? CRIT_COLOR : "#ffffff", at: now });
-      for (const b of event.barrage ?? []) this.popups.push({ x: SLOT_XS[b.slot]!, y: CORRIDOR_ROW, text: `-${short(b.hit)}`, color: "#9ad8ff", at: now });
-      if (event.enemyHit) this.popups.push({ x: run.hero.x, y: run.hero.y, text: `-${short(event.enemyHit)}`, color: "#ff6060", at: now });
+      this.popups.hit(slotTile(event.slot), event.heroHit, "hero", now, { crit: event.crit });
+      for (const b of event.barrage ?? []) {
+        this.popups.hit(slotTile(b.slot), b.hit, "hero", now);
+        if (b.paid) this.paid(b.slot, b.paid, now, run.hero);
+      }
+      if (event.paid) this.paid(event.slot, event.paid, now, run.hero);
+      if (event.enemyHit) this.popups.hit(up(run.hero), event.enemyHit, "enemy", now + STRIKE_BACK_MS);
+      this.struckAt = now;
+      this.struckBackAt = event.killed ? -Infinity : now + STRIKE_BACK_MS;
       this.hitAt = now;
       this.hitSlot = event.slot;
+      this.cue("punch");
+      if (event.killed || event.barrage?.some((b) => b.killed)) this.cue("bodyFall");
+      if (!event.killed) this.cue("punch", STRIKE_BACK_MS);
     }
-    if (event?.kind === "pickup") this.popups.push({ x: event.target.x, y: event.target.y, text: `+${short(event.target.amount)}`, color: event.target.kind === "lore" ? "#e8c27a" : "#d7e3ef", at: now });
-    if (this.popups.length > 12) this.popups.splice(0, this.popups.length - 12);
+    // A pickup rises from its tile as a run's does: Lore's tablet or the Ingot's bar, after its amount.
+    if (event?.kind === "pickup") {
+      const t = event.target, on = up(t);
+      this.popups.reward(t.kind === "lore"
+        ? { ...on, text: `+${popupAmount(t.amount)} Lore`, art: { cell: true } }
+        : { ...on, text: `+${popupAmount(t.amount)} ${t.ingot}`, art: { kit: ingotSprite(t.ingot), color: INGOT_COLOR } }, now);
+      this.cue("key");
+    }
+    if (event?.kind === "descend") this.cue("stoneSteps");
+    if (event?.kind === "fall" || (event?.kind === "restart" && !event.stalemate)) this.cue("bodyFall");
   }
 
   /** Draws the hall; `bars` is the Enemy HP bars setting. */
@@ -125,22 +209,21 @@ export class CatacombBoard {
     run.slots.forEach((slot, i) => {
       if (!slot) return;
       const x = SLOT_XS[i]!;
-      const shake = !reduceMotion && i === this.hitSlot && now - this.hitAt < 160 ? Math.round(Math.sin((now - this.hitAt) / 18) * 2) : 0;
-      at(CORRIDOR_ROW, x, () => {
+      const shake = !reduceMotion && i === this.hitSlot && now >= this.hitAt && now - this.hitAt < 160 ? Math.round(Math.sin((now - this.hitAt) / 18) * 2) : 0;
+      // The undead leans into the hero as it strikes back.
+      const lean = !reduceMotion && i === this.hitSlot ? -lunge(now - this.struckBackAt) : 0;
+      at(CORRIDOR_ROW, x + lean, () => {
         const bob = reduceMotion || slot.id !== "wisp" && slot.id !== "ghost" ? 0 : Math.round(Math.sin(now / 300 + i) * 1.5);
         // The red glow and black outline a run's enemy wears, brighter and gold-rimmed by rank.
         paintRingedSprite(c, undeadSprite(slot.id), slot.strength, shake, bob);
         if (slot.strength !== "normal") rankChevrons(c, slot.strength, "#ffd85a", "#000000", 1, 1);
         if (slot.mark) paintCrosshair(c, slot.mark === "gold", now, reduceMotion);
-        // Slots are two tiles apart: two columns keep all four marks readable.
-        DROP_IDS.filter((d) => slot.drops?.[d]).forEach((d, k) => {
-          drawKit(c, buffSprite(d), 22 + (k % 2) * 12, Math.floor(k / 2) * 12, 12, 12);
-        });
       });
     });
     // The hero, crossing to its tile.
     const t = this.to ? Math.min(1, (now - this.movedAt) / MOVE_MS) : 1, from = this.from ?? run.hero, to = this.to ?? run.hero;
-    const hx = from.x + (to.x - from.x) * t, hy = from.y + (to.y - from.y) * t;
+    // Leaning into its strike, as a run's hero does.
+    const hx = from.x + (to.x - from.x) * t + (reduceMotion ? 0 : lunge(now - this.struckAt)), hy = from.y + (to.y - from.y) * t;
     c.save(); c.translate(Math.round(hx * S), Math.round(hy * S)); paintHero(c, { dx: 1, dy: 0 }); c.restore();
     // Torchlight and crypt dark: the walls fall away into black.
     const glow = c.createRadialGradient(hx * S + 12, hy * S + 12, S, hx * S + 12, hy * S + 12, S * 9);
@@ -150,19 +233,36 @@ export class CatacombBoard {
     c.fillRect(0, 0, N * S, N * S);
     // Each struck undead's HP bar over it, draining to each strike as a run's does, fading once it is banished.
     this.drawBars(run, hall, number, now, bars, scale);
-    // The strikes' numbers, rising and fading.
-    c.font = "bold 9px monospace";
-    c.textAlign = "center";
-    this.popups = this.popups.filter((p) => now - p.at < POPUP_MS);
-    for (const p of this.popups) {
-      const k = (now - p.at) / POPUP_MS;
-      c.globalAlpha = 1 - k;
-      c.fillStyle = "#000000";
-      c.fillText(p.text, p.x * S + 13, p.y * S + 3 - k * 10);
-      c.fillStyle = p.color;
-      c.fillText(p.text, p.x * S + 12, p.y * S + 2 - k * 10);
+    // The Lore tablet and the Ingots are treasure: each wears the gold rim a run's pickups do, bright over the dark.
+    for (let row = 0; row < N; row++) for (let x = 0; x < N; x++) {
+      const k = hallCell(hall, x, row);
+      if (!left.has(`${x},${row}`)) continue;
+      if (k === "lore") at(row, x, () => drawPixelOutline(c, "cell", "gold", { x: 3, y: 3, w: 18, h: 18 }));
+      else if (k === "brass" || k === "iron" || k === "steel" || k === "nickel") at(row, x, () => drawPixelOutline(c, ingotSprite(k), "gold"));
     }
-    c.globalAlpha = 1;
+    // Each undead's Drops in a row centred over it, above its HP bar and clear of the dark, so none stands between two undead.
+    run.slots.forEach((slot, i) => {
+      const held = DROP_IDS.filter((d) => slot?.drops?.[d]), left = 12 - (held.length * DROP_MARK - 1) / 2;
+      // Each wears a light green rim, so it stands out against the crypt's stone.
+      if (held.length) at(CORRIDOR_ROW, SLOT_XS[i]!, () => held.forEach((d, k) => {
+        const spot = { x: left + k * DROP_MARK, y: -15, w: DROP_MARK - 1, h: DROP_MARK - 1 };
+        drawPixelOutline(c, buffSprite(d), "green", spot);
+        drawKit(c, buffSprite(d), spot.x, spot.y, spot.w, spot.h);
+      }));
+    });
+    // Thunderbolts on tapped crosshairs: straight down to the undead, then its jagged light, as a run's.
+    this.bolts = this.bolts.filter((b) => now - b.at < THUNDERBOLT_FALL_MS + THUNDERBOLT_FLASH_MS);
+    for (const b of this.bolts) {
+      const age = now - b.at, x = SLOT_XS[b.slot]!;
+      c.save();
+      paintThunderbolt(c, x * S + S / 2, CORRIDOR_ROW * S + S / 2, reduceMotion ? 1 : age / THUNDERBOLT_FALL_MS, x, CORRIDOR_ROW, b.salt, S);
+      c.restore();
+      if (age >= THUNDERBOLT_FALL_MS || reduceMotion) at(CORRIDOR_ROW, x, () => paintThunderlight(c, reduceMotion ? 0 : age));
+    }
+    // What rises off the board: a run's numbers and rewards, over the hall as a 17-tile view.
+    this.popups.expire(now);
+    const frame: PopupFrame = { c, now, s: S, n: N, left: 0, bottom: 0, look };
+    this.popups.draw(frame);
   }
 
   /** Moves each slot's bar on to its MHP now and draws those struck. */
@@ -172,7 +272,7 @@ export class CatacombBoard {
       if (slot) {
         const full = undeadStats(slot.id, slot.strength, hall, number).mhp;
         if (!b || b.gone || b.full !== full) b = { from: slot.mhp, to: slot.mhp, at: -Infinity, full };
-        else if (b.to !== slot.mhp) b = { from: shownHp(b, now), to: slot.mhp, at: now, full };
+        else if (b.to !== slot.mhp) b = { from: shownHp(b, now), to: slot.mhp, at: Math.max(now, this.lands[i] ?? now), full };
       } else if (b && !b.gone) b = { from: shownHp(b, now), to: 0, at: now, full: b.full, gone: true };
       if (b?.gone && now - b.at >= BAR_DRAIN_MS + BAR_FADE_MS) b = null;
       this.bars[i] = b;
@@ -183,12 +283,12 @@ export class CatacombBoard {
     });
   }
 
-  /** Forgets the tween, popups and bars, so the next hall shown starts still. */
+  /** Forgets the tween, popups, bolts and bars, so the next hall shown starts still. */
   reset() {
     this.from = this.to = null;
-    this.popups = [];
+    this.popups.clear();
+    this.bolts = [];
     this.bars = [];
+    this.lands = [];
   }
 }
-
-const short = (n: number) => (n >= 10_000 ? `${Math.round(n / 1000)}K` : `${Math.round(n * 10) / 10}`);

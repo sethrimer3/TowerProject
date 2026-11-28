@@ -5,7 +5,7 @@ import { snap } from "../exact.ts";
 import { undeadStats } from "./catalog.ts";
 import { SIDE_TILES } from "./hall.ts";
 import { magician } from "./magic.ts";
-import { defeat, hitFor, noGains, rollCrit, striking, type CatacombGains } from "./combat.ts";
+import { defeat, hitFor, noGains, rollCrit, striking, type CatacombGains, type Paid } from "./combat.ts";
 import { drawing, type CatacombSave } from "./state.ts";
 
 /** Each turn, each undead without a crosshair gains one this often (percent). */
@@ -19,7 +19,7 @@ export const POTION_MHP = 10;
 
 /** A tap's outcome, for the board's popups. */
 export type TapEvent =
-  | { kind: "crosshair"; slot: number; hit: number; crit: boolean; gold: boolean; killed: boolean }
+  | { kind: "crosshair"; slot: number; hit: number; crit: boolean; gold: boolean; killed: boolean; paid?: Paid }
   | { kind: "potion"; x: number; y: number; mhp: number };
 
 /** The end of a turn: each undead standing without a crosshair rolls for
@@ -56,8 +56,8 @@ export function tapCrosshair(c: CatacombSave, slot: number, gains: CatacombGains
   delete s.mark;
   s.mhp = Math.max(0, snap(s.mhp - hit));
   const killed = s.mhp === 0;
-  if (killed) defeat(c, slot, gains);
-  return { kind: "crosshair", slot, hit, crit, gold, killed };
+  const paid = killed ? defeat(c, slot, gains) : undefined;
+  return { kind: "crosshair", slot, hit, crit, gold, killed, ...(paid ? { paid } : {}) };
 }
 
 /** Takes the potion on tile (x, y): MHP back, never past the maximum. Null when none lies there. */

@@ -196,7 +196,8 @@ export const STORY_INTRO: readonly string[] = [
   "This is a land of magical adventure and dangerous dungeons. Dungeons that descend deep into the earth and mighty towers that stretch high into the sky.",
   "They have been present since the earliest history books, and nobody has reached the top of one of the towers, nor have they seen the bottom of one of the dungeons.",
   "They are full of magic, treasure, and unspeakable danger. Adventurers climb the towers and descend into the depths in search of magic and wonders, which become more potent the further they go.",
-  "Our story begins with one young adventurer, turning to delving out of necessity to support their family and raise them out of debt.",
+  "Our story begins with one young adventurer, turned to delving out of necessity to support their house and raise them out of debt.",
+  "The family invested in a single magic card, imbuing the adventurer with the power to enter and climb the stairs of the towers without restrictions.",
   "In an unprecedented stroke of luck, the adventurer obtained the Chrono Anchor, a unique divine gift. Looking at the tower, they wonder if it was all just a vision or a dream.",
 ];
 

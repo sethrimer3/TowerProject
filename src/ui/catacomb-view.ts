@@ -152,7 +152,10 @@ export class CatacombView {
   draw(now: number) {
     const run = this.c.run;
     if (!this.active || !run) return false;
-    this.board.draw(run, this.c.number, now, this.ctx.game.save.settings.reduceMotion, usesGameSprites(this.ctx.game.save), this.ctx.game.save.settings.enemyBars);
+    const settings = this.ctx.game.save.settings;
+    // A run's rows of the Settings: hit numbers, HP gains and enemy HP bars.
+    this.board.settings(settings);
+    this.board.draw(run, this.c.number, now, settings.reduceMotion, usesGameSprites(this.ctx.game.save), settings.enemyBars);
     return true;
   }
 
@@ -171,7 +174,7 @@ export class CatacombView {
     // A crosshair's undead, standing or just banished, is what the box shows.
     const at = onSlot && (event || run.slots[slot]) ? { x, y: CORRIDOR_ROW } : { x, y };
     if (event) {
-      this.board.tapped(event, performance.now());
+      this.board.tapped(event, performance.now(), run.hero);
       if (event.kind === "potion" || event.killed) this.hideInspect();
       else {
         this.inspected = at;

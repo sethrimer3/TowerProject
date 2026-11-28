@@ -34,7 +34,9 @@ export type Drop = { row: number; with: boolean };
 export type GainArt = { tile: Tile; spent?: true } | { heart: true; raised?: true } | { gem: true; kind?: "golden" | "stellar" } | { coin: Coin } | { cell: true } | { ruby: true }
   | { equipMaterial: EquipMaterialId; quantity: number } | { equipPiece: string; rarity: EquipRarity }
   /** CHEST's Double and Triple: the times over a chest paid, flashed over it. */
-  | { multiplier: number };
+  | { multiplier: number }
+  /** A kit sprite after its amount, written in `color` (the Catacomb's Spirit, Ingots and MXP). */
+  | { kit: string; color: string };
 /** The coin a Gold or Silver gain raises. */
 export type Coin = "gold" | "silver";
 /** A potion's heal: the HP from and to, where the hero stood, and its number. */

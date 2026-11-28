@@ -138,7 +138,7 @@ test("the Story opens in the Codex once the first climb has ended, its Intro the
   const intro = story().sections[0]!;
   assert.ok(story().open);
   assert.equal(intro.title, "Intro");
-  assert.equal(intro.prose?.length, 5);
+  assert.equal(intro.prose?.length, 6);
   assert.match(intro.prose!.at(-1)!, /Chrono Anchor/);
 });
 

@@ -13,6 +13,8 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-28", text: "Catacomb and trial fights rise and sound like a climb's; crosshairs call thunderbolts; Catacomb speeds x2 and x25." },
+  { date: "2026-11-28", text: "The Codex Story opens with the family's magic card." },
   { date: "2026-11-28", text: "Zooming in no longer makes lines near walls twitch, and torch shadows hold still as the flame flickers." },
   { date: "2026-11-28", text: "Tap a boost or a Catacomb tile to see what it is; the Catacombs can pause; pause no longer misses a tap." },
   { date: "2026-11-28", text: "Catacomb menus sit on the bottom tabs, undead get a run's HP bar, and the forest menu fills two rows." },

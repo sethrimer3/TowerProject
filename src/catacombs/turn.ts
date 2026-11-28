@@ -7,18 +7,19 @@ import { undeadStats } from "./catalog.ts";
 import { hallTargets, type Target } from "./hall.ts";
 import { magician } from "./magic.ts";
 import { autoCast, BARRAGE_SHARE, coolAbilities } from "./abilities.ts";
-import { defeat, hitFor, noGains, rollCrit, striking, type CatacombGains } from "./combat.ts";
+import { defeat, hitFor, noGains, rollCrit, striking, type CatacombGains, type Paid } from "./combat.ts";
 import { rollTaps } from "./taps.ts";
 import { enterHall, startRun, type CatacombSave } from "./state.ts";
 
-export { noGains, type CatacombGains } from "./combat.ts";
+export { noGains, type CatacombGains, type Paid } from "./combat.ts";
 
 /** A round: the hits the Magician struck its target with (summed), whether
  * any crit, how many strikes it had, what the undead struck back, whether
- * the target fell, and Arcane Barrage's hit on each other undead. */
+ * the target fell (and what it `paid`), and Arcane Barrage's hit on each
+ * other undead (and what each it beat paid). */
 export type TurnEvent =
   | { kind: "dash"; x: number; y: number }
-  | { kind: "round"; slot: number; heroHit: number; enemyHit: number; killed: boolean; crit: boolean; strikes: number; barrage?: { slot: number; hit: number; killed: boolean }[] }
+  | { kind: "round"; slot: number; heroHit: number; enemyHit: number; killed: boolean; crit: boolean; strikes: number; paid?: Paid; barrage?: { slot: number; hit: number; killed: boolean; paid?: Paid }[] }
   | { kind: "pickup"; target: Extract<Target, { kind: "lore" | "ingot" }> }
   | { kind: "descend"; hall: number }
   | { kind: "fall" }
@@ -88,7 +89,7 @@ function round(c: CatacombSave, i: number, gains: CatacombGains): TurnEvent {
     heroHit = snap(heroHit + hit);
     slot.mhp = Math.max(0, snap(slot.mhp - hit));
   }
-  let barrage: { slot: number; hit: number; killed: boolean }[] | undefined;
+  let barrage: { slot: number; hit: number; killed: boolean; paid?: Paid }[] | undefined;
   if (c.buffs.barrage > 0) {
     barrage = [];
     run.slots.forEach((s, j) => {
@@ -102,11 +103,11 @@ function round(c: CatacombSave, i: number, gains: CatacombGains): TurnEvent {
   if (c.speed > 0) c.speed--;
   for (const b of ["surge", "rush", "barrage"] as const) if (c.buffs[b] > 0) c.buffs[b]--;
   // The beaten pay, the target last; a slot emptied leaves the targets, so the index already points past it.
-  for (const b of barrage ?? []) if (b.killed) defeat(c, b.slot, gains);
+  for (const b of barrage ?? []) if (b.killed) b.paid = defeat(c, b.slot, gains);
   const killed = slot.mhp === 0;
   if (killed) {
-    defeat(c, i, gains);
-    return { kind: "round", slot: i, heroHit, enemyHit: 0, killed, crit, strikes, ...(barrage ? { barrage } : {}) };
+    const paid = defeat(c, i, gains);
+    return { kind: "round", slot: i, heroHit, enemyHit: 0, killed, crit, strikes, paid, ...(barrage ? { barrage } : {}) };
   }
   run.hero.mhp = Math.max(0, snap(run.hero.mhp - enemyHit));
   if (run.hero.mhp === 0) {

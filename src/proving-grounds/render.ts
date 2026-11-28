@@ -27,6 +27,7 @@ import {paintThunderbolt,paintThunderlight} from "../render/effects/thunderbolt.
 import {beamDirection} from "../arcana/overseer.ts";
 import {RICOCHET_FLASH_MS,THUNDERBOLT_FALL_MS,THUNDERBOLT_FLASH_MS} from "../volley.ts";
 import type {TrialStrike} from "./trial-spells.ts";
+import {TrialFx} from "./trial-fx.ts";
 export {TRIAL_VIEW_TILES} from "./camera.ts";
 
 const N = TRIAL_VIEW_TILES, S = TRIAL_TILE_SIZE, SIZE = N * S;
@@ -56,6 +57,8 @@ export class TrialRenderer {
   private darkness = document.createElement("canvas");
   private lastStrikes: TrialStrike[]|undefined;
   private strikesAt = -Infinity;
+  /** Numbers, rewards and sounds, as a run raises them. */
+  private fx = new TrialFx();
   constructor(private canvas: HTMLCanvasElement) {
     canvas.width = canvas.height = this.darkness.width = this.darkness.height = SIZE;
   }
@@ -66,11 +69,15 @@ export class TrialRenderer {
   get settled(){return this.camera.settled;}
   tileAt(s:TrialState,u:number,v:number){return this.camera.tileAt(s,u,v);}
   draw(s: TrialState, now: number, firedAt: number, reduceMotion: boolean,
-    options: {styledSprites?:boolean;spriteAnimations?:boolean;destination?:{x:number;y:number}|null;transition?:TrialTransition;pathAhead?:readonly {dx:number;dy:number}[];hidden?:{ricochet:boolean;thunderbolt:boolean;lifespring:boolean;phantasm:boolean;necro:boolean;voidwell?:boolean};phantasmAlpha?:number} = {}) {
+    options: {styledSprites?:boolean;spriteAnimations?:boolean;destination?:{x:number;y:number}|null;transition?:TrialTransition;pathAhead?:readonly {dx:number;dy:number}[];hidden?:{ricochet:boolean;thunderbolt:boolean;lifespring:boolean;phantasm:boolean;necro:boolean;voidwell?:boolean};phantasmAlpha?:number;
+      /** The Settings rows a run's numbers and bars obey. */
+      shown?:{hitNumbers:boolean;hpGains:boolean;enemyBars:boolean}} = {}) {
     this.camera.update(s,now,reduceMotion,options.transition,options.pathAhead);
     const styled=true,animated=!!options.spriteAnimations;
     // Animation is presentation only; saved turns own all positions.
     if(this.lastState!==s) { this.lastState=s; this.lastStep=s.steps; this.jumpedAt=-Infinity; this.lastCombatStep=s.bossVariant?.lastRound?.step??-1; this.combatAt=-Infinity; this.lastTeleport=s.elemental.teleport; this.teleportAt=-Infinity;this.heroAt=null;this.facing={dx:0,dy:-1}; this.lastStrikes=s.arcana?.strikes; this.strikesAt=-Infinity; }
+    if(options.shown)this.fx.settings(options.shown);
+    this.fx.observe(s,now,options.hidden);
     if(s.arcana?.strikes!==this.lastStrikes){this.lastStrikes=s.arcana?.strikes;this.strikesAt=now;}
     if(s.bossVariant?.lastRound && s.bossVariant.lastRound.step!==this.lastCombatStep) {
       this.lastCombatStep=s.bossVariant.lastRound.step;
@@ -315,9 +322,6 @@ export class TrialRenderer {
           if(delayed>=THUNDERBOLT_FALL_MS || reduceMotion){c.translate(to.x-12,to.y-12);paintThunderlight(c,reduceMotion?0:delayed);}
           c.restore();
         }
-        c.save();c.font="bold 9px sans-serif";c.textAlign="center";
-        c.fillStyle="#000";c.fillText(`-${Math.round(strike.damage)}`,to.x+1,to.y-11);
-        c.fillStyle="#fff";c.fillText(`-${Math.round(strike.damage)}`,to.x,to.y-12);c.restore();
       }
       // Telegraph only near the elemental, without revealing the unlit room.
       if(!s.keymaster && !s.bossVariant && s.status==="active" && (bossClock(s)/100)%10>=8) {
@@ -336,6 +340,8 @@ export class TrialRenderer {
       ];
       for (const p of foes) if (shocked.has(p.key)) tile(p.x, p.y, () => paintShockStatus(c, now, !!options.spriteAnimations && !reduceMotion));
     }
+    // What rises off the board, as a run's: strikes' and bites' numbers, heals and pickups.
+    this.fx.draw({c,now,s:S,n:N,left,bottom,look});
     if(options.destination && s.status==="active") {
       c.save();c.strokeStyle="#f3dc9c";c.lineWidth=1;
       c.strokeRect(px(options.destination.x)+2,py(options.destination.y)+2,S-4,S-4);c.restore();

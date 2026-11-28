@@ -11,6 +11,13 @@ import { RARITY_TIERS } from "../equipment/balance.ts";
 import { iconPixels, materialPixels, pieceSpriteId } from "../ui/equipment-icons.ts";
 import { drawKit, INSPIRATION_SPRITE, kitImage } from "../sprites/kit.ts";
 import { tileCenter, toTileSpace, type FrameContext } from "./render-frame.ts";
+/** What the popups need of a frame: the canvas, the time, the tiles in view
+ * and how the board looks. A run's `FrameContext` is one; the Catacomb's and
+ * a trial's boards build their own, so their numbers and rewards rise as a
+ * run's do. */
+export type PopupFrame = Pick<FrameContext, "c" | "now" | "s" | "n" | "left" | "bottom" | "look">;
+/** A tile on the board, world y growing upward. */
+type At = { x: number; y: number };
 import { BAR_DRAIN_MS, BAR_FADE_MS, BAR_RISE, paintHpBar } from "./hp-bar.ts";
 
 /** How long each popup shows, and the fade that ends it (ms). */
@@ -270,6 +277,35 @@ export class BoardPopups {
     }
     this.numbers.push({ x: on.x + (both ? SHROUD_SPLIT : 0), y, start, text: popupAmount(s.damage), ...(s.crit ? { color: CRIT_COLOR, glow: CRIT_GLOW } : { color: s.by === "hero" ? DAMAGE_COLOR : HERO_DAMAGE_COLOR }), ...(s.pronounced ? { ring: CHARGED_RING } : charge > 0 ? { ring: charge < FULL_CHARGE ? FAINT_RING : CHARGED_RING } : {}) });
   }
+  /** Which numbers the Settings show, for a board that never calls `update`
+   * (the Catacomb's, a trial's). */
+  settings(shown: Shown) {
+    this.shown = shown;
+  }
+  /** A hit from outside a run's fights (a Catacomb round, a crosshair, a
+   * trial's minion): its number over `on` from `start`, as a fight's strike
+   * raises it, a critical one in the crit's glow, a `pronounced` one ringed in gold. */
+  hit(on: At, damage: number, by: "hero" | "enemy", start: number, mark: { crit?: boolean; superCrit?: boolean; pronounced?: boolean } = {}) {
+    this.raise({ by, damage, ...(mark.crit ? { crit: 1 } : {}), ...(mark.superCrit ? { superCrit: true as const } : {}), ...(mark.pronounced ? { pronounced: true as const } : {}), start: 0, at: 0, end: 0, hp: 0 }, on, start);
+  }
+  /** The HP a potion healed, as a blue +N over `on`, as a run's potion raises it. */
+  potionHeal(on: At, amount: number, start: number) {
+    if (Math.round(amount) > 0 && this.shown.hpGains) this.numbers.push({ x: on.x, y: on.y + DAMAGE_START, start, text: `+${popupAmount(amount)}`, color: HEAL_COLOR });
+  }
+  /** A reward rising from its tile from `start`, a kill's drops each in their row. */
+  reward(gain: Gain, start: number) {
+    this.rewards.push({ x: gain.x, y: gain.y + (gain.drop?.row ?? 0) * DROP_ROW, start, gain });
+  }
+  /** Lets go of what has finished rising, for a board that never calls `update`. */
+  expire(now: number) {
+    this.rewards = this.rewards.filter((p) => now < p.start + POPUP_MS);
+    this.numbers = this.numbers.filter((p) => now < p.start + POPUP_MS);
+  }
+  /** Lets go of everything at once (a board shown afresh). */
+  clear() {
+    this.rewards = [];
+    this.numbers = [];
+  }
   /** Nothing is rising or waiting to, and the enemy's HP bar is still. */
   idle(now: number) {
     return !this.rewards.length && !this.numbers.length && !this.arrowBars.length && !this.fights.some((shown) => barMoving(shown.fight, now));
@@ -280,7 +316,7 @@ export class BoardPopups {
    * so newer ones draw on top. Numbers draw over the other rewards, so a
    * potion's heal is never hidden behind its sprite; drops draw over the
    * numbers, so what a kill gives is never hidden behind its damage. */
-  draw(f: FrameContext) {
+  draw(f: PopupFrame) {
     if (this.shown.enemyBars) {
       for (const shown of this.fights) drawEnemyBar(f, shown.fight);
       for (const bar of this.arrowBars) drawArrowBar(f, bar);
@@ -295,7 +331,7 @@ export class BoardPopups {
   }
   /** CHEST's Double and Triple: `text` (×2, ×3, ×6) flashed large over
    * the chest, in gold, pulsing in place, fading as a popup does. */
-  private drawFlash(f: FrameContext, p: Popup, text: string) {
+  private drawFlash(f: PopupFrame, p: Popup, text: string) {
     const c = f.c, { alpha } = this.phase(f, p, 0), at = tileCenter(f, p.x, p.y), age = f.now - p.start;
     const pulse = f.look.reduceMotion ? 1 : 1 + 0.08 * Math.sin((age / POPUP_MS) * Math.PI * 6);
     c.save();
@@ -314,14 +350,14 @@ export class BoardPopups {
     c.restore();
   }
   /** The popup's opacity and how far it has risen (in tiles) at `now`. */
-  private phase(f: FrameContext, p: Popup, rise: number) {
+  private phase(f: PopupFrame, p: Popup, rise: number) {
     const age = f.now - p.start;
     return {
       alpha: Math.max(0, Math.min(1, (POPUP_MS - age) / FADE_MS)),
       rise: f.look.reduceMotion ? 0 : (rise * age) / POPUP_MS,
     };
   }
-  private drawText(f: FrameContext, p: Popup, text: string, { color, rise, size, glow, ring, edge }: TextStyle) {
+  private drawText(f: PopupFrame, p: Popup, text: string, { color, rise, size, glow, ring, edge }: TextStyle) {
     const c = f.c, { alpha, rise: up } = this.phase(f, p, rise), at = tileCenter(f, p.x, p.y + up);
     c.save();
     c.globalAlpha = alpha;
@@ -356,7 +392,7 @@ export class BoardPopups {
     c.restore();
   }
   /** The reward's own sprite, rising; false when it has none (yet). */
-  private drawSprite(f: FrameContext, p: Popup & { gain: Gain }) {
+  private drawSprite(f: PopupFrame, p: Popup & { gain: Gain }) {
     const art = p.gain.art;
     if (!art) return false;
     const image = artImage(art);
@@ -399,7 +435,7 @@ function enemyHits(fight: ShownFight): Hit[] {
 /** A fight's opening over the enemy (`fight.to`), until its first strike
  * swings: Tangle's blue down arrow, held, behind Takedown's X, which shrinks
  * onto the enemy, then holds. A summary shows none. */
-function drawOpening(f: FrameContext, fight: ShownFight) {
+function drawOpening(f: PopupFrame, fight: ShownFight) {
   const o = fight.bout.opening, t = f.now - fight.start;
   if (!o || fight.summary || t < 0 || t > o.at + OPENING_FADE_MS) return;
   const c = f.c, at = tileCenter(f, fight.to.x, fight.to.y), held = o.takedown ? OPENING_SHRINK_MS : 0;
@@ -487,7 +523,7 @@ function struckAt(fight: ShownFight, s: Strike, won: boolean) {
 /** Art drawn without an image: a tile's contents, the Gem, Equipment's
  * pixel icons, or on a themed board the Heart Door's heart. */
 const paintsItself = (art: GainArt, themed: boolean) =>
-  "tile" in art || "gem" in art || "cell" in art || "ruby" in art || "equipMaterial" in art || "equipPiece" in art || (themed && "heart" in art);
+  "tile" in art || "gem" in art || "cell" in art || "kit" in art || "ruby" in art || "equipMaterial" in art || "equipPiece" in art || (themed && "heart" in art);
 
 /** The image a gain's art draws from, or null where it has none or it is
  * still loading. */
@@ -501,7 +537,7 @@ function artImage(art: GainArt): CanvasImageSource | null {
  * its minus sign), the Gem, a coin after its amount, the Heart Door's heart
  * with a check (with a plus for max HP raised), a material with its count,
  * or an Equipment piece with its rarity's mark. */
-function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gain: Gain }, image: CanvasImageSource | null) {
+function paintArt(c: CanvasRenderingContext2D, f: PopupFrame, p: Popup & { gain: Gain }, image: CanvasImageSource | null) {
   const art = p.gain.art!;
   // A multiplier flashes on its own (`drawFlash`).
   if ("multiplier" in art) return;
@@ -511,6 +547,12 @@ function paintArt(c: CanvasRenderingContext2D, f: FrameContext, p: Popup & { gai
     // The amount, then Lore's tablet in place of the word "Lore".
     if (!(f.look.styledSprites && drawKit(c, "cell"))) paintCell(c);
     mark(c, p.gain.text.split(" ")[0], { x: 10, y: 12 }, { color: CELL_COLOR, size: 10, align: "right", styled: f.look.styledSprites });
+    return;
+  }
+  if ("kit" in art) {
+    // The amount, then its sprite, as Lore's tablet rises.
+    drawKit(c, art.kit, 11, 3, 18);
+    mark(c, p.gain.text.split(" ")[0], { x: 10, y: 12 }, { color: art.color, size: 10, align: "right", styled: f.look.styledSprites });
     return;
   }
   if ("ruby" in art) {
@@ -595,7 +637,7 @@ function paintPixels(c: CanvasRenderingContext2D, pixels: { x: number; y: number
 /** A tile's contents rising, in the board's own art (its Game theme's on a
  * themed board);
  * a key a door took shifts right to make room for its minus sign. */
-function paintSpentTile(c: CanvasRenderingContext2D, f: FrameContext, p: Popup, art: Extract<GainArt, { tile: unknown }>) {
+function paintSpentTile(c: CanvasRenderingContext2D, f: PopupFrame, p: Popup, art: Extract<GainArt, { tile: unknown }>) {
   const look = f.look;
   if (art.spent) c.translate(4, 0);
   if (look.themed) look.themed.contents(c, art.tile);
@@ -634,7 +676,7 @@ function barMoving(fight: ShownFight, now: number) {
   const last = enemyHits(fight).at(-1);
   return !!last && now - fight.start < last.at + BAR_DRAIN_MS + (last.hp ? 0 : BAR_FADE_MS);
 }
-function drawEnemyBar(f: FrameContext, fight: ShownFight) {
+function drawEnemyBar(f: PopupFrame, fight: ShownFight) {
   const bar = enemyBar(fight, f.now);
   if (!bar || !fight.hp) return;
   paintBar(f, fight.to, bar.hp / fight.hp, bar.alpha);
@@ -644,7 +686,7 @@ function drawEnemyBar(f: FrameContext, fight: ShownFight) {
 const arrowBarMs = (b: { hp: number }) => BAR_DRAIN_MS + (b.hp ? ARROW_BAR_HOLD_MS : 0) + BAR_FADE_MS;
 /** An arrow's HP bar over the enemy it struck: hidden until it lands, then
  * draining from what the enemy had to what it has left of its full HP. */
-function drawArrowBar(f: FrameContext, b: { x: number; y: number; from: number; hp: number; full: number; start: number }) {
+function drawArrowBar(f: PopupFrame, b: { x: number; y: number; from: number; hp: number; full: number; start: number }) {
   const t = f.now - b.start;
   if (t < 0) return;
   const k = Math.min(1, t / BAR_DRAIN_MS), hp = b.from + (b.hp - b.from) * k;
@@ -652,7 +694,7 @@ function drawArrowBar(f: FrameContext, b: { x: number; y: number; from: number; 
   paintBar(f, b, hp / b.full, fading > 0 ? Math.max(0, 1 - fading / BAR_FADE_MS) : 1);
 }
 /** An HP bar over the tile at `on`, filled to `share`. */
-function paintBar(f: FrameContext, on: { x: number; y: number }, share: number, alpha: number) {
+function paintBar(f: PopupFrame, on: { x: number; y: number }, share: number, alpha: number) {
   paintHpBar(f.c, tileCenter(f, on.x, on.y + BAR_RISE), f.s, share, alpha);
 }
 

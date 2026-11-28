@@ -224,7 +224,7 @@ test("Arcane Barrage: every undead also takes 20% of a hit past its MDef for 5 a
   const e = catacombTurn(c) as { heroHit: number; barrage: { slot: number; hit: number; killed: boolean }[] };
   // The target: 10 − 5, then the barrage's 20% of that.
   assert.equal(e.heroHit, 6);
-  assert.deepEqual(e.barrage, [{ slot: 1, hit: 2, killed: false }, { slot: 4, hit: 2, killed: true }]);
+  assert.deepEqual(e.barrage, [{ slot: 1, hit: 2, killed: false }, { slot: 4, hit: 2, killed: true, paid: { mxp: 1, spirit: 1, rarity: "common", mhp: 0 } }]);
   assert.equal(c.run!.slots[1]!.mhp, 98);
   assert.equal(c.run!.slots[4], null);
   assert.equal(c.spirit.common, 1);
