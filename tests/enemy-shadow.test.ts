@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { SHADOW_ALPHA, shadowRows } from "../src/render/enemy-shadow.ts";
+import { SHADOW_TONE, shadowRows } from "../src/render/enemy-shadow.ts";
 
 /** A 24x24 alpha channel with a solid block from (l, t) to (r, b). */
 function block(l: number, t: number, r: number, b: number) {
@@ -38,7 +38,7 @@ test("a flying enemy's shadow sits on the floor and is smaller", () => {
   assert.ok(Math.max(...flying.map((r) => r.y)) > Math.max(...ground.map((r) => r.y)));
 });
 
-test("missing art still gets a shadow, and the shadow never casts a torch shadow", () => {
+test("missing art still gets a shadow, and its core is darker than its rim", () => {
   assert.ok(shadowRows(new Uint8Array(576)).length > 0);
-  assert.ok(SHADOW_ALPHA.core * 255 < 140 && SHADOW_ALPHA.rim < SHADOW_ALPHA.core);
+  for (let i = 0; i < 3; i++) assert.ok(SHADOW_TONE.core[i] < SHADOW_TONE.rim[i] && SHADOW_TONE.rim[i] < 255);
 });

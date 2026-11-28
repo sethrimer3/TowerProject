@@ -26,7 +26,7 @@ import { CloudShadows } from "./cloud-shadows.ts";
 import { MODES } from "../modes.ts";
 import { torchAnimationFrame } from "../sprites/options.ts";
 import { drawWallOutline, towerTileset } from "../sprites/dungeon.ts";
-import { paintHero, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
+import { paintEnemyShadow, paintHero, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
 import type { AtmosphereConfig } from "./lighting-pass.ts";
 import { DungeonLight, type LitBoard } from "./dungeon-light.ts";
 import { drawThemedBoard, themedBoardOf } from "./boards/themed-boards.ts";
@@ -362,6 +362,7 @@ export class Renderer {
       this.drawWeather(f);
       return;
     }
+    this.drawEnemyShadows(f);
     this.drawEachContents(f, f.c);
     const forest = f.look.styledSprites && this.game.world instanceof OutsideWorld && forestSpritesReady();
     if (forest) {
@@ -383,7 +384,7 @@ export class Renderer {
         ...(this.game.world.torches ?? []).filter((t) => t.active && t.x >= f.left - 1 && t.x <= f.left + f.n && t.y >= f.bottom - 1 && t.y <= f.bottom + f.n).map(torchShadowCaster),
       ],
       glow: () => { if (decor) this.decor.drawGlow(f.c, decor, f.darkness); },
-      underContents: () => this.drawFloorFields(f),
+      underContents: () => { this.drawFloorFields(f); this.drawEnemyShadows(f); },
       contents: (ctx) => this.drawEachContents(f, ctx),
       torches: () => { for (const t of f.torches) this.drawTorchSprite(f.c, f, t); },
       route: () => this.drawRoute(f),
@@ -678,6 +679,18 @@ export class Renderer {
       hero: { x: this.playerX, y: this.playerY, frame: animated ? `${f.heroFacing.dx},${f.heroFacing.dy}:${f.heroIdleFrame}` : undefined,
         paint: (c) => paintHero(c, f.heroFacing, f.heroIdleFrame) },
     };
+  }
+  /** Each enemy's ground shadow, at the spot it is drawn (a lunge carries it). */
+  private drawEnemyShadows(f: FrameContext) {
+    forEachViewTile(f, (x, y) => {
+      const t = f.world.tile(x, y);
+      if (t.kind !== "enemy" || !t.enemy) return;
+      const at = contentsAt(f, x, y);
+      f.c.save();
+      toTileSpace(f.c, f, at.x, at.y);
+      paintEnemyShadow(f.c, t.enemy, f.look.legacyEnemies);
+      f.c.restore();
+    });
   }
   /** Doors, stairs, items, and enemies, drawn onto `ctx`. */
   private drawEachContents(f: FrameContext, ctx: CanvasRenderingContext2D) {
