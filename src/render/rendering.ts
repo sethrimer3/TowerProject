@@ -722,7 +722,7 @@ export class Renderer {
   }
   private drawRoute(f: FrameContext) {
     this.routePath.update(this.game.shownPath, this.previewRoute, this.game.run.player, f.dt);
-    this.routePath.draw(f);
+    this.routePath.draw(f, this.game.moveRate, this.game.save.settings.legacyHighlight);
   }
   private forestFoliage = new ForestFoliage();
   private cloudShadows = new CloudShadows();

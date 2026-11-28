@@ -352,7 +352,7 @@ export class BoardOverlay {
   }
 
   /** Whether the tapped tile wears the old glowing box: chosen in Settings
-   * (Legacy tile highlight), or under Battery saver, whose frames are too
+   * (Legacy highlight and path), or under Battery saver, whose frames are too
    * far apart to trace. */
   private legacyGlow() {
     const { legacyHighlight, batterySaver } = this.game.save.settings;

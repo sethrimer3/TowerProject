@@ -1,4 +1,6 @@
 import { tileCenter, type FrameContext } from "./render-frame.ts";
+import { drawRouteTrace, planRoute, ROUTE_CELLS, type RoutePlan } from "./effects/route-trace.ts";
+import { stream } from "../random.ts";
 
 type Point = { x: number; y: number };
 
@@ -15,6 +17,10 @@ export class RoutePath {
   private goalKey: string | null = null;
   private lastLen = 0;
   private wasLive = false;
+  /** The traced look's plan for this walk (effects/route-trace.ts), made
+   * on its first frame, and when it began. */
+  private plan: RoutePlan | null = null;
+  private planStart = 0;
 
   /** Rebuilds the polyline when a new walk/preview starts and eases the
    * consumed length toward the steps already taken. `route` is the walk in
@@ -44,6 +50,7 @@ export class RoutePath {
       this.points = [{ x: player.x, y: player.y }, ...source];
       this.progress = 0;
       this.goalKey = goalKey;
+      this.plan = null;
     }
     this.lastLen = source.length;
     this.wasLive = live;
@@ -53,9 +60,13 @@ export class RoutePath {
     if (Math.abs(consumed - this.progress) < 0.01) this.progress = consumed;
   }
 
-  draw(f: FrameContext) {
+  /** Draws the line: traced (effects/route-trace.ts), each line at least
+   * twice as fast as the hero's `moveRate`, or with `legacy` the old
+   * glowing line. */
+  draw(f: FrameContext, moveRate = 0, legacy = false) {
     const route = this.points;
     if (!route || route.length === 0) return;
+    if (!legacy && route.length > 1) return this.drawTraced(f, route, moveRate);
     const c = f.c;
     c.save();
     c.lineCap = "round";
@@ -98,6 +109,26 @@ export class RoutePath {
     c.arc(destPt.x, destPt.y, Math.max(2, f.s * 0.12), 0, Math.PI * 2);
     c.fill();
 
+    c.restore();
+  }
+
+  /** The traced line, drawn on whole device pixels: the board's transform
+   * (its pixel ratio and any zoom) is applied to the points here, so each
+   * third-of-a-pixel cell rounds crisply. With reduced motion it is drawn
+   * whole at once. */
+  private drawTraced(f: FrameContext, route: Point[], moveRate: number) {
+    if (!this.plan) {
+      this.plan = planRoute(route, moveRate, stream("effects"));
+      this.planStart = f.now;
+    }
+    const c = f.c, m = c.getTransform(), t = f.look.reduceMotion ? Infinity : (f.now - this.planStart) / 1000;
+    const center = (i: number) => {
+      const p = tileCenter(f, route[i].x, route[i].y);
+      return { x: m.a * p.x + m.e, y: m.d * p.y + m.f };
+    };
+    c.save();
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    drawRouteTrace(c, this.plan, t, (f.s * m.a) / ROUTE_CELLS, this.progress * ROUTE_CELLS, center, f.look.reduceMotion ? 0 : 0.5 + 0.5 * Math.sin(f.now / 200));
     c.restore();
   }
 

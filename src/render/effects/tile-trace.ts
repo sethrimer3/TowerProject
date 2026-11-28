@@ -1,30 +1,33 @@
 // The tapped tile's traced outline (BoardOverlay draws it on a canvas over
-// the board): four lines, each a quarter of an art pixel wide, stacked
-// outward round the tile so none of them covers it. All four start at 12
-// o'clock and trace the tile clockwise, each at its own slightly random
-// speed. A line's head is bright and pale, and each quarter-pixel cell it
+// the board): three lines, each a third of an art pixel wide, stacked
+// outward round the tile so none of them covers it. All three start at 12
+// o'clock and trace the tile clockwise, each at its own random speed.
+// A line's head is bright and pale, and each third-of-a-pixel cell it
 // leaves behind settles to the highlight's gold, each a shade apart. Once
 // every cell has settled, the outline holds still and its canvas pulses
-// gently (`tile-trace-pulse` in `style.css`, whose 1.6s delay waits out
+// gently (`tile-trace-pulse` in `style.css`, whose 1.4s delay waits out
 // the slowest trace: keep it in step with TRACE_S and SETTLE_S).
 // The old glowing box stays as the fallback (`legacyHighlight`, and
 // Battery saver).
 
 /** How many lines trace the tile, stacked outward from its edge. */
-export const TRACE_LINES = 4;
-/** Quarter-pixel cells along a tile's side: 24 art pixels, four cells each. */
-export const TILE_CELLS = 96;
+export const TRACE_LINES = 3;
+/** Third-of-a-pixel cells along a tile's side: 24 art pixels, three cells each. */
+export const TILE_CELLS = 72;
 /** How long a line takes to go round, before its own speed's spread. */
-const TRACE_S = 1;
-/** How far a line's time may stray from TRACE_S either way (±15%). */
-const SPEED_SPREAD = 0.15;
+export const TRACE_S = 1 / 1.4;
+/** How far a line's time may stray from TRACE_S either way (±30%). */
+const SPEED_SPREAD = 0.3;
+/** The trace's speed in tiles a second, a tile's perimeter over TRACE_S:
+ * the slowest the route line draws (route-trace.ts). */
+export const TRACE_TILES_PER_S = 4 / TRACE_S;
 /** How long a cell takes to settle from the head's pale to its gold, and how
  * far a cell's own time may stray from it. */
 const SETTLE_S = 0.32;
 const SETTLE_SPREAD = 0.35;
 /** The head's pale and the settled gold (the old box's #ffd166). */
-const PALE: Rgb = [255, 250, 228];
-const GOLD: Rgb = [255, 209, 102];
+export const PALE: Rgb = [255, 250, 228];
+export const GOLD: Rgb = [255, 209, 102];
 
 export type Rgb = [number, number, number];
 
@@ -32,7 +35,7 @@ export type Rgb = [number, number, number];
  * time and shade of gold (-1 to 1). */
 export type TracePlan = { durations: number[]; settle: number[][]; shade: number[][] };
 
-/** Line `line`'s cells, clockwise from 12 o'clock, in quarter-pixel cells
+/** Line `line`'s cells, clockwise from 12 o'clock, in cells
  * from the tile's top-left corner (the tile covers 0 to TILE_CELLS - 1 on
  * both axes): the ring of cells `line + 1` out from the tile. */
 export function ringCells(line: number): Array<[number, number]> {
@@ -75,8 +78,13 @@ export function cellColor(plan: TracePlan, line: number, k: number, t: number): 
   const count = RINGS[line].length, duration = plan.durations[line];
   if (k >= progress(t, duration) * count) return null;
   const age = t - reached(k / count, duration), settle = plan.settle[line][k];
-  const u = Math.min(1, Math.max(0, age / settle)), eased = u * u * (3 - 2 * u);
-  const gold = settledColor(plan.shade[line][k]);
+  return settling(age / settle, plan.shade[line][k]);
+}
+
+/** A cell's color `u` of the way (0 to 1) from the head's pale to its
+ * settled gold of shade `shade`. */
+export function settling(u: number, shade: number): Rgb {
+  const x = Math.min(1, Math.max(0, u)), eased = x * x * (3 - 2 * x), gold = settledColor(shade);
   return [0, 1, 2].map((i) => PALE[i] + (gold[i] - PALE[i]) * eased) as Rgb;
 }
 
@@ -86,7 +94,7 @@ export function traceSettled(plan: TracePlan, t: number): boolean {
 }
 
 /** Draws the trace `t` seconds in on `c`, whose origin is the outer corner
- * of the outermost line, `cell` device pixels a quarter-pixel cell. Each
+ * of the outermost line, `cell` device pixels a cell. Each
  * cell's edges are rounded to whole device pixels, so the lines stay crisp
  * and meet without gaps. With `still`, every cell is drawn settled. */
 export function drawTrace(c: CanvasRenderingContext2D, cell: number, plan: TracePlan, t: number, still = false) {
