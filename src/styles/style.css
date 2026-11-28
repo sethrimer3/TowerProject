@@ -832,6 +832,8 @@ h1 span {
     0 10px 40px #0009;
   background: #0c1119;
 }
+/* Dev zoom scales the board's canvas about the hero; its frame crops it. */
+.board.dev-zoom { overflow: hidden; }
 canvas {
   display: block;
   width: 100%;

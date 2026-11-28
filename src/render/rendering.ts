@@ -69,6 +69,7 @@ import { drawChestMarks } from "./chest-marks.ts";
 import type { Dash, ShownTurn } from "../shown.ts";
 import { darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { ART_PX, artPixelScale, onArtGrid } from "./pixel-scale.ts";
+import { artScreenPixels, stepZoom, zoomForScale, zoomLook, zoomOffset, zoomSteps } from "./dev-zoom.ts";
 import { gameLook } from "../theme-collection.ts";
 import { usesGameSprites } from "../sprites/style.ts";
 import { spriteRevision } from "../sprites/kit.ts";
@@ -143,6 +144,10 @@ export class Renderer {
    * Drawn via the same line as an in-progress walk whenever no walk is
    * actually underway (game.route takes priority when both are set). */
   previewRoute: Array<{ x: number; y: number }> | null = null;
+  /** Dev zoom (render/dev-zoom.ts): screen pixels an art pixel, 0 unzoomed,
+   * and the scale the canvas wears now. */
+  private devZoom = 0;
+  private zoomScale = 1;
   /** The dungeon atmosphere (tint, vignette, torch haze), tunable per renderer. */
   get atmosphere(): AtmosphereConfig {
     return this.light.atmosphere;
@@ -395,7 +400,9 @@ export class Renderer {
   private beginFrame(now: number): FrameContext {
     const g = this.game, n = this.density;
     this.snapOnNewBoard(n, now);
-    const battery = g.save.settings.batterySaver, pixelPerfect = g.save.settings.pixelPerfect && !battery, nativePixels = !battery && (pixelPerfect || this.look().styledSprites), box = this.canvas.getBoundingClientRect();
+    const battery = g.save.settings.batterySaver, rect = this.canvas.getBoundingClientRect(), box = { width: rect.width / this.zoomScale };
+    const zoom = this.zoomNow(box.width, n);
+    const pixelPerfect = (g.save.settings.pixelPerfect || !!zoom) && !battery, nativePixels = !battery && (pixelPerfect || this.look().styledSprites);
     // Native sprites always get whole backing pixels per source texel,
     // including on small boards. Pixel-perfect additionally snaps motion
     // to the art grid and allows the higher density cap.
@@ -403,6 +410,7 @@ export class Renderer {
       // Battery saver draws whole canvas pixels a pixel of its art at about
       // one canvas pixel a CSS pixel, a quarter of a phone's usual count.
       width = battery && box.width ? n * BATTERY_GRID * Math.max(1, Math.round(box.width / (n * BATTERY_GRID)))
+        : zoom ? n * ART_PX * zoom.perArtPixel
         : nativePixels && box.width ? n * ART_PX * artPixelScale(box.width * screen, n) : Math.round(box.width * screen),
       dpr = (nativePixels || battery) && box.width ? width / box.width : screen;
     if (this.canvas.width !== width) {
@@ -444,7 +452,56 @@ export class Renderer {
       this.decor.update({ dt, now, hx: this.playerX, hy: this.playerY, tileAt: this.tileAt, reduceMotion: f.look.reduceMotion });
       f.glows.push(...this.decor.glows(f, f.look.styledSprites));
     }
+    this.placeZoom(f, zoom?.scale ?? 1);
     return f;
+  }
+  /** Dev zoom's steps for the board as it is laid out now, or null while
+   * Dev Mode is off or Battery saver is on. */
+  private zoomBasis(width = this.canvas.getBoundingClientRect().width / this.zoomScale, n = this.density) {
+    const s = this.game.save.settings;
+    if (!s.devTools || s.batterySaver || !width) return null;
+    return artScreenPixels(width, devicePixelRatio || 1, n);
+  }
+  /** This frame's dev zoom, its step kept within the board's own steps. */
+  private zoomNow(width: number, n: number) {
+    const a = this.zoomBasis(width, n);
+    if (a === null || !this.devZoom) return (this.devZoom = 0), null;
+    const { min, max } = zoomSteps(a);
+    this.devZoom = this.devZoom < min ? 0 : Math.min(max, this.devZoom);
+    return this.devZoom ? zoomLook(this.devZoom, a, n) : null;
+  }
+  /** Dev zoom one step in (1) or out (-1), as the mouse wheel turns. */
+  zoomStep(dir: 1 | -1) {
+    const a = this.zoomBasis();
+    if (a !== null) this.devZoom = stepZoom(this.devZoom, dir, a);
+  }
+  /** Dev zoom's step now, and a setter to the step nearest `scale` times
+   * the zoom it began from, as a pinch spreads. */
+  zoomPinch() {
+    const a = this.zoomBasis();
+    if (a === null) return null;
+    const from = this.devZoom ? this.devZoom / a : 1;
+    return (scale: number) => { this.devZoom = zoomForScale(from * scale, a); };
+  }
+  /** Whether Dev zoom takes the wheel and pinches (Dev Mode, outside Battery saver). */
+  get zoomable() {
+    return this.zoomBasis() !== null;
+  }
+  /** Scales the canvas about the hero for Dev zoom, inside its frame. */
+  private placeZoom(f: FrameContext, scale: number) {
+    const style = this.canvas.style;
+    if (!style) return;
+    this.canvas.parentElement?.classList.toggle("dev-zoom", scale !== 1);
+    if (scale === 1) {
+      if (this.zoomScale !== 1) style.transform = style.transformOrigin = "";
+      this.zoomScale = 1;
+      return;
+    }
+    const hx = (f.playerX - f.left + 0.5) * f.s, hy = (f.n - 1 - (f.playerY - f.bottom) + 0.5) * f.s;
+    const at = zoomOffset(hx, hy, f.width, scale, devicePixelRatio || 1);
+    style.transformOrigin = "0 0";
+    style.transform = `translate(${at.x}px, ${at.y}px) scale(${scale})`;
+    this.zoomScale = scale;
   }
   /** A new run or a step outside resets the camera and hero onto their
    * targets; reaching another Tower floor snaps the hero onto its tile there,
@@ -990,13 +1047,14 @@ export class Renderer {
     paintHero(c);
   }
   position(clientX: number, clientY: number) {
-    const r = this.canvas.getBoundingClientRect();
+    // The canvas's box as shown, so a tap lands right while Dev zoom scales it.
+    const r = this.canvas.getBoundingClientRect(), size = r.width / this.density || this.size;
     return {
-      x: Math.floor((clientX - r.left) / this.size + this.left),
+      x: Math.floor((clientX - r.left) / size + this.left),
       y: Math.floor(
         this.bottom +
           this.density -
-          (clientY - r.top) / this.size,
+          (clientY - r.top) / size,
       ),
     };
   }

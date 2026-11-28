@@ -146,6 +146,10 @@ Classic always uses a whole number of backing pixels per native sprite texel, ev
 Pixel-perfect additionally snaps the camera and hero and permits the higher density cap.
 Ground cache builds and decor blits disable interpolation, including when a canvas resize resets its defaults.
 The view still shows `n` tiles, so tap mapping and the overlays are unchanged.
+**Dev zoom** (`render/dev-zoom.ts`, under the `devTools` setting, not in Battery saver): `Renderer.zoomStep` (the wheel, a notch a step) and `zoomPinch` (a two-finger spread, in place of Cinematic mode's pinch) pick a step, `devZoom`, in screen pixels an art pixel: from the first whole number past the board's own (`artScreenPixels`) to the first past ×4 (`zoomSteps`).
+While zoomed, `beginFrame` draws the whole board as with Pixel-perfect scaling, at `zoomLook`'s whole canvas pixels an art pixel (capped at `ZOOM_CANVAS_MAX` across), and `placeZoom` scales the canvas by CSS about the drawn hero, kept inside the board (`zoomOffset`), the frame (`.board.dev-zoom`) cropping it.
+`position` reads the canvas's shown box, so taps still land on the right tile.
+`tests/dev-zoom.test.ts` covers the steps and `tests/dev-zoom.mjs` (in `test:browser`) the wheel and the pinch.
 
 The sprite modules (the PNG kit, `sprites/kit.ts`, and every `sprites/*.ts` it feeds, with the board's and the interface's sprites) are in `src/sprites/`, since the interface uses them as much as the board.
 

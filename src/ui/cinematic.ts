@@ -156,6 +156,12 @@ export class PinchTracker {
     return direction;
   }
 
+  /** How far the two fingers have spread since the pinch began (1 as it
+   * began), or null without a pinch. */
+  get spreadRatio() {
+    return this.points.size === 2 && this.start > 0 ? this.spread() / this.start : null;
+  }
+
   up(id: number) {
     this.points.delete(id);
     if (this.points.size < 2) this.start = 0;

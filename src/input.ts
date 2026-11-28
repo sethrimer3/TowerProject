@@ -46,21 +46,31 @@ export function bindInput(
   });
   let gesture: { id: number; x: number; y: number } | null = null;
   const canvas = renderer.canvas, pinch = new PinchTracker();
+  // Under Dev Mode a pinch zooms the board (render/dev-zoom.ts) instead.
+  let zoomTo: ((scale: number) => void) | null = null;
   canvas.addEventListener("pointerdown", (e) => {
     if (!active()) return;
     e.preventDefault();
     pinch.down(e.pointerId, e.clientX, e.clientY);
     canvas.setPointerCapture(e.pointerId);
     // A second finger makes it a pinch: the first's tap or swipe is dropped.
-    if (pinch.count > 1) gesture = null;
-    else if (e.isPrimary) gesture = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    if (pinch.count > 1) {
+      gesture = null;
+      zoomTo = pinch.count === 2 ? renderer.zoomPinch() : zoomTo;
+    } else if (e.isPrimary) gesture = { id: e.pointerId, x: e.clientX, y: e.clientY };
   });
   canvas.addEventListener("pointermove", (e) => {
     const direction = pinch.move(e.pointerId, e.clientX, e.clientY);
+    if (zoomTo) {
+      const ratio = pinch.spreadRatio;
+      if (ratio !== null && active()) zoomTo(ratio);
+      return;
+    }
     if (direction && active()) cinematic.pinch(direction);
   });
   canvas.addEventListener("pointerup", (e) => {
     pinch.up(e.pointerId);
+    if (pinch.count < 2) zoomTo = null;
     if (!gesture || gesture.id !== e.pointerId) return;
     const start = gesture;
     gesture = null;
@@ -90,12 +100,27 @@ export function bindInput(
   });
   canvas.addEventListener("pointercancel", (e) => {
     pinch.up(e.pointerId);
+    if (pinch.count < 2) zoomTo = null;
     gesture = null;
   });
-  // Ctrl and the wheel (a trackpad's pinch) stand in for two fingers.
+  // Under Dev Mode the wheel zooms the board a step a notch, gathering a
+  // trackpad's small turns (and its pinch, Ctrl and the wheel) into notches.
+  let turned = 0;
+  // Otherwise Ctrl and the wheel (a trackpad's pinch) stand in for two fingers.
   canvas.addEventListener(
     "wheel",
     (e) => {
+      if (renderer.zoomable && active()) {
+        e.preventDefault();
+        const notch = e.ctrlKey ? 10 : 40;
+        turned += e.deltaMode ? e.deltaY * 40 : e.deltaY;
+        while (Math.abs(turned) >= notch) {
+          renderer.zoomStep(turned < 0 ? 1 : -1);
+          turned -= Math.sign(turned) * notch;
+        }
+        changed();
+        return;
+      }
       if (!e.ctrlKey || !active()) return;
       e.preventDefault();
       cinematic.pinch(e.deltaY > 0 ? "in" : "out");
