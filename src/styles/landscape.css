@@ -9,9 +9,9 @@ html.layout-landscape .shell {
   --gap: 10px;
   --rail: 62px;
   --side-min: 340px;
-  /* The board: the largest square the height allows, leaving the side
-     column at least --side-min. */
-  --board-size: min(calc(100dvh - 2 * var(--gap)), calc(100vw - var(--side-min) - var(--rail) - 4 * var(--gap)));
+  /* The board: the largest square the height allows, leaving room for the
+     controls inside this grid's content width, including its desktop cap. */
+  --board-size: min(calc(100dvh - 2 * var(--gap)), calc(100% - var(--side-min) - var(--rail) - 2 * var(--gap)));
   width: 100%;
   max-width: none;
   height: 100dvh;
@@ -27,8 +27,8 @@ html.layout-landscape .shell {
     "board side  rail"
     "board train rail";
 }
-/* On a big screen the shell keeps to the middle, the board no taller than
-   the portrait layout's cap. */
+/* On a big screen the whole layout keeps to the middle; the board still
+   reserves the controls' width inside this cap. */
 @media (min-width: 1500px) {
   html.layout-landscape .shell { max-width: 1400px; }
 }
