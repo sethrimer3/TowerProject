@@ -1,5 +1,5 @@
 import { tileTransform, type FrameContext } from "../render-frame.ts";
-import { paintEnemy } from "../tile-painters.ts";
+import { paintEnemy, paintEnemyShadow } from "../tile-painters.ts";
 import type { Smitten } from "../../angel.ts";
 import { drawPoof, POOF_MS } from "./poof.ts";
 
@@ -21,6 +21,7 @@ export function drawSmite(f: FrameContext, s: Smitten, age: number) {
   const c = f.c, t = age / SLASH_MS, cut = f.look.reduceMotion ? 1 : Math.min(1, t / 0.55);
   c.save();
   c.setTransform(tileTransform(f, s.x, s.y));
+  paintEnemyShadow(c, s.enemy, f.look.legacyEnemies);
   paintEnemy(c, { kind: "enemy", enemy: s.enemy }, f.look.legacyEnemies);
   // The slash: a white core in a golden glow, growing across the tile, then thinning.
   const thin = t < 0.55 ? 1 : 1 - (t - 0.55) / 0.45, [x0, y0, x1, y1] = [24, -2, 0, 26];
