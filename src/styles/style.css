@@ -6153,12 +6153,7 @@ html.catacombs nav { display: none !important; }
 .catacomb-tip small { color: #d7a8ff; font-size: 10px; }
 .catacomb-stat-head b { font-size: 11px; }
 .catacomb-stat-head small { font-size: 12px; }
-/* Spirit and Ingots in the currencies table, drawn in CSS until their PNGs. */
-.spirit-icon { display: inline-block; width: 12px; height: 12px; margin-right: 4px; vertical-align: -1px; border-radius: 50% 50% 45% 45%;
-  background: radial-gradient(circle at 50% 40%, #ffffff 0 18%, var(--spirit) 45%, transparent 72%); }
-.spirit-common { --spirit: #9fb4c8; } .spirit-uncommon { --spirit: #5fd27a; } .spirit-rare { --spirit: #4aa3ff; }
-.spirit-epic { --spirit: #b46cff; } .spirit-legendary { --spirit: #ffb23a; } .spirit-mythic { --spirit: #ff4a6a; } .spirit-ancestral { --spirit: #3affe0; }
-.ingot-icon { display: inline-block; width: 13px; height: 7px; margin-right: 4px; vertical-align: 1px; border-radius: 1px;
-  background: linear-gradient(var(--ingot-light) 0 30%, var(--ingot) 30%); box-shadow: inset 0 -2px 0 #00000055; }
-.ingot-brass { --ingot: #d4a23a; --ingot-light: #ffe08a; } .ingot-iron { --ingot: #7d838c; --ingot-light: #c3c9d1; }
-.ingot-steel { --ingot: #9fb2c4; --ingot-light: #e6f0fa; } .ingot-nickel { --ingot: #b6b2a0; --ingot-light: #f1eedf; }
+/* Native Catacombs currencies remain legible in tables and buy buttons. */
+.spirit-icon, .ingot-icon { display: inline-block; width: 18px; height: 18px; margin-right: 4px; vertical-align: middle; }
+.catacomb-tabs button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.catacomb-tab-icon { display: block; width: 24px; height: 24px; flex: none; }

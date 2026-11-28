@@ -1,15 +1,15 @@
 // Draws a Catacomb hall (docs/CATACOMBS.md) on the board's canvas: crypt
-// stone from the Tower's tiles, torches, the Lore tile, Ingots, the undead in
-// pixels until their PNGs are made, the hero, and a popup for each strike.
+// stone from the Tower's tiles, torches, the Lore tile, Ingots, the undead as
+// native PNGs, the hero, and a popup for each strike.
 // Presentation only: it reads the run and never changes it.
 import type { Tile } from "../entities.ts";
 import { paintContents, paintHero, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
-import { sprite } from "../sprites/pixel-sprite.ts";
-import { drawKit } from "../sprites/kit.ts";
+import {undeadSprite, ingotSprite, buffSprite} from "../sprites/catacombs.ts";
+import { drawKit, kitUrl } from "../sprites/kit.ts";
 import { HALL_SIZE, hallCell, type HallCell } from "../catacombs/hall.ts";
 import { hallTargets, SLOT_XS, CORRIDOR_ROW } from "../catacombs/hall.ts";
-import { DROP_IDS, undeadStats, type DropId, type IngotId, type UndeadId } from "../catacombs/catalog.ts";
+import { DROP_IDS, undeadStats, type UndeadId } from "../catacombs/catalog.ts";
 import type { CatacombRun } from "../catacombs/state.ts";
 import type { TurnEvent } from "../catacombs/turn.ts";
 import type { TapEvent } from "../catacombs/taps.ts";
@@ -18,34 +18,6 @@ const N = HALL_SIZE, S = 24;
 /** How long the hero takes to cross to a turn's tile (ms), and a strike's popup to rise and fade. */
 const MOVE_MS = 140, POPUP_MS = 700;
 
-const UNDEAD_ART: Record<UndeadId, { rows: readonly string[]; colors: Record<string, string> }> = {
-  wisp: { rows: ["....aa....", "...abba...", "..abccba..", "..bccccb..", ".abcwwcba.", ".bccwwccb.", ".bcccccb..", "..bcccb...", "...bcb....", "....b....."], colors: { a: "#3f6fb0", b: "#6fb4ff", c: "#bfe6ff", w: "#ffffff" } },
-  ghost: { rows: ["...wwww...", "..wwwwww..", ".wwwwwwww.", ".wwkwwkww.", ".wwkwwkww.", ".wwwwwwww.", ".wwwkkwww.", ".wwwwwwww.", ".wwwwwwww.", ".w.ww.ww.w"], colors: { w: "#e8eef6", k: "#202838" } },
-  skeleton: { rows: ["...bbbb...", "..bbbbbb..", "..bkbbkb..", "..bbbbbb..", "...bkkb...", "....bb....", ".bbbbbbbb.", "...b..b...", "..bbbbbb..", "..b....b.."], colors: { b: "#e6dfc8", k: "#1b1612" } },
-  ghoul: { rows: ["...gggg...", "..gggggg..", "..grggrg..", "..gggggg..", "...gddg...", "..gggggg..", ".gg.gg.gg.", ".g..gg..g.", "...g..g...", "..gg..gg.."], colors: { g: "#7fa45a", r: "#ff4a3a", d: "#2e3d22" } },
-  vampire: { rows: ["...kkkk...", "..kppppk..", "..prpprp..", "..pppppp..", "...pwwp...", ".kkkrrkkk.", "kkkkrrkkkk", "kkkkkkkkkk", ".kk.kk.kk.", "..k....k.."], colors: { k: "#1c1424", p: "#e9dce4", r: "#b0182e", w: "#ffffff" } },
-  lich: { rows: ["..y.y.y...", "..yyyyy...", "..bbbbb...", "..bcbcb...", "..bbbbb...", ".ppppppp..", "ppcppppcp.", ".ppppppp..", ".ppppppp..", "pp.ppp.pp."], colors: { y: "#e7c24a", b: "#e6dfc8", c: "#6effe6", p: "#5a2e86" } },
-  demon: { rows: ["h........h", "hh.rrrr.hh", ".hrrrrrrh.", "..ryrryr..", "..rrrrrr..", "...rkkr...", ".rrrrrrrr.", "rr.rrrr.rr", "...r..r...", "..rr..rr.."], colors: { h: "#3a2a22", r: "#c8322a", y: "#ffd23a", k: "#2a0a0a" } },
-};
-
-const INGOT_COLORS: Record<IngotId, [string, string, string]> = {
-  brass: ["#7a5a1c", "#d4a23a", "#ffe08a"],
-  iron: ["#3e4248", "#7d838c", "#c3c9d1"],
-  steel: ["#4a5866", "#9fb2c4", "#e6f0fa"],
-  nickel: ["#5c5a4e", "#b6b2a0", "#f1eedf"],
-};
-
-/** An Ingot bar, its edge dark and its top lit. */
-function paintIngot(c: CanvasRenderingContext2D, ingot: IngotId) {
-  const [dark, mid, light] = INGOT_COLORS[ingot];
-  c.fillStyle = "#00000066"; c.fillRect(4, 17, 17, 3);
-  c.fillStyle = dark; c.fillRect(4, 10, 16, 8);
-  c.fillStyle = mid; c.fillRect(6, 8, 13, 8);
-  c.fillStyle = light; c.fillRect(7, 8, 11, 2); c.fillRect(7, 11, 2, 1);
-}
-
-/** Each drop's pip on an undead: MXP purple, Loot Spirit green, Speed yellow, MHP red. */
-const DROP_COLORS: Record<DropId, string> = { mxp: "#c84aff", loot: "#5fd27a", speed: "#ffe14a", mhp: "#ff4a4a" };
 const CRIT_COLOR = "#ffd23a", GOLD_COLOR = "#ffc93a";
 
 /** A crosshair over an undead, pulsing: red-white, or gold. */
@@ -75,20 +47,8 @@ function paintPotion(c: CanvasRenderingContext2D, now: number, reduceMotion: boo
   c.restore();
 }
 
-/** An undead's picture as an image, for the Codex: its pixel art on a 24 × 24 canvas. */
-const undeadIcons = new Map<UndeadId, string>();
-export function undeadIconUrl(id: UndeadId) {
-  let url = undeadIcons.get(id);
-  if (!url) {
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = 24;
-    const art = UNDEAD_ART[id];
-    sprite(canvas.getContext("2d")!, art.rows, art.colors, 2, 12, 12);
-    url = canvas.toDataURL();
-    undeadIcons.set(id, url);
-  }
-  return url;
-}
+/** Native portrait URL for callers outside the shared icon renderer. */
+export const undeadIconUrl = (id: UndeadId) => kitUrl(undeadSprite(id));
 
 /** A strike's number rising off a tile. */
 type Popup = { x: number; y: number; text: string; color: string; at: number };
@@ -135,7 +95,7 @@ export class CatacombBoard {
 
   draw(run: CatacombRun, number: number, now: number, reduceMotion: boolean, styledSprites: boolean) {
     const box = this.canvas.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
-    const width = Math.max(N * S, Math.round(box.width * dpr));
+    const width = N * S * Math.max(1, Math.ceil(box.width * dpr / (N * S)));
     if (this.canvas.width !== width) this.canvas.width = this.canvas.height = width;
     const c = this.canvas.getContext("2d")!, scale = width / (N * S);
     c.setTransform(scale, 0, 0, scale, 0, 0);
@@ -159,27 +119,26 @@ export class CatacombBoard {
       if (k === "stairs") at(row, x, () => paintContents(c, { kind: "stairs" }, { x, y: row, time: now, reduceMotion, styledSprites }));
       else if (k === "torch") at(row, x, () => paintTorch(c, { x, y: row, lightRadius: 0, baseIntensity: 0, active: true }, now, reduceMotion));
       else if (k === "lore" && left.has(`${x},${row}`)) at(row, x, () => drawKit(c, "cell", 3, 3, 18, 18));
-      else if ((k === "brass" || k === "iron" || k === "steel" || k === "nickel") && left.has(`${x},${row}`)) at(row, x, () => paintIngot(c, k));
+      else if ((k === "brass" || k === "iron" || k === "steel" || k === "nickel") && left.has(`${x},${row}`)) at(row, x, () => drawKit(c, ingotSprite(k)));
     }
     // Potions on the side tiles.
     for (const [x, row] of run.potions) at(row, x, () => paintPotion(c, now, reduceMotion));
-    // The undead, with their rank chevrons, their drops' pips, what MHP they have left and their crosshairs.
+    // The undead, with their rank chevrons, their native Drop marks, what MHP they have left and their crosshairs.
     run.slots.forEach((slot, i) => {
       if (!slot) return;
       const x = SLOT_XS[i]!, full = undeadStats(slot.id, slot.strength, hall, number).mhp;
       const shake = !reduceMotion && i === this.hitSlot && now - this.hitAt < 160 ? Math.round(Math.sin((now - this.hitAt) / 18) * 2) : 0;
       at(CORRIDOR_ROW, x, () => {
         const bob = reduceMotion || slot.id !== "wisp" && slot.id !== "ghost" ? 0 : Math.round(Math.sin(now / 300 + i) * 1.5);
-        const art = UNDEAD_ART[slot.id];
-        sprite(c, art.rows, art.colors, 2, 12 + shake, 11 + bob);
+        drawKit(c, undeadSprite(slot.id), shake, bob, 24, 24);
         if (slot.strength !== "normal") rankChevrons(c, slot.strength, "#ffd85a", "#000000", 1, 1);
         c.fillStyle = "#000000aa"; c.fillRect(3, 21, 18, 3);
         c.fillStyle = "#c84aff"; c.fillRect(4, 22, Math.max(1, Math.round(16 * Math.min(1, slot.mhp / full))), 1);
-        DROP_IDS.filter((d) => slot.drops?.[d]).forEach((d, k) => {
-          c.fillStyle = "#000000"; c.fillRect(19, 1 + k * 5, 5, 5);
-          c.fillStyle = DROP_COLORS[d]; c.fillRect(20, 2 + k * 5, 3, 3);
-        });
         if (slot.mark) paintCrosshair(c, slot.mark === "gold", now, reduceMotion);
+        // Slots are two tiles apart: two columns keep all four marks readable.
+        DROP_IDS.filter((d) => slot.drops?.[d]).forEach((d, k) => {
+          drawKit(c, buffSprite(d), 22 + (k % 2) * 12, Math.floor(k / 2) * 12, 12, 12);
+        });
       });
     });
     // The hero, crossing to its tile.

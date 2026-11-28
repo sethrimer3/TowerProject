@@ -482,3 +482,7 @@ Hero level-ups use `effects/pixel-level-up.ts`: a cached native 24-pixel-per-til
 The two-second celebration and subsequent training-point timing remain unchanged; Reduce Motion keeps the rings stationary and suppresses flying sparks.
 Revival, area and Warp Loot effects retain their separate existing painters.
 The appended `pixelLevelUp` scene covers burst, hold, fade, points, reduced motion and expiry without shifting other scene seeds.
+
+Catacombs now use the shared native PNG kit for the forest Mausoleum, seven undead, four board ingots and four enemy Drop marks.
+`CatacombBoard` quantizes its backing resolution to whole multiples of the native tile grid, preserving literal sprite pixels on phone and desktop layouts.
+The existing slots, motion, crosshairs, drops, collision and save data are unchanged.

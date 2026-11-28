@@ -1,3 +1,6 @@
+import {CatacombBoard} from "../src/render/catacomb-board.ts";
+import {UNDEAD_IDS, undeadStats} from "../src/catacombs/catalog.ts";
+import type {CatacombRun} from "../src/catacombs/state.ts";
 import { TrialRenderer } from "../src/proving-grounds/render.ts";
 import { startTrial, trialStep } from "../src/proving-grounds/trial.ts";
 import {advanceKeymasterEffects} from "../src/proving-grounds/keymaster.ts";
@@ -608,6 +611,20 @@ function playPixelLevelUp(_name: string, seed: number, canvas: HTMLCanvasElement
   });
 }
 
+/** New art coverage appended without changing the earlier fixtures' seeds. */
+function playCatacombSprites(_name: string, seed: number, canvas: HTMLCanvasElement, grab: Grab) {
+ seeded(seed,()=>{
+  const g=new Game(defaults());g.save.upgrades.catacombs=1;g.save.settings.reduceMotion=true;g.save.settings.weatherSound=false;
+  g.newRun({outside:true,seed:7});const forest=new Renderer(canvas,g);
+  for(let t=1000;t<=1450;t+=50)forest.draw(t);grab("mausoleum");
+  const run:CatacombRun={hall:300,target:0,hero:{x:0,y:8,mhp:100},potions:[],slots:UNDEAD_IDS.slice(0,6).map((id,i)=>({id,strength:i===5?"boss":"normal",mhp:undeadStats(id,"normal",300,1).mhp,drops:{mxp:2,loot:2,speed:4,mhp:4}}))};
+  const board=new CatacombBoard(canvas);board.draw(run,1,1000,true,true);grab("undeadAndBuffs");
+  run.slots[0]={id:"demon",strength:"elite",mhp:undeadStats("demon","elite",300,1).mhp,drops:{mxp:2,loot:2,speed:4,mhp:4}};
+  board.draw(run,1,1500,true,true);grab("demon");
+  run.target=999;run.slots[0]=null;board.draw(run,1,2000,true,true);grab("collected");
+ });
+}
+
 /** Every scene retains its seed, including gaps left by retired scenes. */
 export const JOBS: Job[] = [
   ...Object.keys(BOARD_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
@@ -622,6 +639,7 @@ export const JOBS: Job[] = [
   ...Object.keys(NEW_TOWER_SCENES).map((name) => ({ name, canvas: "board" as const, run: playBoard })),
   { name: "nativeSpellArt", canvas: "board" as const, run: playNewSpellArt },
   { name: "pixelLevelUp", canvas: "board" as const, run: playPixelLevelUp },
+  { name: "catacombSprites", canvas: "board" as const, run: playCatacombSprites },
 ].map(({ name, canvas, run }, i) => {
   // Keep the fourth seed reserved for the retired sprite-opt-out scene.
   const seed = i + 1 + (i >= 3 ? 1 : 0) + (i >= Object.keys(BOARD_SCENES).length ? 5 : 0);

@@ -372,7 +372,7 @@ type CatacombRun = {
 ## Currencies
 
 - The currencies dialog (`currencyRows`) and the Codex's Currencies gain the seven Spirits and four Ingots after Lore, once the Catacombs are open (all in Dev mode).
-- Icons: seven Spirit wisps tinted by rarity, four ingot bars, drawn in CSS until their PNGs.
+- Icons: seven native Spirit subjects distinguished by shape and rarity color, matching Ingot inventory bars, four menu subjects and the Catacomb button.
 - They aren't Shop currencies, so `CurrencyId` is unchanged.
 
 ## Art and sound
@@ -397,7 +397,7 @@ All seven steps are built, each with its tests, docs and DEVLOG line; docs/agent
 
 ## Follow-ups
 
-- **Art.** PNGs for the Mausoleum, the seven undead, Spirit and Ingot icons, the purple training arrow and the Catacomb button (now the Mausoleum and undead in code-drawn pixels, the icons in CSS, the button the torch); see Art and sound.
+- **Art.** The Mausoleum, seven undead, Spirit, board and UI Ingots, menu tabs, Catacomb button and enemy Drop marks now have native PNGs. The dedicated terrain set and purple training arrow remain separate future work; see Art and sound.
 - **Sound.** The Catacomb screen is silent: fight, pickup and stairs cues for drawn turns.
 - **Codex discovery.** An undead counts as seen once a hall it can stand in is reached; once Spirit can be spent, keep sightings in `save.codex` instead.
 

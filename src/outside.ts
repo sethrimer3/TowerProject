@@ -204,28 +204,10 @@ export function drawTournamentHall(c: CanvasRenderingContext2D, center: number, 
     (OUTSIDE_SIZE - TOURNAMENT_HALL.y - TOURNAMENT_HALL.height) * 24, TOURNAMENT_HALL.width * 24, TOURNAMENT_HALL.height * 24);
 }
 
-/** The Mausoleum: a pale stone tomb with a pediment, two columns and a dark
- * doorway, drawn in pixels until its PNG is made (docs/CATACOMBS.md's Art). */
+/** The native Mausoleum occupies the existing three-by-three forest footprint. */
 export function drawMausoleum(c: CanvasRenderingContext2D, center: number) {
-  const x = (center + MAUSOLEUM.dx) * 24, y = (OUTSIDE_SIZE - MAUSOLEUM.y - MAUSOLEUM.height) * 24;
-  c.save(); c.translate(x, y);
-  const px = (color: string, rx: number, ry: number, w: number, h: number) => { c.fillStyle = color; c.fillRect(rx, ry, w, h); };
-  // Shadow, plinth and body.
-  px("#00000055", 6, 66, 62, 4);
-  px("#5d5a63", 6, 60, 60, 8); px("#8e8a96", 6, 60, 60, 2);
-  px("#9b97a3", 10, 26, 52, 34); px("#b9b5c1", 10, 26, 52, 2); px("#6f6b78", 60, 26, 2, 34);
-  // Pediment, stepped, with a cross at its peak.
-  for (let i = 0; i < 6; i++) px(i % 2 ? "#a7a3af" : "#b9b5c1", 6 + i * 5, 24 - i * 3, 60 - i * 10, 3);
-  px("#cfcbd6", 6, 24, 60, 2);
-  px("#d9d5df", 35, 0, 2, 10); px("#d9d5df", 32, 3, 8, 2);
-  // Columns either side of the doorway.
-  for (const cx of [14, 52]) { px("#d1cdd8", cx, 30, 6, 30); px("#7c7884", cx + 5, 30, 1, 30); px("#e4e0ea", cx - 1, 28, 8, 2); px("#e4e0ea", cx - 1, 58, 8, 2); }
-  // The doorway, dark, arched, with a faint violet glow from below.
-  px("#1a1520", 26, 36, 20, 24); px("#1a1520", 28, 33, 16, 3); px("#1a1520", 30, 31, 12, 2);
-  px("#5b3d7a", 28, 56, 16, 4); px("#7d55a8", 32, 58, 8, 2);
-  // Moss creeping up the plinth.
-  px("#4f6b3a", 8, 58, 6, 2); px("#4f6b3a", 58, 58, 8, 2); px("#5f7d45", 10, 56, 3, 2);
-  c.restore();
+  drawKit(c, "forest-mausoleum", (center + MAUSOLEUM.dx) * 24,
+    (OUTSIDE_SIZE - MAUSOLEUM.y - MAUSOLEUM.height) * 24, 72, 72);
 }
 
 export function drawProvingGrounds(c: CanvasRenderingContext2D, center: number) {
