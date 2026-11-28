@@ -57,6 +57,8 @@ export type CatacombSave = {
   upgrades: Record<SpiritUpgradeId, number>;
   /** The tap unlocks (Spirit Potion, Zap) whose lesson has been dismissed. */
   taught: TapUnlock[];
+  /** Whether the Spirit menu hides maxed upgrades (its Hide Maxed box). */
+  hideMaxed: boolean;
 };
 
 export const noRng = (): Record<CatacombStream, number | null> => ({ spawns: null, drops: null, crits: null, crosshairs: null, potions: null });
@@ -66,8 +68,11 @@ export const defaultCatacombs = (): CatacombSave => ({
   mxp: 0, points: noPoints(),
   spirit: Object.fromEntries(SPIRIT_RARITIES.map((r) => [r, 0])) as Record<SpiritRarity, number>,
   ingots: Object.fromEntries(INGOTS.map((i) => [i, 0])) as Record<IngotId, number>,
-  speed: 0, abilities: defaultAbilities(), buffs: noBuffs(), upgrades: noUpgrades(), taught: [],
+  speed: 0, abilities: defaultAbilities(), buffs: noBuffs(), upgrades: noUpgrades(), taught: [], hideMaxed: false,
 });
+
+/** The deepest hall the Magician has reached in any Catacomb (0 before the first). */
+export const maxHall = (c: CatacombSave) => Object.values(c.best).reduce((most, hall) => Math.max(most, hall), 0);
 
 /** How far mulberry32's state moves a draw (random.ts), so the saved
  * stream carries on where it stopped. */

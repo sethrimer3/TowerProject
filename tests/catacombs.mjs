@@ -23,7 +23,7 @@ try {
     for (const k of Object.keys(g.save.tutorials)) g.save.tutorials[k] = true;
     g.save.tower.tiersOpen = 2; g.save.tower.tier = 2; g.save.upgrades.catacombs = 1;
     g.save.catacombs.rng.spawns = 7; g.catacombs.enter(1);
-    g.save.catacombs.mxp = 26;
+    g.save.catacombs.mxp = 528;
     g.save.catacombs.spirit.common = 10; g.save.catacombs.spirit.uncommon = 20;
     // A crosshair on the hall's last undead, far from the hero.
     const run = g.save.catacombs.run, marked = run.slots.findLastIndex(Boolean);

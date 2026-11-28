@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { catacombStatRows, defaultCatacombs, enterCatacomb, mxpForLevel, skillLines } from "../src/catacombs/index.ts";
-import { abilitiesHtml, menuPanelHtml, skillBoxHtml, upgradeHtml } from "../src/ui/catacomb-menus.ts";
+import { abilitiesHtml, menuPanelHtml, skillBoxHtml, spiritUpgradesHtml, upgradeHtml } from "../src/ui/catacomb-menus.ts";
 import { seedAll } from "./catacombs-seed.ts";
 
 test("a skill's lines: each effect, a point's worth and the total", () => {
@@ -43,8 +43,30 @@ test("the Skills panel lists every skill and the points free; Spirit sells its u
   assert.match(menuPanelHtml(c, "forge", null), /Ingots to upgrade the Blacksmith's forge[\s\S]*Iron 4/);
   const spirit = menuPanelHtml(c, "spirit", null);
   assert.match(spirit, /No Spirit yet/);
-  assert.match(spirit, /Unlock Ability[\s\S]*MHP \+10[\s\S]*Magic ATK \+1[\s\S]*Magic Armor Pierce[\s\S]*MXP Gain[\s\S]*MCrit Chance[\s\S]*Max MHP \+20[\s\S]*Magic ATK \+2[\s\S]*Loot Drop Gain/);
+  assert.match(spirit, /Unlock Ability[\s\S]*MHP \+10[\s\S]*Magic ATK \+1/);
   assert.match(menuPanelHtml(c, "academy", null), /boosts outside the Catacombs/);
+});
+
+test("Spirit's cards: the open ones, then the next hall's locked ones, then Reveal More while more wait", () => {
+  const c = defaultCatacombs();
+  const cards = () => [...spiritUpgradesHtml(c).matchAll(/data-(?:upgrade|locked)="(\w+)"|(reveal-more)/g)].map((m) => m[1] ?? m[2]).filter((v, i, a) => a.indexOf(v) === i);
+  assert.deepEqual(cards(), ["unlock", "mhp", "matk", "pierce", "reveal-more"]);
+  assert.match(spiritUpgradesHtml(c), /data-locked="pierce"[\s\S]*Unlocks at Hall 5<\/span>[\s\S]*Reveal More With Next Unlock/);
+  assert.doesNotMatch(spiritUpgradesHtml(c), /data-locked="pierce"[^]*?<button/, "a locked card has no button");
+  c.best[1] = 20;
+  assert.deepEqual(cards(), ["unlock", "mhp", "matk", "pierce", "mxp", "crit", "vitality", "matk2", "reveal-more"]);
+  c.best[2] = 23;
+  assert.deepEqual(cards(), ["unlock", "mhp", "matk", "pierce", "mxp", "crit", "vitality", "matk2", "loot", "surge"], "the last locked card, with none past it");
+  c.best[2] = 25;
+  assert.doesNotMatch(spiritUpgradesHtml(c), /locked/);
+  // Hide Maxed: only once an upgrade is maxed; on, the maxed cards go.
+  assert.doesNotMatch(spiritUpgradesHtml(c), /Hide Maxed/);
+  c.upgrades.unlock = 5;
+  assert.match(spiritUpgradesHtml(c), /<input type="checkbox" data-hide-maxed> Hide Maxed/);
+  assert.ok(cards().includes("unlock"));
+  c.hideMaxed = true;
+  assert.match(spiritUpgradesHtml(c), /data-hide-maxed checked/);
+  assert.ok(!cards().includes("unlock") && cards().includes("mhp"));
 });
 
 test("a Spirit upgrade shows its level and price, off while short, MAX once maxed", () => {
@@ -86,7 +108,8 @@ test("the stats table: the Magician, the drops, the run, Lore and every Spirit a
   assert.equal(rows["Speed Drop chance"], "0.2%: +10 to +110 attacks at ×2 attack speed");
   assert.equal(rows["Gold Crosshair chance"], "0.5%: ×3 damage");
   assert.equal(rows["Magic level"], "2");
-  assert.equal(rows["MXP to next level"], "10 / 14");
+  assert.equal(rows["MXP to next level"], "10 / 288");
+  assert.equal(rows["Max hall reached"], "1");
   assert.equal(rows["Loot Drop chance"], "0.2%: ×2 to ×5 Spirit from this undead");
   c.upgrades.loot = 1;
   assert.equal(Object.fromEntries(catacombStatRows(c, 0))["Loot Drop chance"], "0.2%: ×2.3 to ×5.3 Spirit from this undead");

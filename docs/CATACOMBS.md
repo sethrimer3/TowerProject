@@ -22,8 +22,8 @@ The designer chose floor 20, ancestral as the seventh rarity, the XP curve in 7,
 6. **"The tower's gold bonus".**
    Default: the tier's Gold bonus only (`TIER_BONUS_TENTHS`: ×1, ×2, ×3.1, ×4.3 …, via `tierGold`), not every Gold multiplier; Lore stays fractional (`snap`), as `save.cells` already allows, and the HUD rounds down.
 7. **Magic XP curve.**
-   Decided: from level L to L + 1 takes 12 × 1.2^(L − 1) MXP, rounded (12, 14, 17, 21, 25 …; level 3 at 26 in all), one magic skill point per level.
-   It was 200 × 1.2^(L − 1); the designer's table replaced it (question 37).
+   Decided: from level L to L + 1 takes 240 × 1.2^(L − 1) MXP, rounded (240, 288, 346, 415, 498 …; level 3 at 528 in all), one magic skill point per level.
+   It was 200 × 1.2^(L − 1), then briefly 12 × (question 37).
 8. **What a magic skill point buys.**
    First built as three stat boxes (Force, Ward, Vitality); the designer's five Magic skills replaced them (step 8, **Magic skills** below).
 9. **Strong, Elite and Boss drops.**
@@ -71,11 +71,13 @@ Step 8 (the designer's spawn table, set halls, Magic skills, drops, crosshairs, 
 
 The designer's Spirit upgrades and level table settled these:
 
-37. **The MXP table** (levels 1 to 255) is 12 × 1.2^(level − 1), rounded, multiplied out in order; it matches the table's exact values and its rounded ones (828m at 100, 1.55s at 255). No level cap is set.
+37. **The MXP curve** follows the designer's table's 1.2 growth from a base of 240 (the table's 12, ×20), multiplied out in order. No level cap is set.
 38. **Spirit Potion and Zap** are unlocks, not abilities: they take no ability slot or cooldown, and before them no potion or crosshair appears, nor does either stream draw.
 39. **Stacking.** The Spirit upgrades' flat amounts, chances, Armor Penetration and MCrit damage add to the Skills' (MCrit damage onto the MCrit factor as Might's does); MXP Gain is a different kind of bonus from Focus's, so the two multiply.
 40. **Loot Drop Gain** adds 0.3 a level to a Loot Drop's factor as it pays (×2 to ×5 becomes ×2.3 to ×5.3); the rolled amount saved with the hall is unchanged.
 41. **MXP Gain's level 7** is 296 Uncommon Spirit as given, though the series would give 299.
+42. **Hall gates** go by the deepest hall reached in any Catacomb (`maxHall`, the largest of `best`), so changing Catacomb never shuts one; they gate buying, not levels already bought.
+43. **Spell Surge's upgrade** adds 2 percentage points to Spell Surge's own MAtk (×1.2 to ×1.22) and MCrit damage (+1 to +1.02 on the factor) a level, and takes a turn off its 60-turn cooldown; it changes nothing else. Its prices follow 600 × 1.2^(level − 1): the table's levels 4 to 15 (10,368 … 77,035) were a digit long.
 
 ## Unlock
 
@@ -348,10 +350,14 @@ The Spirit menu's purchases (`spirit-upgrades.ts`), in the menu's order; each le
 | Magic ATK +1 | 25 | +1 MAtk | 50 to 3,975 Uncommon Spirit (question 19) |
 | Magic Armor Pierce +1 | 25 | +1 flat Armor Penetration | 75 to 5,962 Uncommon Spirit |
 | MXP Gain +2% | 25 | +2% MXP, its own factor | 100 to 7,950 Uncommon Spirit |
-| MCrit Chance +0.25% / MCrit Damage +1% | 25 | +0.25% MCrit chance, +0.01 MCrit factor | 200 to 15,899 Uncommon Spirit |
-| Max MHP +20 / MHP Drop Chance +0.05% | 20 | +20 Max MHP, +0.05% MHP Drop chance | 200 to 6,390 Rare Spirit |
+| MCrit Chance +0.25%, MCrit Damage +1% | 25 | +0.25% MCrit chance, +0.01 MCrit factor | 200 to 15,899 Uncommon Spirit |
+| Max MHP +20, MHP Drop Chance +0.05% | 20 | +20 Max MHP, +0.05% MHP Drop chance | 200 to 6,390 Rare Spirit |
 | Magic ATK +2 | 20 | +2 MAtk | 300 to 9,584 Rare Spirit |
-| Loot Drop Gain +0.30× | 10 | +0.3 on a Loot Drop's factor | 450 to 2,322 Rare Spirit |
+| Loot Drop Gain +0.3× | 10 | +0.3 on a Loot Drop's factor | 450 to 2,322 Rare Spirit |
+| Spell Surge: MAtk & MCrit Damage +2%, Cooldown -1 turn | 15 | Spell Surge's MAtk and MCrit damage +2 points, cooldown −1 turn | 600 to 7,704 Rare Spirit (question 43) |
+
+Magic Armor Pierce opens at Hall 5, MXP Gain at 9, MCrit Chance and Damage at 13, Max MHP +20 at 17, Magic ATK +2 at 21, Loot Drop Gain at 23 and Spell Surge's upgrade at 25 (`UNLOCK_HALL`; question 42).
+The menu lists the open upgrades, then the locked ones of the next hall with *Unlocks at Hall N*, then *Reveal More With Next Unlock* while more lie past it; Hide Maxed (`hideMaxed`, saved) shows once one is maxed.
 
 Unlocking Spirit Potion or Zap shows its lesson over the hall, a run's board-lesson note, until tapped (`taught` in the save).
 

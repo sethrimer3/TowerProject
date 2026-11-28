@@ -227,21 +227,17 @@ test("when neither side can hurt the other the run restarts that same turn", () 
   } finally { UNDEAD.skeleton.matk = matk; }
 });
 
-test("Magic levels: 12 × 1.2^(level − 1) MXP each, a point a level", () => {
-  // The designer's table, levels 1 to 40.
-  assert.deepEqual(Array.from({ length: 40 }, (_, i) => mxpToNext(i + 1)), [
-    12, 14, 17, 21, 25, 30, 36, 43, 52, 62, 74, 89, 107, 128, 154, 185, 222, 266, 319, 383,
-    460, 552, 662, 795, 954, 1145, 1374, 1648, 1978, 2374, 2849, 3418, 4102, 4922, 5907, 7088, 8506, 10207, 12248, 14698,
-  ]);
+test("Magic levels: 240 × 1.2^(level − 1) MXP each, a point a level", () => {
+  assert.deepEqual([1, 2, 3, 4, 5, 10].map(mxpToNext), [240, 288, 346, 415, 498, 1238]);
   assert.equal(mxpForLevel(1), 0);
-  assert.equal(mxpForLevel(2), 12);
-  assert.equal(mxpForLevel(3), 26);
+  assert.equal(mxpForLevel(2), 240);
+  assert.equal(mxpForLevel(3), 528);
   assert.equal(magicLevel(0), 1);
-  assert.equal(magicLevel(11), 1);
-  assert.equal(magicLevel(12), 2);
-  assert.equal(magicLevel(25), 2);
-  assert.equal(magicLevel(26), 3);
-  assert.equal(pointsEarned(26), 2);
+  assert.equal(magicLevel(239), 1);
+  assert.equal(magicLevel(240), 2);
+  assert.equal(magicLevel(527), 2);
+  assert.equal(magicLevel(528), 3);
+  assert.equal(pointsEarned(528), 2);
 });
 
 test("points move freely within those earned and each skill's cap, and apply on the next turn", () => {

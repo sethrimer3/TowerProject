@@ -5,6 +5,7 @@
 // lasting the Magician's next few attacks (rounds of combat).
 import { snap } from "../exact.ts";
 import { magician } from "./magic.ts";
+import { SPIRIT_PER } from "./spirit-upgrades.ts";
 import type { CatacombSave } from "./state.ts";
 
 /** What Unlock Ability opens, a level each, in order: Spirit Potion
@@ -33,8 +34,22 @@ export const ABILITIES: Record<AbilityId, { name: string; cooldown: number; atta
 };
 /** The charges each ability holds (upgrades to raise it: Later). */
 export const MAX_CHARGES = 1;
-/** Spell Surge's MAtk factor and what it adds to the MCrit factor. */
+/** Spell Surge's MAtk factor and what it adds to the MCrit factor, before its Spirit upgrade. */
 export const SURGE_MATK = 1.2, SURGE_CRIT = 1;
+/** Spell Surge's MAtk factor and MCrit factor addition with its Spirit
+ * upgrade: +2 percentage points onto each a level. */
+export const surgeStats = (c: CatacombSave) => {
+  const more = (SPIRIT_PER.surge * c.upgrades.surge) / 100;
+  return { matk: snap(SURGE_MATK + more), crit: snap(SURGE_CRIT + more) };
+};
+/** Ability `id`'s cooldown in turns: Spell Surge's shortened a turn a level of its Spirit upgrade. */
+export const cooldownOf = (c: CatacombSave, id: AbilityId) => ABILITIES[id].cooldown - (id === "surge" ? SPIRIT_PER.surgeCooldown * c.upgrades.surge : 0);
+/** Ability `id`'s tooltip line, with Spell Surge's upgraded amounts. */
+export function abilityBrief(c: CatacombSave, id: AbilityId) {
+  if (id !== "surge") return ABILITIES[id].brief;
+  const s = surgeStats(c), pct = (v: number) => Math.round(v * 100);
+  return `Next ${ABILITIES.surge.attacks} attacks: +${pct(s.matk - 1)}% MAtk and +${pct(s.crit)}% MCrit damage.`;
+}
 /** Renewing Rush's MHP on cast. */
 export const RUSH_MHP = 50;
 /** Arcane Barrage's hit, as a share of MAtk. */
@@ -58,7 +73,7 @@ export function castAbility(c: CatacombSave, id: AbilityId) {
   if (!canCast(c, id)) return false;
   const a = c.abilities[id];
   a.charges--;
-  if (a.cooldown === 0) a.cooldown = ABILITIES[id].cooldown;
+  if (a.cooldown === 0) a.cooldown = cooldownOf(c, id);
   c.buffs[id] += ABILITIES[id].attacks;
   if (id === "rush") c.run!.hero.mhp = Math.min(magician(c).mhp, snap(c.run!.hero.mhp + RUSH_MHP));
   return true;
@@ -73,7 +88,7 @@ export function coolAbilities(c: CatacombSave) {
     a.cooldown = Math.max(0, a.cooldown - 1);
     if (a.cooldown === 0) {
       a.charges++;
-      if (a.charges < MAX_CHARGES) a.cooldown = ABILITIES[id].cooldown;
+      if (a.charges < MAX_CHARGES) a.cooldown = cooldownOf(c, id);
     }
   }
 }

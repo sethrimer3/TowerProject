@@ -4,7 +4,7 @@
 import { snap } from "../exact.ts";
 import { INGOTS, SPIRIT_RARITIES, undeadRewards, type IngotId, type SpiritRarity } from "./catalog.ts";
 import { magician, type Magician } from "./magic.ts";
-import { SURGE_CRIT, SURGE_MATK } from "./abilities.ts";
+import { surgeStats } from "./abilities.ts";
 import { drawing, type CatacombSave } from "./state.ts";
 
 /** What turns and taps earned, summed: MXP, Lore (for `save.cells`), Spirit
@@ -21,10 +21,12 @@ export const noGains = (): CatacombGains => ({
 });
 
 /** The Magician as it strikes now: Spell Surge's MAtk and MCrit damage
- * while its buff lasts. */
+ * (with its Spirit upgrade) while its buff lasts. */
 export function striking(c: CatacombSave): Magician {
   const m = magician(c);
-  return c.buffs.surge > 0 ? { ...m, matk: snap(m.matk * SURGE_MATK), critFactor: snap(m.critFactor + SURGE_CRIT) } : m;
+  if (c.buffs.surge <= 0) return m;
+  const s = surgeStats(c);
+  return { ...m, matk: snap(m.matk * s.matk), critFactor: snap(m.critFactor + s.crit) };
 }
 
 /** An undead's MDef past the Magician's Armor Penetration: the percent

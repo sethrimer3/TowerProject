@@ -5,7 +5,7 @@ import { tierNumeral } from "../tiers.ts";
 import { DROP_IDS, DROPS, INGOTS, loreBonus, SPIRIT_RARITIES } from "./catalog.ts";
 import { magician, magicLevel, mxpForLevel, pointsEarned, pointsSpent } from "./magic.ts";
 import { GOLD_CROSSHAIR_FACTOR } from "./taps.ts";
-import type { CatacombSave } from "./state.ts";
+import { maxHall, type CatacombSave } from "./state.ts";
 
 const n = (v: number) => Math.floor(v).toLocaleString("en-US");
 const titled = (s: string) => s[0]!.toUpperCase() + s.slice(1);
@@ -41,6 +41,7 @@ export function catacombStatRows(c: CatacombSave, lore: number): [string, string
     ["Catacomb", tierNumeral(c.number)],
     ["Hall", run ? n(run.hall) : "–"],
     ["Deepest hall", n(c.best[c.number] ?? 0)],
+    ["Max hall reached", n(maxHall(c))],
     ["Lore bonus", `×${loreBonus(c.number)}`],
     ["Lore", n(lore)],
     ...SPIRIT_RARITIES.map((r): [string, string] => [`${titled(r)} Spirit`, n(c.spirit[r])]),

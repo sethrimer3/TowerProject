@@ -7,11 +7,11 @@ import { SPIRIT_PER, type SpiritUpgradeId } from "./spirit-upgrades.ts";
 
 /** 1.2^(level − 1), by level from 1, multiplied out in order. */
 const powers: number[] = [1];
-/** MXP from level `level` to the next: 12 × 1.2^(level − 1), rounded. */
+/** MXP from level `level` to the next: 240 × 1.2^(level − 1), rounded. */
 export function mxpToNext(level: number) {
   if (level < 1) return 0;
   while (powers.length < level) powers.push(powers[powers.length - 1]! * 1.2);
-  return Math.round(12 * powers[level - 1]!);
+  return Math.round(240 * powers[level - 1]!);
 }
 
 /** Total MXP that reaches level `level` (0 for level 1). */

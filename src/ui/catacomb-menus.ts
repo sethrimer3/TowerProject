@@ -9,8 +9,8 @@ import { el, spiritIcon } from "./dom.ts";
 import { controlIcon } from "./control-icon.ts";
 import { MAGIC_SKILL_IDS, MAGIC_SKILLS, movePoint, pointsEarned, pointsSpent, skillLines, type MagicSkillId } from "../catacombs/magic.ts";
 import { INGOTS, SPIRIT_RARITIES } from "../catacombs/catalog.ts";
-import { ABILITIES, ABILITY_IDS, abilityUnlocked, canCast, castAbility, type AbilityId } from "../catacombs/abilities.ts";
-import { buyUpgrade, SPIRIT_UPGRADE_IDS, SPIRIT_UPGRADES, upgradePrice, type SpiritUpgradeId } from "../catacombs/spirit-upgrades.ts";
+import { ABILITIES, ABILITY_IDS, abilityBrief, abilityUnlocked, canCast, castAbility, cooldownOf, type AbilityId } from "../catacombs/abilities.ts";
+import { buyUpgrade, SPIRIT_UPGRADE_IDS, SPIRIT_UPGRADES, UNLOCK_HALL, upgradeOpen, upgradePrice, type SpiritUpgradeId } from "../catacombs/spirit-upgrades.ts";
 import { catacombStatRows } from "../catacombs/summary.ts";
 import type { CatacombSave } from "../catacombs/state.ts";
 
@@ -51,6 +51,28 @@ export function upgradeHtml(c: CatacombSave, id: SpiritUpgradeId) {
   return `<div class="catacomb-upgrade" data-upgrade="${id}"><div><b>${u.name}</b> <small>${n(level)}/${n(u.prices.length)}</small><p>${u.brief}</p></div>${buy}</div>`;
 }
 
+/** A Spirit upgrade not open yet: its name and what it does, and the hall that opens it in place of a price. */
+export function lockedUpgradeHtml(id: SpiritUpgradeId) {
+  const u = SPIRIT_UPGRADES[id];
+  return `<div class="catacomb-upgrade locked" data-locked="${id}"><div><b>${u.name}</b><p>${u.brief}</p></div>` +
+    `<span class="catacomb-unlocks-at">Unlocks at Hall ${n(UNLOCK_HALL[id]!)}</span></div>`;
+}
+
+/** The Spirit menu's cards: every open upgrade (less the maxed ones while
+ * Hide Maxed is on), then the upgrades the next unlock hall opens, then, if
+ * more wait past that hall, one card saying so. Hide Maxed shows once any
+ * upgrade is maxed. */
+export function spiritUpgradesHtml(c: CatacombSave) {
+  const maxed = (id: SpiritUpgradeId) => upgradePrice(c, id) === null, anyMaxed = SPIRIT_UPGRADE_IDS.some(maxed);
+  const open = SPIRIT_UPGRADE_IDS.filter((id) => upgradeOpen(c, id) && !(anyMaxed && c.hideMaxed && maxed(id)));
+  const locked = SPIRIT_UPGRADE_IDS.filter((id) => !upgradeOpen(c, id)), next = Math.min(...locked.map((id) => UNLOCK_HALL[id]!));
+  const hide = anyMaxed
+    ? `<label class="catacomb-hide-maxed"><input type="checkbox" data-hide-maxed${c.hideMaxed ? " checked" : ""}> Hide Maxed</label>` : "";
+  return hide + open.map((id) => upgradeHtml(c, id)).join("") +
+    locked.filter((id) => UNLOCK_HALL[id] === next).map(lockedUpgradeHtml).join("") +
+    (locked.some((id) => UNLOCK_HALL[id]! > next) ? `<div class="catacomb-upgrade locked reveal-more"><p>Reveal More With Next Unlock</p></div>` : "");
+}
+
 /** The panel under the tabs for menu `menu`. */
 export function menuPanelHtml(c: CatacombSave, menu: CatacombMenu, open: MagicSkillId | null) {
   if (menu === "skills") {
@@ -60,7 +82,7 @@ export function menuPanelHtml(c: CatacombSave, menu: CatacombMenu, open: MagicSk
       `<small class="catacomb-free" title="Magic skill points to spend">${n(free)} free</small>`;
   }
   const spirit = SPIRIT_RARITIES.filter((r) => c.spirit[r] >= 1).map((r) => `${spiritIcon(r)}${n(c.spirit[r])}`).join(" · ") || "No Spirit yet.";
-  if (menu === "spirit") return `<p class="catacomb-held">${spirit}</p>` + SPIRIT_UPGRADE_IDS.map((id) => upgradeHtml(c, id)).join("");
+  if (menu === "spirit") return `<p class="catacomb-held">${spirit}</p>` + spiritUpgradesHtml(c);
   const held = menu === "forge" ? INGOTS.map((i) => `${titled(i)} ${n(c.ingots[i])}`).join(" · ") : spirit;
   return `<p class="catacomb-later">${LATER[menu]} It opens in a later update.</p><p class="catacomb-held">${held}</p>`;
 }
@@ -121,6 +143,12 @@ export class CatacombMenus {
     const point = target.closest<HTMLButtonElement>(".catacomb-point"), buy = target.closest<HTMLButtonElement>(".catacomb-buy[data-upgrade]");
     const cast = target.closest<HTMLButtonElement>(".catacomb-cast"), auto = target.closest<HTMLElement>(".catacomb-auto");
     const c = this.catacombs();
+    // Hide Maxed: the box itself (a tap on its label reaches it too).
+    if (target instanceof HTMLInputElement && target.matches("[data-hide-maxed]")) {
+      c.hideMaxed = target.checked;
+      this.changed();
+      return this.render(true);
+    }
     if (cast || auto) {
       // A hold showed the tooltip: it casts nothing.
       if (this.held) { this.held = false; return; }
@@ -161,7 +189,7 @@ export class CatacombMenus {
   private tip(target: Element) {
     const slot = target.closest<HTMLElement>(".catacomb-ability");
     if (!slot) return;
-    const id = slot.dataset.ability as AbilityId, a = ABILITIES[id];
+    const id = slot.dataset.ability as AbilityId, a = ABILITIES[id], c = this.catacombs();
     let tip = document.querySelector<HTMLElement>(".catacomb-tip");
     if (!tip) {
       tip = document.createElement("div");
@@ -169,7 +197,7 @@ export class CatacombMenus {
       tip.setAttribute("role", "tooltip");
       document.body.append(tip);
     }
-    tip.innerHTML = `<b>${a.name}</b><span>${a.brief}</span><small>Cooldown: ${a.cooldown} turns.</small>`;
+    tip.innerHTML = `<b>${a.name}</b><span>${abilityBrief(c, id)}</span><small>Cooldown: ${cooldownOf(c, id)} turns.</small>`;
     const box = slot.getBoundingClientRect();
     tip.style.left = `${Math.max(8, Math.min(innerWidth - 228, box.left + box.width / 2 - 110))}px`;
     tip.style.top = `${Math.max(8, box.top - 8)}px`;

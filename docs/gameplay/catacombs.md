@@ -28,7 +28,7 @@ The Catacombs play on while you are elsewhere in the game.
 
 **Skills.** The Catacomb screen has four menus, tabs along the bottom in place of the hand: Skills, Spirit, Forge and Academy.
 Each Magic level past the first gives a magic skill point.
-Level 2 takes 12 MXP, and each level after takes a fifth more than the one before.
+Level 2 takes 240 MXP, and each level after takes a fifth more than the one before.
 In Skills, tap a skill to open it: − and + move a point out of it or into it, at any time, and its lines show what a point gives and what the skill gives in all.
 Each skill takes up to its cap of points, and each point gives three things:
 
@@ -80,13 +80,19 @@ Unlock Ability opens something new each level: Spirit Potion for 10 Common Spiri
 | Magic ATK +1 | +1 MAtk | 25 | Uncommon, from 50 |
 | Magic Armor Pierce +1 | the undead you strike have 1 less MDef | 25 | Uncommon, from 75 |
 | MXP Gain +2% | +2% MXP | 25 | Uncommon, from 100 |
-| MCrit Chance +0.25% / MCrit Damage +1% | +0.25% MCrit chance, +1% MCrit factor | 25 | Uncommon, from 200 |
-| Max MHP +20 / MHP Drop Chance +0.05% | +20 Max MHP, +0.05% MHP Drop chance | 20 | Rare, from 200 |
+| MCrit Chance +0.25%, MCrit Damage +1% | +0.25% MCrit chance, +1% MCrit factor | 25 | Uncommon, from 200 |
+| Max MHP +20, MHP Drop Chance +0.05% | +20 Max MHP, +0.05% MHP Drop chance | 20 | Rare, from 200 |
 | Magic ATK +2 | +2 MAtk | 20 | Rare, from 300 |
-| Loot Drop Gain +0.30× | ×0.3 more Spirit from each Loot Drop | 10 | Rare, from 450 |
+| Loot Drop Gain +0.3× | ×0.3 more Spirit from each Loot Drop | 10 | Rare, from 450 |
+| Spell Surge: MAtk & MCrit Damage +2%, Cooldown -1 turn | Spell Surge's own +20% MAtk and +100% MCrit damage each 2% more, its cooldown a turn shorter | 15 | Rare, from 600 |
 
 MXP Gain multiplies Focus's MXP bonus; the others add to what Skills give.
 Magic Armor Pierce adds to Armor Penetration, so past an undead's MDef it does nothing more.
+
+Most upgrades open only once you have reached a hall, in any Catacomb: Magic Armor Pierce at Hall 5, MXP Gain at 9, MCrit at 13, Max MHP +20 at 17, Magic ATK +2 at 21, Loot Drop Gain at 23 and Spell Surge's at 25.
+The menu shows the next ones to open, saying the hall that opens them, and under them *Reveal More With Next Unlock* while more wait.
+Once an upgrade is maxed, a Hide Maxed box appears at the top of the list; tick it to hide the maxed ones.
+The ≡ stats table shows the deepest hall you have reached in any Catacomb as Max hall reached.
 
 **Abilities.** Each ability unlocked has a button over the menus.
 Tap it to cast; then the number under it counts down the turns until it is ready again.

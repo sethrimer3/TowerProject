@@ -74,6 +74,7 @@ export function decodeCatacombs(raw: unknown): CatacombSave {
     }
   if (isRecord(raw.buffs)) for (const id of ABILITY_IDS) if (whole(raw.buffs[id])) c.buffs[id] = raw.buffs[id];
   if (Array.isArray(raw.taught)) c.taught = TAP_UNLOCKS.filter((id) => (raw.taught as unknown[]).includes(id));
+  c.hideMaxed = raw.hideMaxed === true;
   // Points spent past those earned (an edited save) are all handed back.
   if (pointsSpent(c.points) > pointsEarned(c.mxp)) c.points = noPoints();
   return c;

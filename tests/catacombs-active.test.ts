@@ -5,7 +5,8 @@ import assert from "node:assert/strict";
 import {
   ABILITIES, abilityUnlocked, buyUpgrade, castAbility, catacombTurn, decodeCatacombs, defaultCatacombs, defeat, DROPS, enterCatacomb,
   enterHall, GOLD_CROSSHAIR_FACTOR, magician, mxpForLevel, noGains, POTION_MHP, rollDrops, rollTaps, SIDE_TILES, SPIRIT_UPGRADES,
-  strikesNow, takePotion, tapCrosshair, undeadStats, upgradePrice, isUnlocked, pendingLesson, lootFactor, noUpgrades, type CatacombSave, type Slot,
+  strikesNow, takePotion, tapCrosshair, undeadStats, upgradePrice, isUnlocked, pendingLesson, lootFactor, noUpgrades, UNLOCK_HALL, upgradeOpen,
+  maxHall, abilityBrief, cooldownOf, type CatacombSave, type Slot,
 } from "../src/catacombs/index.ts";
 import { seedAll } from "./catacombs-seed.ts";
 
@@ -273,8 +274,10 @@ test("Spirit upgrades: Unlock Ability's five unlocks, the rest each in its rarit
   const levels = Object.fromEntries(Object.entries(SPIRIT_UPGRADES).map(([id, u]) => [id, `${u.prices.length} ${u.prices[0]!.rarity}`]));
   assert.deepEqual(levels, {
     unlock: "5 common", mhp: "35 common", matk: "25 uncommon", pierce: "25 uncommon", mxp: "25 uncommon",
-    crit: "25 uncommon", vitality: "20 rare", matk2: "20 rare", loot: "10 rare",
+    crit: "25 uncommon", vitality: "20 rare", matk2: "20 rare", loot: "10 rare", surge: "15 rare",
   });
+  // Spell Surge's follows 600 × 1.2^(level − 1).
+  assert.deepEqual(SPIRIT_UPGRADES.surge.prices.map((p) => p.amount), [600, 720, 864, 1037, 1244, 1493, 1792, 2150, 2580, 3096, 3715, 4458, 5350, 6420, 7704]);
   assert.equal(buyUpgrade(c, "unlock"), false, "short");
   c.spirit.common = 15;
   assert.equal(buyUpgrade(c, "unlock"), true);
@@ -290,6 +293,40 @@ test("Spirit upgrades: Unlock Ability's five unlocks, the rest each in its rarit
   assert.equal(ABILITIES.rush.cooldown, 120);
 });
 
+test("Spirit upgrades open by the deepest hall reached in any Catacomb, and can't be bought before", () => {
+  assert.deepEqual(UNLOCK_HALL, { pierce: 5, mxp: 9, crit: 13, vitality: 17, matk2: 21, loot: 23, surge: 25 });
+  const c = defaultCatacombs();
+  c.spirit.uncommon = 1000;
+  assert.equal(maxHall(c), 0);
+  assert.ok(upgradeOpen(c, "unlock") && upgradeOpen(c, "mhp") && upgradeOpen(c, "matk") && !upgradeOpen(c, "pierce"));
+  assert.equal(buyUpgrade(c, "pierce"), false, "locked");
+  c.best = { 1: 4, 3: 5 };
+  assert.equal(maxHall(c), 5);
+  assert.ok(upgradeOpen(c, "pierce") && !upgradeOpen(c, "mxp"));
+  assert.equal(buyUpgrade(c, "pierce"), true);
+  // Reaching a hall records it.
+  const f = fresh();
+  f.run!.slots = [null, null, null, null, null, null];
+  f.run!.target = 1;
+  catacombTurn(f);
+  assert.equal(maxHall(f), 2);
+});
+
+test("Spell Surge's upgrade: +2% to its MAtk and MCrit damage and a turn off its cooldown a level, Spell Surge alone", () => {
+  const c = fresh();
+  c.upgrades.unlock = 5;
+  c.upgrades.surge = 5;
+  assert.deepEqual([cooldownOf(c, "surge"), cooldownOf(c, "rush")], [55, 120]);
+  assert.equal(abilityBrief(c, "surge"), "Next 5 attacks: +30% MAtk and +110% MCrit damage.");
+  assert.equal(abilityBrief(c, "rush"), ABILITIES.rush.brief);
+  besideOne(c, slot("ghost"));
+  castAbility(c, "surge");
+  assert.equal(c.abilities.surge.cooldown, 55);
+  // 10 × 1.3 − 5.
+  assert.equal((catacombTurn(c) as { heroHit: number }).heroHit, 8);
+  assert.equal(magician(c).matk, 10, "the Magician's own MAtk is untouched");
+});
+
 test("Spirit Potion's and Zap's lessons wait once unlocked, one at a time, until dismissed", () => {
   const c = defaultCatacombs();
   assert.equal(pendingLesson(c), null);
@@ -302,6 +339,7 @@ test("Spirit Potion's and Zap's lessons wait once unlocked, one at a time, until
   c.taught.push("zap");
   assert.equal(pendingLesson(c), null);
   assert.deepEqual(decodeCatacombs({ taught: ["zap", "surge", 3] }).taught, ["zap"]);
+  assert.deepEqual([decodeCatacombs({ hideMaxed: true }).hideMaxed, decodeCatacombs({ hideMaxed: 1 }).hideMaxed], [true, false]);
 });
 
 test("decoding keeps the drops, marks, potions, abilities, buffs and upgrades, and drops what doesn't fit", () => {
