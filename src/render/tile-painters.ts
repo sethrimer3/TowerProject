@@ -13,6 +13,7 @@ import { drawAnimatedTorch, drawSquareDoor } from "../sprites/options.ts";
 import { paintTorchFire, TORCH_HARDWARE_ROW } from "./torch-fire.ts";
 import { drawPickupAnimation, drawSpriteFrame } from "../sprites/animations.ts";
 import { drawPixelOutline } from "../sprites/pixel-outline.ts";
+import { paintShadowRows, shadowRows } from "./enemy-shadow.ts";
 
 // Everything here paints in 24x24 tile space: the caller translates and
 // scales the context to the tile first.
@@ -173,7 +174,6 @@ onSpritesLoaded(() => bakedEnemies.clear());
 
 export function paintEnemy(c: CanvasRenderingContext2D, t: Tile, legacy = false) {
   const e = t.enemy!;
-  groundShadow(c, 12, 21, 8, 2.6, 0.4);
   const key = `${kitEnemy(e, legacy)}|${e.profile}|${e.shielded}|${e.aggro}|${e.name}|${e.tier}|${e.strength}|${e.fast}|${e.ranged}|${e.flying}|${e.armored}`;
   let baked = bakedEnemies.get(key);
   if (!baked) bakedEnemies.set(key, (baked = bakeEnemy(e, legacy)));
@@ -183,7 +183,7 @@ export function paintEnemy(c: CanvasRenderingContext2D, t: Tile, legacy = false)
   c.restore();
 }
 
-/** An enemy with its glow, outline, chevrons and a Fast enemy's mark, on a canvas ENEMY_MARGIN
+/** An enemy with its pixel-art ground shadow (render/enemy-shadow.ts), glow, outline, chevrons and a Fast enemy's mark, on a canvas ENEMY_MARGIN
  * wider than the tile on every side. The rings go on from the outside in,
  * each cutting out what lies inside it first, so every band keeps exactly
  * its own opacity; the sprite goes on last. */
@@ -203,6 +203,13 @@ function bakeEnemy(e: Enemy, legacy: boolean) {
   }
   oc.globalAlpha = 1;
   oc.drawImage(body, m, m);
+  // The shadow goes in behind everything, so the rings' cut-outs leave it whole.
+  const alpha = bc.getImageData(0, 0, 24, 24)?.data.filter((_, i) => i % 4 === 3);
+  if (alpha) {
+    oc.globalCompositeOperation = "destination-over";
+    paintShadowRows(oc, shadowRows(alpha, !!e.flying), m);
+    oc.globalCompositeOperation = "source-over";
+  }
   const rank = RANK_CHEVRONS[e.strength];
   const rankId = rank.down ? COMBAT_MARKS.rankDown : COMBAT_MARKS.rankUp;
   for (let i = 0; i < rank.count; i++) drawKit(oc, rankId, m, m + i * 4, 7, 6);
@@ -259,18 +266,3 @@ export function paintTorch(c: CanvasRenderingContext2D, t: Torch, now: number, r
   paintTorchFire(c, t.x, t.y, now, reduceMotion);
 }
 
-/** Cheap, restrained grounding shadow: a soft dark ellipse under a sprite's
- * feet. No blur filter — a two-stop radial gradient reads as soft at this
- * tile scale for near-zero cost. */
-function groundShadow(c: CanvasRenderingContext2D, cx: number, cy: number, rx: number, ry: number, alpha: number) {
-  const gr = c.createRadialGradient(cx, cy, 0, cx, cy, rx);
-  gr.addColorStop(0, `rgba(0,0,0,${alpha})`);
-  gr.addColorStop(0.7, `rgba(0,0,0,${alpha * 0.55})`);
-  gr.addColorStop(1, "rgba(0,0,0,0)");
-  c.save();
-  c.fillStyle = gr;
-  c.beginPath();
-  c.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
-  c.fill();
-  c.restore();
-}
