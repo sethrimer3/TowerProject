@@ -11,6 +11,8 @@ const page = await context.newPage();
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 await page.addInitScript(() => {
+  // The pinch and the wheel zoom the board (tests/dev-zoom.mjs); this suite checks Cinematic mode's.
+  globalThis.__noDevZoom = true;
   const fixture = sessionStorage.getItem("__cinematicFixture");
   if (fixture) {
     localStorage.setItem("towerdelve.v1", fixture);

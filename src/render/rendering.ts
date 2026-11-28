@@ -69,7 +69,7 @@ import { drawChestMarks } from "./chest-marks.ts";
 import type { Dash, ShownTurn } from "../shown.ts";
 import { contentsAt, darknessOf, forEachViewTile, tileTransform, toTileSpace, type FrameContext } from "./render-frame.ts";
 import { ART_PX, artPixelScale, onArtGrid } from "./pixel-scale.ts";
-import { artScreenPixels, stepZoom, zoomForScale, zoomLook, zoomOffset, zoomSteps } from "./dev-zoom.ts";
+import { artScreenPixels, stepZoom, zoomForScale, zoomLook, anchorOffset, clampOffset, zoomSteps } from "./dev-zoom.ts";
 import { gameLook } from "../theme-collection.ts";
 import { usesGameSprites } from "../sprites/style.ts";
 import { spriteRevision } from "../sprites/kit.ts";
@@ -148,6 +148,9 @@ export class Renderer {
    * and the scale the canvas wears now. */
   private devZoom = 0;
   private zoomScale = 1;
+  /** Dev zoom's offset of the canvas in its frame, in CSS pixels. */
+  private zoomX = 0;
+  private zoomY = 0;
   /** The dungeon atmosphere (tint, vignette, torch haze), tunable per renderer. */
   get atmosphere(): AtmosphereConfig {
     return this.light.atmosphere;
@@ -456,11 +459,11 @@ export class Renderer {
     this.placeZoom(f, zoom?.scale ?? 1);
     return f;
   }
-  /** Dev zoom's steps for the board as it is laid out now, or null while
-   * Dev Mode is off or Battery saver is on. */
+  /** Dev zoom's steps for the board as it is laid out now, or null in
+   * Battery saver (or in a test that turns it off). */
   private zoomBasis(width = this.canvas.getBoundingClientRect().width / this.zoomScale, n = this.density) {
     const s = this.game.save.settings;
-    if (!s.devTools || s.batterySaver || !width) return null;
+    if (s.batterySaver || !width || (globalThis as { __noDevZoom?: boolean }).__noDevZoom) return null;
     return artScreenPixels(width, devicePixelRatio || 1, n);
   }
   /** This frame's dev zoom, its step kept within the board's own steps. */
@@ -471,37 +474,66 @@ export class Renderer {
     this.devZoom = this.devZoom < min ? 0 : Math.min(max, this.devZoom);
     return this.devZoom ? zoomLook(this.devZoom, a, n) : null;
   }
-  /** Dev zoom one step in (1) or out (-1), as the mouse wheel turns. */
-  zoomStep(dir: 1 | -1) {
-    const a = this.zoomBasis();
-    if (a !== null) this.devZoom = stepZoom(this.devZoom, dir, a);
+  /** A client point in CSS pixels from the board frame's inner corner, where the canvas sits unzoomed. */
+  private framePoint(clientX: number, clientY: number) {
+    const frame = this.canvas.parentElement, r = frame?.getBoundingClientRect();
+    return r ? { x: clientX - r.left - frame!.clientLeft, y: clientY - r.top - frame!.clientTop } : { x: clientX, y: clientY };
   }
-  /** Dev zoom's step now, and a setter to the step nearest `scale` times
-   * the zoom it began from, as a pinch spreads. */
-  zoomPinch() {
+  /** Zooms to `level` keeping the board's point under `clientX, clientY` there. */
+  private zoomAbout(level: number, a: number, clientX: number, clientY: number) {
+    const from = this.devZoom ? this.devZoom / a : 1, to = level ? level / a : 1, p = this.framePoint(clientX, clientY);
+    this.zoomX = anchorOffset(this.zoomX, p.x, from, to);
+    this.zoomY = anchorOffset(this.zoomY, p.y, from, to);
+    this.devZoom = level;
+  }
+  /** Dev zoom one step in (1) or out (-1) about the pointer, as the mouse wheel turns. */
+  zoomStep(dir: 1 | -1, clientX: number, clientY: number) {
+    const a = this.zoomBasis();
+    if (a !== null) this.zoomAbout(stepZoom(this.devZoom, dir, a), a, clientX, clientY);
+  }
+  /** A setter for a pinch: the step nearest `scale` times the zoom it began
+   * from, the board's point first under the fingers' midpoint kept under it
+   * as they move (so two fingers pan too). */
+  zoomPinch(startX: number, startY: number) {
     const a = this.zoomBasis();
     if (a === null) return null;
-    const from = this.devZoom ? this.devZoom / a : 1;
-    return (scale: number) => { this.devZoom = zoomForScale(from * scale, a); };
+    const from = this.devZoom ? this.devZoom / a : 1, p = this.framePoint(startX, startY);
+    const u = { x: (p.x - this.zoomX) / from, y: (p.y - this.zoomY) / from };
+    return (scale: number, clientX: number, clientY: number) => {
+      this.devZoom = zoomForScale(from * scale, a);
+      const to = this.devZoom ? this.devZoom / a : 1, q = this.framePoint(clientX, clientY);
+      this.zoomX = q.x - u.x * to;
+      this.zoomY = q.y - u.y * to;
+    };
   }
-  /** Whether Dev zoom takes the wheel and pinches (Dev Mode, outside Battery saver). */
+  /** Pans the zoomed board by a drag of `dx, dy` CSS pixels. */
+  panBy(dx: number, dy: number) {
+    this.zoomX += dx;
+    this.zoomY += dy;
+  }
+  /** Whether the wheel and pinches zoom the board (outside Battery saver). */
   get zoomable() {
     return this.zoomBasis() !== null;
   }
-  /** Scales the canvas about the hero for Dev zoom, inside its frame. */
+  /** Whether the board is zoomed in, so a drag pans it. */
+  get zoomed() {
+    return this.devZoom > 0;
+  }
+  /** Scales and places the canvas for Dev zoom, inside its frame. */
   private placeZoom(f: FrameContext, scale: number) {
     const style = this.canvas.style;
     if (!style) return;
     this.canvas.parentElement?.classList.toggle("dev-zoom", scale !== 1);
+    const dpr = devicePixelRatio || 1;
+    this.zoomX = clampOffset(this.zoomX, f.width, scale, dpr);
+    this.zoomY = clampOffset(this.zoomY, f.width, scale, dpr);
     if (scale === 1) {
       if (this.zoomScale !== 1) style.transform = style.transformOrigin = "";
       this.zoomScale = 1;
       return;
     }
-    const hx = (f.playerX - f.left + 0.5) * f.s, hy = (f.n - 1 - (f.playerY - f.bottom) + 0.5) * f.s;
-    const at = zoomOffset(hx, hy, f.width, scale, devicePixelRatio || 1);
     style.transformOrigin = "0 0";
-    style.transform = `translate(${at.x}px, ${at.y}px) scale(${scale})`;
+    style.transform = `translate(${this.zoomX}px, ${this.zoomY}px) scale(${scale})`;
     this.zoomScale = scale;
   }
   /** A new run or a step outside resets the camera and hero onto their

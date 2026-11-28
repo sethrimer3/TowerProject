@@ -1,5 +1,5 @@
-/** Dev zoom (Dev Mode only): the board scaled up about the hero by the mouse
- * wheel or a pinch, for a close look at the drawing. Every step puts a whole
+/** Dev zoom: the board scaled up about the pointer by the mouse wheel or a
+ * pinch, and dragged to pan, for a close look at the drawing. Every step puts a whole
  * number of screen pixels on each art pixel, so the art stays crisp, and the
  * last step is the first such number past ×4. Drawing only. */
 import { ART_PX } from "./pixel-scale.ts";
@@ -45,13 +45,14 @@ export function zoomLook(level: number, a: number, n: number) {
   return { scale: level / a, perArtPixel: Math.max(1, Math.min(level, cap)) };
 }
 
-/** The canvas's offset (CSS pixels) that puts `hx, hy` (the hero, in the
- * unzoomed board's CSS pixels) at the middle of a board `width` wide at
- * `scale`, kept from showing past the board's edge, on whole screen pixels. */
-export function zoomOffset(hx: number, hy: number, width: number, scale: number, dpr: number) {
-  const place = (h: number) => {
-    const t = Math.min(0, Math.max(width - width * scale, width / 2 - h * scale));
-    return Math.round(t * dpr) / dpr;
-  };
-  return { x: place(hx), y: place(hy) };
+/** The canvas's offset after zooming from `from` to `to` times about `p`
+ * (both in CSS pixels from the board's corner), so the point under `p` stays
+ * under it. */
+export const anchorOffset = (t: number, p: number, from: number, to: number) => p - ((p - t) * to) / from;
+
+/** The canvas's offset kept from showing past the board's edge (a board
+ * `width` wide at `scale`), on whole screen pixels. */
+export function clampOffset(t: number, width: number, scale: number, dpr: number) {
+  const kept = Math.min(0, Math.max(width - width * scale, t));
+  return Math.round(kept * dpr) / dpr;
 }

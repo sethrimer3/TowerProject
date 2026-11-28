@@ -162,6 +162,13 @@ export class PinchTracker {
     return this.points.size === 2 && this.start > 0 ? this.spread() / this.start : null;
   }
 
+  /** The two fingers' midpoint, or null without a pinch. */
+  get midpoint() {
+    if (this.points.size !== 2) return null;
+    const [a, b] = [...this.points.values()];
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  }
+
   up(id: number) {
     this.points.delete(id);
     if (this.points.size < 2) this.start = 0;

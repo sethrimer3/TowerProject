@@ -44,10 +44,12 @@ export function bindInput(
       manual(d[0], d[1]);
     }
   });
-  let gesture: { id: number; x: number; y: number } | null = null;
+  // A drag on the zoomed board pans it (render/dev-zoom.ts) instead of a tap or swipe.
+  let gesture: { id: number; x: number; y: number; lastX: number; lastY: number; panned: boolean } | null = null;
   const canvas = renderer.canvas, pinch = new PinchTracker();
-  // Under Dev Mode a pinch zooms the board (render/dev-zoom.ts) instead.
-  let zoomTo: ((scale: number) => void) | null = null;
+  // A pinch zooms the board about the fingers (render/dev-zoom.ts) instead
+  // of entering Cinematic mode, which idling still enters.
+  let zoomTo: ((scale: number, x: number, y: number) => void) | null = null;
   canvas.addEventListener("pointerdown", (e) => {
     if (!active()) return;
     e.preventDefault();
@@ -56,15 +58,22 @@ export function bindInput(
     // A second finger makes it a pinch: the first's tap or swipe is dropped.
     if (pinch.count > 1) {
       gesture = null;
-      zoomTo = pinch.count === 2 ? renderer.zoomPinch() : zoomTo;
-    } else if (e.isPrimary) gesture = { id: e.pointerId, x: e.clientX, y: e.clientY };
+      const mid = pinch.midpoint;
+      zoomTo = pinch.count === 2 && mid ? renderer.zoomPinch(mid.x, mid.y) : zoomTo;
+    } else if (e.isPrimary) gesture = { id: e.pointerId, x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, panned: false };
   });
   canvas.addEventListener("pointermove", (e) => {
     const direction = pinch.move(e.pointerId, e.clientX, e.clientY);
     if (zoomTo) {
-      const ratio = pinch.spreadRatio;
-      if (ratio !== null && active()) zoomTo(ratio);
+      const ratio = pinch.spreadRatio, mid = pinch.midpoint;
+      if (ratio !== null && mid && active()) zoomTo(ratio, mid.x, mid.y);
       return;
+    }
+    if (gesture && gesture.id === e.pointerId && renderer.zoomed && active()) {
+      if (!gesture.panned && Math.max(Math.abs(e.clientX - gesture.x), Math.abs(e.clientY - gesture.y)) >= 6) gesture.panned = true;
+      if (gesture.panned) renderer.panBy(e.clientX - gesture.lastX, e.clientY - gesture.lastY);
+      gesture.lastX = e.clientX;
+      gesture.lastY = e.clientY;
     }
     if (direction && active()) cinematic.pinch(direction);
   });
@@ -76,7 +85,7 @@ export function bindInput(
     gesture = null;
     if (canvas.hasPointerCapture(e.pointerId))
       canvas.releasePointerCapture(e.pointerId);
-    if (!active()) return;
+    if (!active() || start.panned) return;
     e.preventDefault();
     const dx = e.clientX - start.x,
       dy = e.clientY - start.y;
@@ -103,10 +112,10 @@ export function bindInput(
     if (pinch.count < 2) zoomTo = null;
     gesture = null;
   });
-  // Under Dev Mode the wheel zooms the board a step a notch, gathering a
+  // The wheel zooms the board a step a notch about the pointer, gathering a
   // trackpad's small turns (and its pinch, Ctrl and the wheel) into notches.
   let turned = 0;
-  // Otherwise Ctrl and the wheel (a trackpad's pinch) stand in for two fingers.
+  // In Battery saver Ctrl and the wheel (a trackpad's pinch) stand in for two fingers.
   canvas.addEventListener(
     "wheel",
     (e) => {
@@ -115,7 +124,7 @@ export function bindInput(
         const notch = e.ctrlKey ? 10 : 40;
         turned += e.deltaMode ? e.deltaY * 40 : e.deltaY;
         while (Math.abs(turned) >= notch) {
-          renderer.zoomStep(turned < 0 ? 1 : -1);
+          renderer.zoomStep(turned < 0 ? 1 : -1, e.clientX, e.clientY);
           turned -= Math.sign(turned) * notch;
         }
         changed();
