@@ -1,14 +1,14 @@
 // An enemy's grounding shadow as pixel art: a stepped oval on the 24-pixel
-// tile grid, sized from the sprite's own feet. Worked out once per baked
-// enemy (paintEnemy bakes it under the rings), so it costs nothing a frame.
+// tile grid, sized from the sprite's own feet. Worked out once per sprite
+// (paintEnemyShadow in tile-painters.ts caches it), and multiplied onto the
+// ground after the room's darkness, so it darkens whatever it lies on.
 
 /** One row of the shadow: columns x0..x1 (inclusive) at row y, and whether it is the darker core. */
 export type ShadowRow = { y: number; x0: number; x1: number; core: boolean };
 
-/** How dark the shadow's rim and core are. Both stay under the torch
- * silhouette's alpha cut (toShadow in entity-lighting.ts), so the ground
- * shadow never casts a torch shadow of its own. */
-export const SHADOW_ALPHA = { rim: 0.28, core: 0.45 };
+/** The shadow's rim and core as multiply tones: each channel of the ground
+ * under it is scaled by tone / 255, a touch cool so it reads as shade, not grey. */
+export const SHADOW_TONE = { rim: [148, 144, 160], core: [96, 92, 112] } as const;
 
 const SIZE = 24, SOLID = 128;
 /** How far past the tile the shadow may spread: the bake's margin (ENEMY_MARGIN). */
@@ -49,17 +49,13 @@ export function shadowRows(alpha: ArrayLike<number>, flying = false): ShadowRow[
   return rows;
 }
 
-/** Paints the shadow's rows onto `c`, offset by `m` pixels (the bake's margin). */
+/** Paints the shadow's rows onto `c` as opaque tones, offset by `m` pixels;
+ * the core overwrites the rim, so the canvas is ready to multiply. */
 export function paintShadowRows(c: CanvasRenderingContext2D, rows: ShadowRow[], m: number) {
   c.save();
   for (const core of [false, true]) {
-    c.fillStyle = `rgba(0,0,0,${(core ? coreOver() : SHADOW_ALPHA.rim).toFixed(3)})`;
+    c.fillStyle = `rgb(${SHADOW_TONE[core ? "core" : "rim"].join(",")})`;
     for (const row of rows) if (row.core === core) c.fillRect(m + row.x0, m + row.y, row.x1 - row.x0 + 1, 1);
   }
   c.restore();
-}
-
-/** The core's own alpha, laid over the rim so the two together reach SHADOW_ALPHA.core. */
-function coreOver() {
-  return 1 - (1 - SHADOW_ALPHA.core) / (1 - SHADOW_ALPHA.rim);
 }

@@ -183,7 +183,37 @@ export function paintEnemy(c: CanvasRenderingContext2D, t: Tile, legacy = false)
   c.restore();
 }
 
-/** An enemy with its pixel-art ground shadow (render/enemy-shadow.ts), glow, outline, chevrons and a Fast enemy's mark, on a canvas ENEMY_MARGIN
+/** Enemy ground shadows by sprite and whether the enemy flies. */
+const enemyShadows = new Map<string, HTMLCanvasElement | null>();
+onSpritesLoaded(() => enemyShadows.clear());
+
+/** An enemy's pixel-art ground shadow (render/enemy-shadow.ts), multiplied
+ * onto the ground under it. Drawn in its own pass before the contents and
+ * after the room's darkness, so it darkens the lit floor rather than taking
+ * the sprites' lighter share of the darkness. */
+export function paintEnemyShadow(c: CanvasRenderingContext2D, e: Enemy, legacy = false) {
+  const key = `${kitEnemy(e, legacy)}|${!!e.flying}`;
+  let shadow = enemyShadows.get(key);
+  if (shadow === undefined) enemyShadows.set(key, (shadow = bakeShadow(e, legacy)));
+  if (!shadow) return;
+  c.save();
+  c.imageSmoothingEnabled = false;
+  c.globalCompositeOperation = "multiply";
+  c.drawImage(shadow, -ENEMY_MARGIN, -ENEMY_MARGIN);
+  c.restore();
+}
+
+function bakeShadow(e: Enemy, legacy: boolean) {
+  const body = square(24), bc = body.getContext("2d")!;
+  drawKit(bc, kitEnemy(e, legacy));
+  const alpha = bc.getImageData(0, 0, 24, 24)?.data.filter((_, i) => i % 4 === 3);
+  if (!alpha) return null;
+  const out = square(24 + 2 * ENEMY_MARGIN);
+  paintShadowRows(out.getContext("2d")!, shadowRows(alpha, !!e.flying), ENEMY_MARGIN);
+  return out;
+}
+
+/** An enemy with its glow, outline, chevrons and a Fast enemy's mark, on a canvas ENEMY_MARGIN
  * wider than the tile on every side. The rings go on from the outside in,
  * each cutting out what lies inside it first, so every band keeps exactly
  * its own opacity; the sprite goes on last. */
@@ -203,13 +233,6 @@ function bakeEnemy(e: Enemy, legacy: boolean) {
   }
   oc.globalAlpha = 1;
   oc.drawImage(body, m, m);
-  // The shadow goes in behind everything, so the rings' cut-outs leave it whole.
-  const alpha = bc.getImageData(0, 0, 24, 24)?.data.filter((_, i) => i % 4 === 3);
-  if (alpha) {
-    oc.globalCompositeOperation = "destination-over";
-    paintShadowRows(oc, shadowRows(alpha, !!e.flying), m);
-    oc.globalCompositeOperation = "source-over";
-  }
   const rank = RANK_CHEVRONS[e.strength];
   const rankId = rank.down ? COMBAT_MARKS.rankDown : COMBAT_MARKS.rankUp;
   for (let i = 0; i < rank.count; i++) drawKit(oc, rankId, m, m + i * 4, 7, 6);
