@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { artScreenPixels, stepZoom, zoomForScale, zoomLook, zoomOffset, zoomSteps, ZOOM_CANVAS_MAX } from "../src/render/dev-zoom.ts";
+import { artScreenPixels, stepZoom, zoomForScale, zoomLook, anchorOffset, clampOffset, zoomSteps, ZOOM_CANVAS_MAX } from "../src/render/dev-zoom.ts";
 
 test("dev zoom's steps are whole screen pixels an art pixel, ending just past ×4", () => {
   for (const [width, dpr] of [[390, 3], [700, 1], [360, 2], [1024, 1.25], [408, 1]]) {
@@ -38,7 +38,18 @@ test("the zoomed canvas keeps whole canvas pixels an art pixel, within its cap",
   assert.equal(zoomLook(3, 2.5, 17).perArtPixel, 3);
 });
 
-test("the zoom centres the hero but never shows past the board", () => {
-  assert.deepEqual(zoomOffset(200, 200, 400, 4, 1), { x: -600, y: -600 });
-  assert.deepEqual(zoomOffset(0, 400, 400, 4, 1), { x: 0, y: -1200 });
+test("zooming keeps the point under the pointer still", () => {
+  // At ×1 with no offset the board point under 100 is 100; at ×4 it must stay at 100.
+  const t = anchorOffset(0, 100, 1, 4);
+  assert.equal(t + 100 * 4, 100);
+  // Zooming further from ×4 to ×8 about 300: that board point stays put.
+  const u = (300 - t) / 4, t2 = anchorOffset(t, 300, 4, 8);
+  assert.equal(t2 + u * 8, 300);
+});
+
+test("panning never shows past the board", () => {
+  assert.equal(clampOffset(50, 400, 4, 1), 0);
+  assert.equal(clampOffset(-5000, 400, 4, 1), -1200);
+  assert.equal(clampOffset(-600.3, 400, 4, 2), -600.5);
+  assert.equal(clampOffset(-30, 400, 1, 1), 0);
 });

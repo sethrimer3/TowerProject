@@ -1225,6 +1225,9 @@ html.reduce-motion #stuck-end-run.lesson-flash { animation: none; }
   border-color: #b59861;
   color: #ecd19d;
 }
+/* Before Auto-Climb, while the hero waits for a card to be tapped, the
+   play/pause button's outline greys out. */
+#auto.waiting:not(#_) { border-color: #5f6164; }
 .tile-highlight {
   position: absolute;
   z-index: 4;

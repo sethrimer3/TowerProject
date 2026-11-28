@@ -106,8 +106,6 @@ The **Toggles** button opens a menu of what the board shows during a run, each t
 Below them, the **Arcana** group, closed until you open it, holds the arcana's own toggles ([Arcana](arcana.md)).
 Materials, Lore, Gems and Free Training's levels always show.
 The **Dev Mode** toggle near the bottom shows the testing tools under it while it is on, and turning it off turns them off; it grants nothing itself.
-While it is on, the mouse wheel or a two-finger pinch on the board zooms it in about the hero, a pinch no longer entering Cinematic mode.
-Each step keeps the art's pixels crisp, and the last is the first such step past ×4.
 Its first, **Unlimited currency**, is the Dev mode these pages speak of: it fills the purse and shows it as ∞, and lets the hero walk by hand inside a run, but unlocks nothing.
 **Free purchases** is a lighter tool for testing: it unlocks nothing, but every purchase (skills, Training, provisions, research and archivists) goes through whatever you have and costs nothing, and research completes the moment it starts.
 **Access to Everything** lets you see everything without changing your progress, only while it is on: every tower, Warp to any Goals checkpoint, every UI and Game theme, every page and tab, every skill tree with its hidden skills, locked Archives research, every provision (those not unlocked marked Locked), every rarity's powers on each card, every Training row (those you can't train yet shown Locked, on the Training page and in a climb's Training groups), every Settings row and every Proving Grounds boss.
