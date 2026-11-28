@@ -6,9 +6,9 @@ import { DecorBaker, paintKitFlower, paintKitPlant, paintPlantBody } from "./dec
 import type { ShadowCaster } from "../entity-lighting.ts";
 import { DecorEffects, type EffectFrame, type TileAt } from "./decor-effects.ts";
 import { WaterReflections, type MirroredSprites, type ReflectionScene, type Wave } from "./decor-reflections.ts";
-import { kitImage, spriteRevision } from "../../sprites/kit.ts";
+import { spriteRevision } from "../../sprites/kit.ts";
 import { dungeonWallDepth } from "../wall-depth.ts";
-import { FLOWER_LIGHTS, FLOWER_SPRITES, GLOWCAP_LIGHT, GLOWCAP_SPRITES } from "../../sprites/environment.ts";
+import { FLOWER_LIGHTS, GLOWCAP_LIGHT } from "../../sprites/environment.ts";
 import { drawBlades, drawCrates, DRIP_FALL, dripNow, dripRings, PixelBatch, ring, type DripNow, type Sway } from "./decor-sprites.ts";
 
 export type { MirroredSprites } from "./decor-reflections.ts";
@@ -280,12 +280,12 @@ export class DecorLayer {
       for (const f of d.flowers)
         out.push({
           x: x + (f.i + 0.5) / TILE_PX - 0.5, y: y + 0.5 - (f.j + 0.5) / TILE_PX,
-          rgb: styled && kitImage(FLOWER_SPRITES[f.color]) ? FLOWER_LIGHTS[f.color] : FLOWER_COLORS[f.color], radius: 0.62, strength: 0.5,
+          rgb: styled ? FLOWER_LIGHTS[f.color] : FLOWER_COLORS[f.color], radius: 0.62, strength: 0.5,
         });
       for (const p of d.plants)
         if (p.kind === "mushrooms" && p.glow)
           out.push({ x: x + (p.i + 0.5) / TILE_PX - 0.5, y: y + 0.5 - (p.j - 1) / TILE_PX,
-            rgb: styled && kitImage(GLOWCAP_SPRITES[p.variant]) ? GLOWCAP_LIGHT : GLOWCAP, radius: 0.5, strength: 0.42 });
+            rgb: styled ? GLOWCAP_LIGHT : GLOWCAP, radius: 0.5, strength: 0.42 });
     });
     return out;
   }
@@ -433,11 +433,11 @@ type GlowFrame = { t: number; k: number; pulse: boolean };
 function bloom(px: PixelBatch, [x, y, d]: DecorTile, glow: GlowFrame, c: CanvasRenderingContext2D, styled: boolean) {
   for (const f of d.flowers) {
     const pulse = glow.pulse ? 0.8 + 0.2 * Math.sin(glow.t * 1.6 + f.i + x * 2.1 + y) : 1;
-    if (!(styled && kitBloom(c, x, y, glow.k * pulse, () => paintKitFlower(c, f)))) flowerGlow(px, [x, y], f, glow);
+    if (!(styled && kitBloom(c, x, y, glow.k * pulse, () => paintKitFlower(c, f, false)))) flowerGlow(px, [x, y], f, glow);
   }
   for (const p of d.plants) if (p.kind === "mushrooms" && p.glow) {
     const pulse = glow.pulse ? 0.75 + 0.25 * Math.sin(glow.t * 0.9 + p.i * 1.7 + y) : 1;
-    if (!(styled && kitBloom(c, x, y, glow.k * pulse, () => paintKitPlant(c, p)))) capGlow(px, [x, y], p, glow);
+    if (!(styled && kitBloom(c, x, y, glow.k * pulse, () => paintKitPlant(c, p, false)))) capGlow(px, [x, y], p, glow);
   }
 }
 

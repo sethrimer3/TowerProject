@@ -1,11 +1,13 @@
 import { kitImage, onSpritesLoaded } from "./kit.ts";
 
-export type OutlineKind = "gold" | "blue" | "black";
+export type OutlineKind = "gold" | "blue" | "black" | "solid";
 /** Upper-left light, body and lower-right shade, on one native-pixel rim. */
 export const OUTLINE_PALETTES = {
   gold: [[255, 234, 159], [225, 177, 64], [136, 88, 30]],
   blue: [[168, 225, 255], [67, 152, 233], [33, 71, 137]],
   black: [[18, 19, 24], [3, 4, 6], [0, 0, 0]],
+  /** Pure black all round, for the half-pixel props (half-props.ts). */
+  solid: [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
 } as const;
 
 /** Dilate only the exterior air by one pixel, orthogonally: an air pixel

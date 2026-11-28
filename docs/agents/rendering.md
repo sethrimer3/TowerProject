@@ -55,7 +55,11 @@ Each effect keeps its original renderer until its PNG is ready and when the effe
 `sprites/board-marks.ts` supplies native Target/Ignore (16 pixels) and skipped/blocked X (12 pixels) PNGs inside the same 24-pixel tile grid, preserving blocked-mark fading.
 `boardFont` in `sprites/font.ts` selects the original bundled Tower Pixel face for Classic kit annotations, damage/reward numbers, level-up text and forest signs; other Game themes preserve the original font strings.
 `EntityLighting` paints silhouettes from the active PNG contents and hero facing; both shadow and highlight caches clear immediately when the effective style or image revision changes.
-`sprites/pixel-outline.ts` generates cached one-pixel orthogonal (4-neighbour, never the diagonal corner) exterior contours from sprite alpha, rasterized at the size drawn: shaded gold for pickups/chests, blue for heroes/stairs/one-way markers and black for standard and square doors, torches (each animation frame too), barrels, crates and their wreckage.
+`sprites/pixel-outline.ts` generates cached one-pixel orthogonal (4-neighbour, never the diagonal corner) exterior contours from sprite alpha, rasterized at the size drawn: shaded gold for pickups/chests, blue for heroes/stairs/one-way markers and black for standard and square doors and torches (each animation frame too).
+`sprites/half-props.ts` draws the small props (crates, barrels and their wreckage, tufts, ferns, sprouts, mushrooms and glowcaps, pebbles, webs and flowers) at twice the world's density, each sprite pixel half a world pixel, with a solid black orthogonal outline (`pixelOutline`'s `solid` palette) also half a world pixel wide; webs alone go without one.
+Crates and barrels are generated at their planned box size (so the outline always fits the box), the rest are hand-drawn 24 × 24 (flowers 16 × 16) letter grids; each sprite and its outlined copy is rasterized once and cached, and drawing is one blit.
+The decor bake draws a tile with any of these props at 48 pixels a tile (the native moss and water scaled up beneath them), so the half pixels survive into the ground cache.
+The old crate, barrel, wreck, plant, glowcap and flower PNGs stay in the kit for interface uses but are no longer drawn on the board.
 Floors beside a wall draw a one-pixel near-black line along each side a wall stands on (`WALL_OUTLINE` in `sprites/dungeon.ts`), so walls wear the same orthogonal outline, and `Renderer.drawWallOutlines` draws it again after the decor ground so moss and flora never cover it; enemy rims (`dilated` in `render/tile-painters.ts`) grow in orthogonal steps, a diamond rather than a disc.
 An exterior-air flood fill leaves interior holes and all original texels untouched, including translucent pixels; three hard palette colors follow the kit's upper-left light and nearest-neighbor scaling.
 Only world painters request the contours, so inventory/control icons retain their original art; the hero's existing idle-frame alpha invariant lets all its frames share one contour per facing.
@@ -65,7 +69,7 @@ Other Game themes keep their own drawing and portrait art; changing UI themes af
 `environmentPixels` decodes material and vine PNGs once; `DecorBaker` samples water texels through the existing pool masks, preserving bank/shore/depth selection.
 Moss instead uses world-coordinate clump noise and a small stepped palette through its unchanged coverage mask, so detail continues across horizontal and vertical tile joins without restarting a non-periodic PNG.
 Vine leaves attach to the seeded stem joints, clipped to their tile and out of water; stems remain one-pixel connectors.
-Flowers and glowing caps replace their procedural bodies only after loading, and their emitted pixels and light colors follow the active PNGs.
+With the kit on, flowers and glowing caps are half-pixel props (`half-props.ts`), and their emitted pixels and light colors follow that art.
 The light-color cache includes effective style and image revision, while source plans, light geometry, water motion and interactions stay unchanged.
 `sprites/forest.ts` defines twenty native forest components and two dedicated entrance bases, exported from the forest source atlases by `tools/prepare-forest-sprites.mjs`.
 The Tower base is 216 × 216 (nine tiles wide), the mountain base 360 × 240 (fifteen tiles wide); their bottom centers meet the existing stairs tile, and their cropped tops continue beyond the northern view without a complete roof or peak.
@@ -410,7 +414,7 @@ Trial floor-edge torches, wooden crates and potions use separate tiles; crates r
 Destroyed torch stands paint only charred fragments and contribute no darkness-mask light; both passes read the persisted `destroyed` map.
 The trial render scenes include intact edge props, beam damage to torch stands and crates, and darkness after the remaining beam glow fades.
 `TrialRenderer` receives the Animations setting; shared tile, item, hero and torch painters always supply native PNG terrain, props and facing/idle art.
-Native crate and wreck pieces use 24 and 12 pixels respectively and are preloaded with the rest of the kit.
+Trial crates and their wreckage are the board's half-pixel props (`half-props.ts`), a 16-pixel crate drawn at 32 half pixels.
 
 Trial manual/hybrid clicks add a native one-pixel gold outline inside the destination tile; the `manualDestination` scene appends coverage without changing existing render frames.
 

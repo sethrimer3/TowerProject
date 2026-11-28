@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { paintKitFlower, paintKitPlant } from "../src/render/decor/decor-bake.ts";
+import { recorder, withPropDom } from "./half-prop-dom.ts";
 import { ENVIRONMENT_SPRITES, FLOWER_SPRITES, GLOWCAP_SPRITES, MOSS_SPRITES, VINE_SPRITES, WATER_SPRITES } from "../src/sprites/environment.ts";
 
 test("environment PNGs retain native density and distinct material/plant variants", () => {
@@ -21,23 +22,19 @@ test("environment PNGs retain native density and distinct material/plant variant
   assert.equal(VINE_SPRITES.length, 2);
 });
 
-test("flowers and glowing mushroom variants use native pixels at their planned anchors", () => {
-  const original = Object.getOwnPropertyDescriptor(globalThis, "Image");
-  class ReadyImage { src = ""; complete = true; naturalWidth = 12; }
-  Object.defineProperty(globalThis, "Image", { configurable: true, value: ReadyImage });
-  const draws: unknown[][] = [];
-  const c = { save() {}, restore() {}, drawImage(image: ReadyImage, ...args: number[]) { draws.push([image.src.split("/").at(-1), ...args]); } } as unknown as CanvasRenderingContext2D;
-  try {
-    FLOWER_SPRITES.forEach((id, color) => {
+test("flowers and glowing mushroom variants are half-pixel props, outlined, at their planned anchors", () => {
+  withPropDom(() => {
+    const { c, calls } = recorder();
+    FLOWER_SPRITES.forEach((_, color) => {
       assert.equal(paintKitFlower(c, { i: 10, j: 15, color }), true);
-      assert.deepEqual(draws.at(-1), [`${id}.png`, 6, 11, 8, 8]);
+      // 16 half pixels and a one-half-pixel rim each side: 9 world pixels, from half a pixel outside the anchor box.
+      assert.deepEqual(calls.at(-1), ["18x18", 5.5, 10.5, 9, 9]);
     });
-    GLOWCAP_SPRITES.forEach((id, variant) => {
+    GLOWCAP_SPRITES.forEach((_, variant) => {
       assert.equal(paintKitPlant(c, { kind: "mushrooms", glow: true, variant, i: 10, j: 20 }), true);
-      assert.deepEqual(draws.at(-1), [`${id}.png`, 4, 10, 12, 12]);
+      assert.deepEqual(calls.at(-1), ["26x26", 3.5, 9.5, 13, 13]);
     });
-  } finally {
-    if (original) Object.defineProperty(globalThis, "Image", original);
-    else Reflect.deleteProperty(globalThis, "Image");
-  }
+    assert.equal(paintKitFlower(c, { i: 10, j: 15, color: 0 }, false), true);
+    assert.deepEqual(calls.at(-1), ["16x16", 6, 11, 8, 8], "the bloom paints the sprite alone");
+  });
 });
