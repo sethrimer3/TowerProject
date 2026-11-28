@@ -128,8 +128,7 @@ export class CatacombBoard {
       this.cue("lightningZap");
       if (event.killed) this.cue("bodyFall", THUNDERBOLT_FALL_MS);
     } else {
-      // A potion that healed shows only its heal over the hero, as a run's does.
-      if (!(Math.round(event.mhp) > 0)) this.popups.reward({ x: event.x, y: N - 1 - event.y, text: "Potion", art: { tile: { kind: "potion", color: "red" } } }, now);
+      // A potion raises no sprite, only its heal over the hero, as a run's does.
       this.popups.potionHeal(up(hero), event.mhp, now);
       this.cue("potion");
     }

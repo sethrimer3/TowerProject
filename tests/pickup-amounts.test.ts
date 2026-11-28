@@ -37,14 +37,14 @@ test("an ATK or DEF shard rises with the amount it added", () => {
   }
 });
 
-test("a potion that heals shows only its heal; one drunk at full HP still rises", () => {
+test("a potion raises no sprite, only its heal", () => {
   const hurt = beside({ kind: "potion" }, 40);
   assert.ok(hurt.move(1, 0));
   assert.deepEqual(tileGains(hurt), [], "no potion rises");
   assert.ok(hurt.lastHeal && hurt.lastHeal.to > hurt.lastHeal.from, "the heal rises over the hero");
   const full = beside({ kind: "potion" }, 100);
   assert.ok(full.move(1, 0));
-  assert.equal(tileGains(full).length, 1, "the potion rises, so it is seen taken");
+  assert.deepEqual(tileGains(full), [], "none at full HP either");
   assert.equal(full.lastHeal, null);
 });
 

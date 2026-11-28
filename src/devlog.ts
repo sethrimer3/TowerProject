@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-28", text: "A potion picked up no longer rises over the other pickups: only its heal shows over the hero." },
   { date: "2026-11-28", text: "Shards now rise as the ATK or DEF they added, and a potion that heals shows only its heal over the hero." },
   { date: "2026-11-28", text: "Catacombs: Magic levels start at 240 MXP, Spirit upgrades open by hall, a Spell Surge upgrade and Hide Maxed." },
   { date: "2026-11-28", text: "Catacombs: faster Magic levels, Spirit Potion and Zap to unlock, and seven new Spirit upgrades." },

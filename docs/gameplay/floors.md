@@ -36,7 +36,7 @@ Gold Bonus training and research multiply it, as they do a kill's Gold and the w
 They multiply Gold / Floor too, and the Silver Interest pays, after Max Interest stops it, so Interest can pay more than that limit.
 Its coin rises over the item as it is picked up, beside the key or HP a door takes; each tile pays once a run.
 An ATK or DEF shard rises as the amount it added beside its icon (+3 and the shard), and so does a pickup that gives more than one key.
-A potion that heals shows only the HP it healed, as a blue +N over the hero; one taken at full HP still rises, so you see it taken.
+A potion shows only the HP it healed, as a blue +N over the hero, never the potion itself, so it never covers what rises with it.
 The same holds in the Delve, the Proving Grounds and the Catacombs.
 Settings can turn off each kind of these rising gains: item pickups, what doors take, Gold and Silver.
 

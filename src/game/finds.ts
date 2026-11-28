@@ -133,9 +133,9 @@ export class Finds {
     const { missions, events } = this.host, text = pickupText(t, outcome, this.host.stepRules);
     this.notePickup(t, outcome);
     if (text) {
-      // A potion that healed shows only its heal, a blue +N over the hero
-      // (`recordHeal`); one drunk at full HP still rises, so it is seen taken.
-      if (t.kind !== "potion" || !(outcome.healed > 0)) this.host.gain(x, y, text, { tile: { ...t } });
+      // A potion raises no sprite, only its heal, a blue +N over the hero
+      // (`recordHeal`), so it never covers what rises with it.
+      if (t.kind !== "potion") this.host.gain(x, y, text, { tile: { ...t } });
       // A key card held pays its Gold on top of the key's own, and KEY's
       // tree raises it; ATK UP's and DEF UP's trees raise a shard's.
       const tree = this.host.powerBonus;
