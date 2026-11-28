@@ -30,6 +30,9 @@ This library is not connected to gameplay; relic numbers identify artwork only a
 `sprites/options.ts` provides six full-tile square door PNGs and a four-frame torch strip, controlled by the saved `squareDoors` and `spriteAnimations` settings only while the effective Game kit is active.
 Square doors retain live key and HP requirement marks, including mixed locks; startup preloading prevents gameplay from starting with missing PNGs.
 Torch frames share the original stationary hardware, advance at 130 milliseconds with spatial phase, and freeze when Reduce motion is on.
+On the board, `paintTorch` draws only the sprite's stand and bowl (the rows from `TORCH_HARDWARE_ROW` down) and burns a live fire in the bowl instead of the baked flame: `render/torch-fire.ts` (`paintTorchFire`), ported from TowerDefense's city torches, an ember bed and thirteen tongues rising off it, hottest first, in art pixels twice as fine as the sprite's (48 a tile), snapped to whole screen pixels.
+Each torch's tongues are its own, from a hash of its tile; Reduce motion holds the fire still.
+The lighting's silhouettes (`paintTorch` without the outline) and the water mirror's snapshots keep the baked sprite.
 The water reflection style key includes both options so warmed snapshots refresh immediately on a toggle.
 `sprites/animations.ts` adds native PNG potion bubbles, rare key glints, four-direction hero idle frames and the skull-and-crossbones death strip.
 Ambient motion requires the effective Classic Game kit, Animations on and Reduce motion off; potion/key bodies stay static and lifted reward icons omit their ambient overlays.
@@ -182,6 +185,7 @@ The passes live in their own modules.
 A wall tile's corners come from the native wall sprites' own corner pieces (`dungeon-corners.png`, above).
 No procedural corner brick or quoin is painted over them.
 Items, the torch and the hero wear a coloured outline (`withOutline`); an enemy is baked once per name, tier, `strength` and whether it is Fast or Ranged (`bakeEnemy`, an arrow at the top right for Ranged, the Fast mark below it when both: a one-pixel black outline, then `ENEMY_LOOK`'s bands outside it and rank chevrons over it (`rankChevrons` in `render/rank-chevrons.ts`, `RANK_CHEVRONS`: a weak enemy's one pointing down, one for strong, two for elite, three for a boss, four for a Greater Boss), and a Fast enemy's cyan fast-forward mark at the top right, `fastMark`; the Neon enemy draws one too), and its dark-room glow in `render/lighting.ts` is keyed by strength too.
+The bake also puts the enemy's ground shadow behind it (`render/enemy-shadow.ts`): `shadowRows` reads the sprite's alpha once and returns a stepped oval of one span a row, three pixels wider each side than its bottom four solid rows, centred under them and a row lower so it shows past the rim, with a darker core inset two pixels (a Flying enemy's sits smaller, on the floor); both tones stay under the torch silhouette's alpha cut, and `tests/enemy-shadow.test.ts` covers the shape.
 Only opaque bands cast torch shadows.
 Ground uses the dedicated native dungeon PNGs through `render/tile-painters.ts`.
 `render/themes.ts` retains biome palette selection and neighbor metadata; the procedural Classic terrain renderer and old area-one/themed tileset loaders are removed.
