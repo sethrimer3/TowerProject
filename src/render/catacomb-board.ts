@@ -47,6 +47,9 @@ const SPIRIT_COLORS: Record<SpiritRarity, string> = {
 /** A crosshair over an undead, pulsing: red-white, or gold. */
 function paintCrosshair(c: CanvasRenderingContext2D, gold: boolean, now: number, reduceMotion: boolean) {
   const r = 8 + (reduceMotion ? 0 : Math.round(Math.sin(now / 160)));
+  // Turning slowly, a full turn every CROSSHAIR_TURN_MS.
+  c.save();
+  if (!reduceMotion) { c.translate(12, 12); c.rotate(((now % CROSSHAIR_TURN_MS) / CROSSHAIR_TURN_MS) * Math.PI * 2); c.translate(-12, -12); }
   c.strokeStyle = "#000000aa";
   c.lineWidth = 3;
   c.beginPath(); c.arc(12, 12, r, 0, Math.PI * 2); c.stroke();
@@ -56,7 +59,10 @@ function paintCrosshair(c: CanvasRenderingContext2D, gold: boolean, now: number,
   c.fillStyle = gold ? GOLD_COLOR : "#ffffff";
   c.fillRect(11, 12 - r - 3, 2, 5); c.fillRect(11, 12 + r - 2, 2, 5);
   c.fillRect(12 - r - 3, 11, 5, 2); c.fillRect(12 + r - 2, 11, 5, 2);
+  c.restore();
 }
+/** How long a crosshair takes to turn once. */
+const CROSSHAIR_TURN_MS = 6000;
 
 /** Native portrait URL for callers outside the shared icon renderer. */
 export const undeadIconUrl = (id: UndeadId) => kitUrl(undeadSprite(id));
@@ -187,7 +193,7 @@ export class CatacombBoard {
     const hall = run.hall;
     // `paintTile` reads north as y + 1, so the board is addressed bottom up: board y is the row from the bottom.
     const cell = (x: number, y: number): HallCell => hallCell(hall, x, N - 1 - y);
-    const world = { tile: (x: number, y: number): Tile => ({ kind: cell(x, y) === "wall" || cell(x, y) === "torch" ? "wall" : "floor" }) };
+    const world = { tile: (x: number, y: number): Tile => ({ kind: cell(x, y) === "wall" ? "wall" : "floor" }) };
     const look: BoardLook = { mode: "tower", tier: 3, height: hall, seed: hall, outside: false, entranceX: 0, reduceMotion, themed: null, styledSprites, spriteAnimations: false };
     const at = (row: number, x: number, draw: () => void) => { c.save(); c.translate(x * S, row * S); draw(); c.restore(); };
     for (let row = 0; row < N; row++) for (let x = 0; x < N; x++) {

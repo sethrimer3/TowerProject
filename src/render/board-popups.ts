@@ -296,15 +296,22 @@ export class BoardPopups {
   reward(gain: Gain, start: number) {
     this.rewards.push({ x: gain.x, y: gain.y + (gain.drop?.row ?? 0) * DROP_ROW, start, gain });
   }
+  /** An HP bar over `on` from `start`, as an arrow's: draining from `from`
+   * to `hp` of `full`, held, then fading (at once for a felled enemy). */
+  bar(on: At, from: number, hp: number, full: number, start: number) {
+    if (full > 0) this.arrowBars.push({ x: on.x, y: on.y, from, hp, full, start });
+  }
   /** Lets go of what has finished rising, for a board that never calls `update`. */
   expire(now: number) {
     this.rewards = this.rewards.filter((p) => now < p.start + POPUP_MS);
     this.numbers = this.numbers.filter((p) => now < p.start + POPUP_MS);
+    this.arrowBars = this.arrowBars.filter((b) => now < b.start + arrowBarMs(b));
   }
   /** Lets go of everything at once (a board shown afresh). */
   clear() {
     this.rewards = [];
     this.numbers = [];
+    this.arrowBars = [];
   }
   /** Nothing is rising or waiting to, and the enemy's HP bar is still. */
   idle(now: number) {

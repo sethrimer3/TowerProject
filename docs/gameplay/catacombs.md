@@ -20,6 +20,7 @@ The Magician walks each hall left to right, a turn a second: a dash to the next 
 Deeper halls bring stronger undead: Skeletons from Hall 11, Ghouls from 25, Vampires from 49, Liches from 80 and Demons from 200.
 Some halls are always the same, such as Hall 45's six Wisps and Hall 395's one of each from Ghost to Demon.
 A fall starts the run again at Hall 1 with full MHP; MXP, Lore, Spirit and Ingots are kept.
+The hall shows "The hero rises and tries again..." as it does.
 The HUD shows the Magician's MHP, MAtk and MDef, the Magic level and its MXP, unspent magic skill points in the portrait's corner, Lore in place of Silver, the hall in place of the floor, and the Spirit you hold in place of the Gold bonus.
 The enemy box shows a Wisp here; tap it for every undead the hall can hold, its chance, stats and rewards, and the Lore bonus.
 An undead's HP bar shows over it once it is struck, as in a climb.
@@ -52,7 +53,7 @@ An MHP Drop (red) gives back 30 to 100 MHP, never past your maximum.
 Every Drop's chance starts at 0% and grows with Skills.
 
 **Crosshairs and potions.** While you watch, you can tap the hall for a little extra.
-Each turn, an undead may gain a crosshair.
+Each turn, an undead may gain a crosshair, which turns slowly over it.
 Tap it (or the wall just above or below the undead) for a free hit: a thunderbolt strikes it, which can be an MCrit and spends no turn.
 A Gold Crosshair hits three times as hard; Fortune gives the chance of one.
 Each turn, a potion may also appear on a tile beside the corridor.

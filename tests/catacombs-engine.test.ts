@@ -9,7 +9,7 @@ import { seedAll } from "./catacombs-seed.ts";
 import {
   BANK_GAP_MS, catacombTurn, CORRIDOR_ROW, decodeCatacombs, deepFactors, defaultCatacombs, enterCatacomb, hallCell, hallStrength,
   hallTargets, magician, ingotAmount, loreOnTile, magicLevel, movePoint, mxpForLevel, mxpToNext, newCarry, noPoints, pointsEarned,
-  rollSlots, runTurns, setHaste, SLOT_XS, spawnOdds, startRun, tick, undeadRewards, undeadStats, offlineSeconds, UNDEAD,
+  rollSlots, runTurns, setHaste, SIDE_TILES, SLOT_XS, spawnOdds, startRun, tick, undeadRewards, undeadStats, offlineSeconds, UNDEAD,
   type CatacombSave, type Slot,
 } from "../src/catacombs/index.ts";
 
@@ -40,10 +40,14 @@ test("treasure rooms open by hall, each reachable from the corridor's middle", (
   assert.deepEqual(ingotsOn(15), ["brass", "steel"]);
   assert.deepEqual(ingotsOn(20), ["brass", "iron", "nickel"]);
   assert.deepEqual(ingotsOn(60), ["brass", "iron", "steel", "nickel"]);
-  assert.equal(hallCell(5, 8, 2), "torch");
-  assert.equal(hallCell(10, 8, 14), "torch");
-  assert.equal(hallCell(15, 1, 4), "torch");
-  assert.equal(hallCell(20, 1, 12), "torch");
+  // Each room's torch stands inside it, on its far edge; every hall has one up and right of the Lore.
+  assert.equal(hallCell(5, 8, 3), "torch");
+  assert.equal(hallCell(10, 8, 13), "torch");
+  assert.equal(hallCell(15, 2, 4), "torch");
+  assert.equal(hallCell(20, 2, 12), "torch");
+  assert.equal(hallCell(5, 8, 2), "wall");
+  for (const hall of [1, 5, 60]) assert.equal(hallCell(hall, 9, 7), "torch");
+  assert.ok(!SIDE_TILES.some(([x, y]) => x === 9 && y === 7), "no potion lies on the Lore's torch");
   // Walking only the corridor's middle and the rooms, every Ingot is in reach.
   const open = (x: number, y: number) => { const k = hallCell(60, x, y); return k !== "wall" && k !== "torch" && k !== "slot"; };
   const seen = new Set<string>(), todo: [number, number][] = [[8, 8]];

@@ -13,6 +13,8 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-28", text: "Catacomb torches stand inside the rooms and by the Lore, crosshairs turn, and a restart says the hero rises." },
+  { date: "2026-11-28", text: "Trial fights show a climb's HP bars, coins, leans, boss hit numbers, footsteps and stair sounds." },
   { date: "2026-11-28", text: "Catacomb and trial fights rise and sound like a climb's; crosshairs call thunderbolts; Catacomb speeds x2 and x25." },
   { date: "2026-11-28", text: "The Codex Story opens with the family's magic card." },
   { date: "2026-11-28", text: "Zooming in no longer makes lines near walls twitch, and torch shadows hold still as the flame flickers." },

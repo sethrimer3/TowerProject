@@ -52,6 +52,9 @@ export function turnLine(event: TurnEvent | null, slotName: (slot: number) => st
 /** How long a tapped plain tile's box shows before it is gone (2 s, then
  * a second's fade: a run's `tile-info-fade`). */
 const PLAIN_TILE_MS = 3000;
+/** The line a restart flashes over the hall, and how long it shows (its fade
+ * over the last half second is `catacomb-flash-fade` in `style.css`). */
+const RESTART_LINE = "The hero rises and tries again...", RESTART_FLASH_MS = 2500;
 
 /** The haste select's words for a haste. */
 export const hasteLabel = (h: Haste) => (h === 0 ? "×0 (Pause)" : `×${h}`);
@@ -73,6 +76,8 @@ export class CatacombView {
   /** The tile whose box shows, kept up to date each turn; null for none. */
   private inspected: { x: number; y: number } | null = null;
   private plainTimer = 0;
+  /** Hides the restart line once it has faded. */
+  private flashTimer = 0;
   /** Stats, Spirit, Forge and Academy, under the board. A point moved shows at once and counts from the next turn. */
   private menus = new CatacombMenus(() => this.c, () => { this.decorate(); this.ctx.save(); });
   active = false;
@@ -120,6 +125,9 @@ export class CatacombView {
     if (!this.active) return;
     this.active = false;
     this.hideInspect();
+    clearTimeout(this.flashTimer);
+    const flash = document.getElementById("catacomb-flash");
+    if (flash) flash.hidden = true;
     // Nobody watches a paused Catacomb: it plays on, or spends the bank at its haste.
     this.unpause();
     document.documentElement.classList.remove("catacombs");
@@ -234,7 +242,23 @@ export class CatacombView {
       this.last = step.last;
       this.board.turn(this.c.run!, step.last, now, this.ctx.game.save.settings.reduceMotion);
     }
+    if (step.gains.restarts > 0) this.flashRestart();
     if (turns > 0 || step.due.banked > 0 || step.due.slowed) this.decorate();
+  }
+
+  /** A restart's line, flashed over the hall's upper part as a run flashes
+   * its free levels: shown, then fading (`catacomb-flash` in `style.css`). */
+  private flashRestart() {
+    const box = document.getElementById("catacomb-flash") ?? el("board-frame").appendChild(Object.assign(document.createElement("div"), { id: "catacomb-flash", className: "catacomb-flash" }));
+    box.setAttribute("role", "status");
+    box.textContent = RESTART_LINE;
+    box.hidden = false;
+    // Replays the fade from the start when another restart comes before it ends.
+    box.classList.remove("showing");
+    void box.offsetWidth;
+    box.classList.add("showing");
+    clearTimeout(this.flashTimer);
+    this.flashTimer = window.setTimeout(() => { box.hidden = true; }, RESTART_FLASH_MS);
   }
 
   /** The Catacomb's own pieces of the HUD, made once: Lore in the purse, the

@@ -59,3 +59,21 @@ test("a trial's Keymaster mimic struck and beaten sounds as a run's fight, and a
   fx.observe(startTrial({ maxHp: 1000, attack: 10, defense: 0 }, "manual", [], 12, 1, "keymaster"), 300);
   assert.deepEqual(heard, []);
 });
+
+test("a trial's walk steps and climbs as a run's, and the Light Elemental struck answers a moment later", () => {
+  const { heard, cue } = listening(), fx = new TrialFx(cue);
+  const s = startTrial({ maxHp: 1000, attack: 10, defense: 0 }, "manual", [], 12, 1);
+  fx.observe(s, 0);
+  for (let i = 1; i <= 4; i++) { trialStep(s, 0, 1); fx.observe(s, i * 1000); }
+  assert.deepEqual(heard, [["step", 0], ["step", 0], ["step", 0], ["stoneSteps", 0]]);
+  heard.length = 0;
+  // Beside the elemental, the hero strikes it; its radiance answers.
+  s.player.x = s.elemental.x; s.player.y = s.elemental.y - 1; s.steps++; fx.observe(s, 5000);
+  const hp = s.player.hp;
+  trialStep(s, 0, 1);
+  fx.observe(s, 6000);
+  assert.ok(s.player.hp < hp);
+  assert.deepEqual(heard, [["punch", 0], ["punch", 220]]);
+  assert.ok(fx.lean(6100, false).hero.dy > 0, "the hero leans into its strike");
+  assert.equal(fx.lean(6100, true).hero.dy, 0, "but not under Reduce motion");
+});

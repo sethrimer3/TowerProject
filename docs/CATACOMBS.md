@@ -133,15 +133,17 @@ The corridor is rows 7 to 9, columns 0 to 16, laid out left to right:
 
 | Every | Room | Tiles | Opening | Ingot | Torch |
 |---|---|---|---|---|---|
-| 5th hall | upper centre | x 7–9, rows 3–5 | (8, 6) to the corridor | Brass at (8, 4) | above it, (8, 2) |
-| 10th hall | lower centre | x 7–9, rows 11–13 | (8, 10) | Iron at (8, 12) | below it, (8, 14) |
-| 15th hall | upper left | x 2–4, rows 3–5 | (5, 4) and (6, 4) to the upper centre room | Steel at (3, 4) | left of it, (1, 4) |
-| 20th hall | lower left | x 2–4, rows 11–13 | (5, 12) and (6, 12) to the lower centre room | Nickel at (3, 12) | left of it, (1, 12) |
+| 5th hall | upper centre | x 7–9, rows 3–5 | (8, 6) to the corridor | Brass at (8, 4) | (8, 3) |
+| 10th hall | lower centre | x 7–9, rows 11–13 | (8, 10) | Iron at (8, 12) | (8, 13) |
+| 15th hall | upper left | x 2–4, rows 3–5 | (5, 4) and (6, 4) to the upper centre room | Steel at (3, 4) | (2, 4) |
+| 20th hall | lower left | x 2–4, rows 11–13 | (5, 12) and (6, 12) to the lower centre room | Nickel at (3, 12) | (2, 12) |
 
+- Each room's torch stands inside it, on its far edge (beyond the Ingot from the opening).
+- Every hall has a torch up and right of the Lore tile, at (9, 7); no potion lies there.
 - Every 15th hall is also a 5th, and every 20th a 10th, so a left room always has its centre room to open from.
 - An ingot tile's amount is its nth appearance in the run times the number: Brass `hall / 5 × N`, Iron `hall / 10 × N`, Steel `hall / 15 × N`, Nickel `hall / 20 × N`, so it follows from the hall alone.
 - The Lore tile shows its amount on the board (`1 × Lore bonus`), as the forest entrance shows the Gold bonus.
-- Torches use the existing wall torches and lighting (`torches.ts`); a hall is dark crypt stone (`CatacombLook`, new tiles `crypt-floor`, `crypt-wall`, `stairs-down`).
+- Torches use the existing torches (`paintTorch`), standing on the room's floor; a hall is dark crypt stone (`CatacombLook`, new tiles `crypt-floor`, `crypt-wall`, `stairs-down`).
 - Decor may dress a hall but, as everywhere, never alters a tile.
 
 ### Enemies

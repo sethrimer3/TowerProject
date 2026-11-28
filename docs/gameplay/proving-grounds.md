@@ -147,6 +147,8 @@ Defeat the Keymaster by combining direct attacks and door impacts to earn that d
 
 Above the floor area during a trial, a **Boss HP Meter** shows the boss's icon on the left, a health bar with tick marks every 10%, and a shortened HP readout centered over the bar.
 Next to the bar, **Damage this run: X** and **DPT: Y** display the total damage you have inflicted on the boss during the current run and your average damage per turn over the run.
+Each boss, minion, part or mimic you strike shows its HP bar for a moment, as an enemy does in a climb.
+Damage numbers, healing, pickups and their sounds also work as they do in a climb.
 
 ## Single-Round Combat, Magic Tower, and Obelisk
 

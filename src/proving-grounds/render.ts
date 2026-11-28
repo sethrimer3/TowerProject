@@ -9,7 +9,7 @@ import { ARENA_CRATES, ARENA_POTIONS, ARENA_TORCHES, beamCount, beamDirections, 
 
 import {drawKeymaster,drawKeymasterTransit,drawMimic,drawDoorSpirits} from "./keymaster-art.ts";
 import {KEYMASTER_DOORS,DOOR_FLIGHT_MS} from "./keymaster.ts";
-import {drawMagicTowerBoss,drawObeliskBoss,drawBossPart,drawBossMinion,drawCombatRoundOverlay} from "./boss-variants-art.ts";
+import {drawMagicTowerBoss,drawObeliskBoss,drawBossPart,drawBossMinion,drawCombatRoundOverlay,drawCoin} from "./boss-variants-art.ts";
 import {activeBossParts} from "./boss-variants.ts";
 import { drawLightElemental, drawElementalTransit, TELEPORT_MS } from "./elemental-art.ts";
 export { drawLightElemental } from "./elemental-art.ts";
@@ -167,26 +167,18 @@ export class TrialRenderer {
               paintContents(c, { kind: item.kind, amount: item.amount }, { x: item.x, y: item.y, time: now, reduceMotion, styledSprites: styled, spriteAnimations: animated, seed: s.seed });
             } else if (item.kind === "potion") {
               paintContents(c, { kind: "potion", color: "red" }, { x: item.x, y: item.y, time: now, reduceMotion, styledSprites: styled, spriteAnimations: animated, seed: s.seed });
-            } else {
-              c.fillStyle = item.kind === "gold" ? "#ffd34d" : "#d9e6f5";
-              c.beginPath();
-              c.arc(12, 14, 4, 0, Math.PI * 2);
-              c.fill();
-              c.strokeStyle = "#1b1408";
-              c.lineWidth = 1;
-              c.stroke();
-            }
+            } else drawCoin(c, item.kind === "gold" ? "gold" : "silver", 12, 14);
           });
         }
       }
     }
     const hero=this.camera.hero(s);
     const combatProgress=s.bossVariant?.lastRound ? (reduceMotion ? 0.5 : Math.min(1, Math.max(0, (now - this.combatAt) / 380))) : 1;
-    const roundLunge = s.bossVariant?.lastRound && s.bossVariant.lastRound.heroDamage > 0 && combatProgress < 1
-      ? Math.sin(combatProgress * Math.PI) * 0.32
-      : 0;
-    const heroDrawX = hero.x + (s.bossVariant?.lastRound ? (s.bossVariant.lastRound.to.x - s.bossVariant.lastRound.from.x) * roundLunge : 0);
-    const heroDrawY = hero.y + (s.bossVariant?.lastRound ? (s.bossVariant.lastRound.to.y - s.bossVariant.lastRound.from.y) * roundLunge : 0);
+    // The hero leans into each strike and the foe into its answer, as a run's (`TrialFx.lean`).
+    const lean=this.fx.lean(now,reduceMotion);
+    const leaning=(x:number,y:number)=>lean.foe && lean.foe.x===x && lean.foe.y===y ? lean.foe : {dx:0,dy:0};
+    const foeTile=(x:number,y:number,draw:()=>void)=>{const l=leaning(x,y);tile(x+l.dx,y+l.dy,draw);};
+    const heroDrawX = hero.x + lean.hero.dx, heroDrawY = hero.y + lean.hero.dy;
     tile(heroDrawX,heroDrawY,()=>paintHero(c,this.facing,idle));
     if (s.room === "arena") {
       if(!s.keymaster && !s.bossVariant) {
@@ -219,7 +211,7 @@ export class TrialRenderer {
         c.drawImage(this.darkness,0,0);
         if(unlit)floorFields();
         // Keep the player readable without lighting a circle of floor.
-        if(!POSITION_HALOS_ENABLED) tile(hero.x,hero.y,()=>paintHero(c,this.facing,idle));
+        if(!POSITION_HALOS_ENABLED) tile(heroDrawX,heroDrawY,()=>paintHero(c,this.facing,idle));
       }
       // Cracks persist for the whole attempt; their heat subsides over 30 turns.
       for(const [k,step] of Object.entries(s.scorches)) {
@@ -255,14 +247,13 @@ export class TrialRenderer {
           drawTransit(c,{x:px(boss.teleport.from.x),y:py(boss.teleport.from.y)},
             {x:px(boss.x),y:py(boss.y)},transit,s.seed^boss.teleport.step);
         }
-        if(transit>.78) tile(boss.x,boss.y,()=> {
+        // Its HP shows in the meter over the board, and in a run's bar as it is struck (`TrialFx`).
+        if(transit>.78) foeTile(boss.x,boss.y,()=> {
           c.save(); c.globalAlpha=transit<1?(transit-.78)/.22:1;
           if(s.keymaster)drawKeymaster(c,now,reduceMotion,boss.incorporeal);
           else if(s.trialId==="magic-tower")drawMagicTowerBoss(c,now,reduceMotion);
           else if(s.trialId==="obelisk")drawObeliskBoss(c,now,reduceMotion);
           else drawLightElemental(c,boss.incorporeal,now,reduceMotion);
-          c.fillStyle=boss.incorporeal?"#344651":"#3b2922"; c.fillRect(1,23,22,1);
-          c.fillStyle=boss.incorporeal?"#91d3ea":"#ffe4a0"; c.fillRect(1,23,22*s.bossHp/s.bossMaxHp,1);
           c.restore();
         });
       }
@@ -271,15 +262,15 @@ export class TrialRenderer {
         c.translate(0,-p.lift); drawLightSlime(c);
       });
       if(s.keymaster) {
-        for(const p of s.keymaster.mimics)tile(p.x,p.y,()=>drawMimic(c,p.hp/p.maxHp));
+        for(const p of s.keymaster.mimics)foeTile(p.x,p.y,()=>drawMimic(c));
         for(const b of s.keymaster.doors)if(!b.hit && s.status==="active") {
           const p=KEYMASTER_DOORS[b.door];
           drawDoorSpirits(c,{x:px(p.x),y:py(p.y)},{x:px(s.elemental.x),y:py(s.elemental.y)},b.elapsed/DOOR_FLIGHT_MS,s.seed^b.door,reduceMotion);
         }
       }
       if(s.bossVariant) {
-        for(const part of activeBossParts(s.bossVariant))tile(part.x,part.y,()=>drawBossPart(c,part,now,reduceMotion));
-        for(const minion of s.bossVariant.minions)tile(minion.x,minion.y,()=>drawBossMinion(c,minion,now,reduceMotion));
+        for(const part of activeBossParts(s.bossVariant))foeTile(part.x,part.y,()=>drawBossPart(c,part,now,reduceMotion));
+        for(const minion of s.bossVariant.minions)foeTile(minion.x,minion.y,()=>drawBossMinion(c,minion,now,reduceMotion));
         if(s.bossVariant.lastRound && combatProgress < 1) {
           drawCombatRoundOverlay(c,s.bossVariant.lastRound,combatProgress,px,py);
         }

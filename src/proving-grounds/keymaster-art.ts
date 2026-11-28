@@ -43,9 +43,9 @@ export function drawKeymaster(c:CanvasRenderingContext2D,now=0,reduceMotion=true
   c.save();if(!reduceMotion)c.translate(0,Math.round(Math.sin(now/700)));
   sprite(c,KEYMASTER,PALETTE,1,12,12);c.restore();
 }
-export function drawMimic(c:CanvasRenderingContext2D,health:number) {
+/** A mimic; its HP shows in a run's bar as it is struck (`TrialFx`). */
+export function drawMimic(c:CanvasRenderingContext2D) {
   sprite(c,MIMIC,PALETTE,1,12,12);
-  c.fillStyle="#3b2922";c.fillRect(2,23,20,1);c.fillStyle="#e5a465";c.fillRect(2,23,20*health,1);
 }
 
 /** The same staggered curved flight and pixel tails as elemental transit,

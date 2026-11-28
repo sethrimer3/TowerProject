@@ -23,17 +23,20 @@ export type Slot = { id: UndeadId; strength: CatacombStrength; mhp: number; drop
 
 type Rect = { x: number; y: number; w: number; h: number };
 /** Each Ingot's treasure room: its 3 × 3 tiles, the tiles that open it to
- * the corridor or the room it opens off, its Ingot's tile and its torch. */
+ * the corridor or the room it opens off, its Ingot's tile and its torch,
+ * standing on the room's far edge. */
 export const ROOMS: Record<IngotId, { room: Rect; opening: readonly (readonly [number, number])[]; ingot: readonly [number, number]; torch: readonly [number, number] }> = {
-  brass: { room: { x: 7, y: 3, w: 3, h: 3 }, opening: [[8, 6]], ingot: [8, 4], torch: [8, 2] },
-  iron: { room: { x: 7, y: 11, w: 3, h: 3 }, opening: [[8, 10]], ingot: [8, 12], torch: [8, 14] },
-  steel: { room: { x: 2, y: 3, w: 3, h: 3 }, opening: [[5, 4], [6, 4]], ingot: [3, 4], torch: [1, 4] },
-  nickel: { room: { x: 2, y: 11, w: 3, h: 3 }, opening: [[5, 12], [6, 12]], ingot: [3, 12], torch: [1, 12] },
+  brass: { room: { x: 7, y: 3, w: 3, h: 3 }, opening: [[8, 6]], ingot: [8, 4], torch: [8, 3] },
+  iron: { room: { x: 7, y: 11, w: 3, h: 3 }, opening: [[8, 10]], ingot: [8, 12], torch: [8, 13] },
+  steel: { room: { x: 2, y: 3, w: 3, h: 3 }, opening: [[5, 4], [6, 4]], ingot: [3, 4], torch: [2, 4] },
+  nickel: { room: { x: 2, y: 11, w: 3, h: 3 }, opening: [[5, 12], [6, 12]], ingot: [3, 12], torch: [2, 12] },
 };
+/** Every hall's own torch, standing up and right of the Lore tile. */
+export const LORE_TORCH = [LORE_X + 1, CORRIDOR_ROW - 1] as const;
 /** The corridor's side tiles, off the hero's path (rows 7 and 9, the slots'
- * walls and the way to the treasure rooms left out): where potions lie. */
+ * walls, the way to the treasure rooms and the Lore's torch left out): where potions lie. */
 export const SIDE_TILES: readonly (readonly [number, number])[] = [CORRIDOR_ROW - 1, CORRIDOR_ROW + 1].flatMap((y) =>
-  Array.from({ length: HALL_SIZE }, (_, x) => x).filter((x) => x !== LORE_X && !(SLOT_XS as readonly number[]).includes(x)).map((x) => [x, y] as const));
+  Array.from({ length: HALL_SIZE }, (_, x) => x).filter((x) => x !== LORE_X && !(SLOT_XS as readonly number[]).includes(x) && !(x === LORE_TORCH[0] && y === LORE_TORCH[1])).map((x) => [x, y] as const));
 
 /** The Ingots whose rooms hall `hall` has. */
 export const hallIngots = (hall: number) => INGOTS.filter((i) => hall % INGOT_EVERY[i] === 0);
@@ -58,6 +61,7 @@ export function hallCell(hall: number, x: number, y: number): HallCell {
     if ((SLOT_XS as readonly number[]).includes(x)) return "slot";
     return "floor";
   }
+  if (at(LORE_TORCH, x, y)) return "torch";
   if (y === CORRIDOR_ROW - 1 || y === CORRIDOR_ROW + 1) return (SLOT_XS as readonly number[]).includes(x) ? "wall" : "floor";
   for (const ingot of hallIngots(hall)) {
     const r = ROOMS[ingot];

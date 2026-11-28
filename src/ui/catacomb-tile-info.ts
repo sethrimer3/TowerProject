@@ -7,7 +7,7 @@ import { snap } from "../exact.ts";
 import { KIND_COLORS, stat, statLines, type TileInfo } from "./tile-info.ts";
 import { cellIcon, ingotIcon, itemSprite, mxpIcon, spiritIcon, uiSprite } from "./dom.ts";
 import { DROP_IDS, DROPS, UNDEAD, undeadRewards, undeadStats, type CatacombStrength } from "../catacombs/catalog.ts";
-import { CORRIDOR_ROW, hallCell, hallTargets, SLOT_XS } from "../catacombs/hall.ts";
+import { CORRIDOR_ROW, hallCell, hallTargets, LORE_TORCH, SLOT_XS } from "../catacombs/hall.ts";
 import { hitFor, striking } from "../catacombs/combat.ts";
 import { magician } from "../catacombs/magic.ts";
 import { forecastFight, type CatacombForecast } from "../catacombs/forecast.ts";
@@ -85,7 +85,7 @@ export function catacombTileInfo(c: CatacombSave, x: number, y: number): TileInf
     return { color: "#d7e3ef", title: `${INGOT_NAMES[target.ingot]} Ingot`, body: `<span>Metal for the Forge</span><br><span class="tile-gain">${ingotIcon(target.ingot)} +${target.amount.toLocaleString("en-US")}</span>` };
   if (cell === "stairs") return { color: KIND_COLORS.stairs!, title: "Stairs Down", body: `Leads to Hall ${(run.hall + 1).toLocaleString("en-US")}` };
   if (cell === "entrance") return { color: PLAIN, title: "Entrance", body: "Where the Magician wakes after a fall." };
-  if (cell === "torch") return { color: "#f2b25c", title: "Torch", body: "It lights the treasure room." };
+  if (cell === "torch") return { color: "#f2b25c", title: "Torch", body: x === LORE_TORCH[0] && y === LORE_TORCH[1] ? "It lights the hall." : "It lights the treasure room." };
   if (cell === "wall") return { color: PLAIN, title: "Wall", body: "Impassable obstacle." };
   return { color: PLAIN, title: "Floor", body: "The Magician's way through the hall." };
 }

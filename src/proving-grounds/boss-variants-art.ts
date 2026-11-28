@@ -1,5 +1,14 @@
 import { sprite } from "../sprites/pixel-sprite.ts";
 import type { BossMinion, BossPart, CombatRound } from "./boss-variants.ts";
+import { coinImage } from "../render/board-popups.ts";
+
+/** A Gold or Silver coin centred on (x, y), the run's own sprite (a plain disc while it loads). */
+export function drawCoin(c: CanvasRenderingContext2D, coin: "gold" | "silver", x: number, y: number) {
+  const art = coinImage(coin);
+  if (art) { c.drawImage(art, Math.round(x - 6), Math.round(y - 6), 12, 12); return; }
+  c.fillStyle = coin === "gold" ? "#ffd34d" : "#d9e6f5";
+  c.beginPath(); c.arc(x, y, 4, 0, Math.PI * 2); c.fill();
+}
 
 const MAGIC_TOWER_BOSS = [
   "...........ww...........",
@@ -119,11 +128,8 @@ export function drawBossPart(c: CanvasRenderingContext2D, part: BossPart, now = 
         : { d: "#162030", b: "#2b4c7e", g: "#577ca8", h: "#a8d2ff", c: "#5cb8ff", w: "#eef8ff" };
   c.save();
   if (!reduceMotion) c.translate(0, Math.round(Math.sin(now / 450 + part.x)));
+  // Its HP shows in a run's bar as it is struck (`TrialFx`).
   sprite(c, PART_SPRITE, palette, 1, 12, 11);
-  c.fillStyle = "#2b1e1a";
-  c.fillRect(2, 22, 20, 2);
-  c.fillStyle = part.kind === "turret" ? "#ff7b66" : part.kind === "regen" ? "#5ce892" : "#6bc4ff";
-  c.fillRect(2, 22, Math.max(1, Math.round((20 * part.hp) / part.maxHp)), 2);
   c.restore();
 }
 
@@ -132,10 +138,6 @@ export function drawBossMinion(c: CanvasRenderingContext2D, minion: BossMinion, 
   c.save();
   if (!reduceMotion) c.translate(0, Math.round(Math.sin(now / 380 + minion.id)));
   sprite(c, MINION_SPRITE, palette, 1, 12, 10);
-  c.fillStyle = "#2b1e1a";
-  c.fillRect(3, 22, 18, 2);
-  c.fillStyle = "#e59866";
-  c.fillRect(3, 22, Math.max(1, Math.round((18 * minion.hp) / minion.maxHp)), 2);
   c.restore();
 }
 
@@ -157,13 +159,7 @@ export function drawCombatRoundOverlay(
     const y1 = py(coin.to.y) + 12;
     const cx = x0 + (x1 - x0) * t;
     const cy = y0 + (y1 - y0) * t - Math.sin(t * Math.PI) * 18;
-    c.fillStyle = coin.kind === "gold" ? "#ffd34d" : "#d9e6f5";
-    c.beginPath();
-    c.arc(cx, cy, 4, 0, Math.PI * 2);
-    c.fill();
-    c.strokeStyle = "#1b1408";
-    c.lineWidth = 1;
-    c.stroke();
+    drawCoin(c, coin.kind === "gold" ? "gold" : "silver", cx, cy);
   }
 
   // 2. Ranged shots & special pulse waves (Obelisk / Turret).

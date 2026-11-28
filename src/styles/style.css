@@ -1389,6 +1389,33 @@ html.reduce-motion .tile-trace { animation: none; }
   animation: free-training-fade 2s linear both;
 }
 .free-training-box[hidden] { display: none; }
+/* A Catacomb restart's line, centred over the hall's upper part in the free
+   levels' box, at the status line's size (CatacombView.flashRestart): shown
+   2.5s, fading over the last 0.5s. */
+.catacomb-flash {
+  position: absolute;
+  z-index: 4;
+  top: 24%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 90%;
+  padding: 4px 10px;
+  background: #10151fd0;
+  border: 1px solid #5a6580;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  white-space: nowrap;
+  color: #e8edf5;
+  pointer-events: none;
+}
+.catacomb-flash.showing { animation: catacomb-flash-fade 2.5s linear both; }
+.catacomb-flash[hidden] { display: none; }
+@keyframes catacomb-flash-fade {
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
 /* The boost table over the board's top-left corner: the temporary boosts
    running (the Level-up Boost, the Gold ad's, the Golden Scarabs'), a row
    each, its icon and time left, in a bordered column (ui/boost-table.ts).
