@@ -13,6 +13,7 @@ export const DEVLOG_TEXT_MAX = 120;
 /** Every change, newest first: the Settings page's DEVLOG button lists them.
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
+  { date: "2026-11-28", text: "Potions in the Catacombs now look like the red potions of a Tower or Delve run." },
   { date: "2026-11-28", text: "Torches now burn with a live, flickering pixel-art fire." },
   { date: "2026-11-28", text: "Wall corners stay square with no diagonal cuts, and wall outlines now show over moss and plants." },
   { date: "2026-11-28", text: "A tapped tile is now outlined by four fine gold lines tracing round it; Legacy tile highlight brings back the old box." },
