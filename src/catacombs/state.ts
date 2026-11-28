@@ -19,9 +19,10 @@ export type CatacombRun = {
   fell?: true;
 };
 /** The Catacombs' clock: when the last real turn fell due (wall clock,
- * ms), the seconds banked, and the haste chosen. */
-export type Haste = 1 | 5 | 10 | 100;
-export const HASTES: readonly Haste[] = [1, 5, 10, 100];
+ * ms), the seconds banked, and the haste chosen (×0: paused, each second
+ * banked instead of played). */
+export type Haste = 0 | 1 | 5 | 10 | 100;
+export const HASTES: readonly Haste[] = [0, 1, 5, 10, 100];
 export type ClockSave = { lastTurnAt: number; bank: number; haste: Haste };
 
 /** The Catacombs' saved random streams, one a purpose, so drawing from one

@@ -255,9 +255,10 @@ export const renderShopDot = (game: Game) => {
 };
 /** The Tournament button, once the Tournament is open to the player: its
  * trophy over the phase, `2d5h` until the next opens, `OPEN`, `ENDING`, or
- * `CLAIM` with a dot while a final prize waits. In the forest's actions
- * column under the hamburger; inside a run, in the run's menu once the
- * player has entered the tournament, else gone (`renderRunMenu` places it).
+ * `CLAIM` with a dot while a final prize waits. In the forest under the
+ * hamburger, inside the menu's frame as a run's Shop is; inside a run, in
+ * the run's menu once the player has entered the tournament, else gone
+ * (`renderRunMenu` places it).
  * Refreshed every second too (main's tick), so the countdown runs. */
 export function renderTournamentButton(game: Game) {
   const button = el("tournament-button"), desk = game.tournament, inside = !game.run.outside;
@@ -395,6 +396,9 @@ const HAND_ICON = { play: "▶︎", pause: "❚❚" };
  * second) between the arrows that change it. In the forest it gives way to
  * Enter, under Goals, which goes straight in to start the run: in the
  * Delve's, into the tournament, wearing its price, a Ticket. */
+/** The icon each play/pause slot was last given (kept off the DOM, so the UI snapshots don't change). */
+const handIconShown = new WeakMap<HTMLElement, string>();
+
 function renderAutoButton(game: Game) {
   const button = el("auto"), inside = !game.run.outside, enter = el("enter-run");
   button.hidden = !inside;
@@ -413,7 +417,12 @@ function renderAutoButton(game: Game) {
   const label = waiting ? "Waiting: tap a card to move" : game.auto ? "Pause the hand" : "Play the hand";
   const icon = paused ? HAND_ICON.pause : HAND_ICON.play,
     slot = button.querySelector<HTMLElement>(".mini-icon")!;
-  if (inside && slot.textContent !== icon) slot.innerHTML = kitIcon(paused ? "pause" : "play", icon, "hand-control-icon");
+  // Rewritten only when it changes: a sprite icon has no text to compare, and
+  // replacing the icon under a press each step would swallow the press's click.
+  if (inside && handIconShown.get(slot) !== icon) {
+    slot.innerHTML = kitIcon(paused ? "pause" : "play", icon, "hand-control-icon");
+    handIconShown.set(slot, icon);
+  }
   text("auto-state", waiting ? "WAITING" : game.auto ? "PLAYING" : "PAUSED");
   button.classList.toggle("waiting", waiting);
   renderSpeed(game, inside);

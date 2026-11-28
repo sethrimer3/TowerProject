@@ -14,6 +14,8 @@ export const DEVLOG_TEXT_MAX = 120;
  * Each change adds its own line at the top (AGENTS.md). */
 export const DEVLOG: readonly DevlogEntry[] = [
   { date: "2026-11-28", text: "Zooming in no longer makes lines near walls twitch, and torch shadows hold still as the flame flickers." },
+  { date: "2026-11-28", text: "Tap a boost or a Catacomb tile to see what it is; the Catacombs can pause; pause no longer misses a tap." },
+  { date: "2026-11-28", text: "Catacomb menus sit on the bottom tabs, undead get a run's HP bar, and the forest menu fills two rows." },
   { date: "2026-11-28", text: "The route line now traces out in fine gold lines to a sparking square; the tile outline is finer and faster." },
   { date: "2026-11-28", text: "Crates, barrels, plants, mushrooms and rocks are redrawn in finer pixels with a crisp black outline." },
   { date: "2026-11-28", text: "Enemy shadows are darker and now shade the floor beneath them instead of looking like a grey patch." },
@@ -27,6 +29,7 @@ export const DEVLOG: readonly DevlogEntry[] = [
   { date: "2026-11-28", text: "Tidier notes behind the board's wall art." },
   { date: "2026-11-28", text: "Torchlight, shadows and glows now move with an enemy as it lunges to attack." },
   { date: "2026-11-28", text: "Under Dev Mode, the mouse wheel or a pinch zooms the board past ×4, its pixels kept crisp." },
+  { date: "2026-11-27", text: "Tapped tile outlines now follow zoom and pan, with readable text above the selected tile." },
   { date: "2026-11-27", text: "Crits and MCrits now multiply only the damage past DEF and MDef, so Piercing and Armor Penetration boost them." },
   { date: "2026-11-27", text: "Bundle training speeds are now ×1.5 and ×2; the Codex Story adds Training and Archives chapters." },
   { date: "2026-11-27", text: "The Divine Portal is now a golden pixel-art portal with a turning rim and sparks circling it." },

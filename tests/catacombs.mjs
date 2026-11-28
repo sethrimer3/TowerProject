@@ -58,6 +58,16 @@ try {
   const world = await page.locator("#world").boundingBox();
   await page.mouse.click(world.x + (([2, 4, 6, 10, 12, 14][marked] + 0.5) / 17) * world.width, world.y + (8.5 / 17) * world.height);
   await expect(page.locator("#message")).toContainText(/A crosshair (strikes|banishes)/);
+  // The tap's box says what stands there, as a run's inspect box does: a plain wall's, and the stairs'.
+  await page.mouse.click(world.x + (16.5 / 17) * world.width, world.y + (8.5 / 17) * world.height);
+  await expect(page.locator("#catacomb-inspect")).toContainText("Stairs Down");
+  await expect(page.locator("#catacomb-highlight")).toBeVisible();
+  await page.mouse.click(world.x + (16.5 / 17) * world.width, world.y + (8.5 / 17) * world.height);
+  await expect(page.locator("#catacomb-inspect")).toBeHidden();
+  // ×0 pauses: the bank grows instead, and says why on the status line.
+  await page.selectOption("#catacomb-haste", "0");
+  await expect(page.locator("#message")).toHaveText("Paused. Each second goes to the bank.");
+  await page.selectOption("#catacomb-haste", "1");
   // Haste spends the bank.
   const left = (t) => { const m = /^(?:(\d+)m )?(\d+)s$/.exec(t); return Number(m[1] ?? 0) * 60 + Number(m[2]); };
   const bankBefore = left(await page.locator("#catacomb-bank-time").textContent());
@@ -94,15 +104,33 @@ try {
   await page.locator(".catacomb-stats").click();
   await expect(page.locator(".catacomb-stats")).toHaveCount(0);
   // The menus still to come say what they will do.
+  const panelBox = async () => JSON.stringify(await page.locator("#catacomb-panel").boundingBox());
+  const skillsBox = await panelBox();
   await page.locator('[role=tab][data-menu="forge"]').click();
   await expect(page.locator("#catacomb-panel")).toContainText("Blacksmith's forge");
+  // The tabs are the tab bar's own buttons, at its foot, the panel over them as tall in every menu.
+  await expect(page.locator('nav #catacomb-tabs [role=tab][data-menu="forge"]')).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("nav [data-tab]").first()).toBeHidden();
+  if ((await panelBox()) !== skillsBox) throw new Error(`the panel moved between menus: ${skillsBox} -> ${await panelBox()}`);
+  const navTop = (await page.locator("nav").boundingBox()).y, panel = await page.locator("#catacomb-panel").boundingBox();
+  if (panel.y + panel.height > navTop) throw new Error("the panel is not over the tabs");
   await page.locator('[role=tab][data-menu="skills"]').click();
+  // Switch Back wears an arrow; the Spirit held stands in the Gold bonus's place, two columns of three.
+  await expect(page.locator("#switch-back .switch-back-icon")).toBeVisible();
+  await expect(page.locator("#gold-bonus")).toBeHidden();
+  await expect(page.locator("#catacomb-spirit > span")).toHaveCount(6);
   // The enemy box opens the hall's undead.
   await page.locator("#base-enemy").click();
   await expect(page.locator(".catacomb-odds h2")).toContainText("Undead in Hall");
+  // Its stats headed by icons, as the run's table is; the Lore bonus under it.
+  await expect(page.locator('.catacomb-odds thead th[aria-label="MAtk"] .stat-sprite')).toBeVisible();
+  await expect(page.locator(".catacomb-odds .odds-undead").first()).toBeVisible();
+  await expect(page.locator(".catacomb-odds")).toContainText("Lore bonus");
+  await expect(page.locator(".catacomb-odds")).not.toContainText("slots rolls once");
   await page.locator(".catacomb-odds .enemy-odds-x").click();
   await expect(page.locator(".catacomb-odds")).toHaveCount(0);
-  // Switch Back: the climb's HUD, the floor it was on.
+  // Switch Back: the climb's HUD, the floor it was on; a paused Catacomb plays on unwatched.
+  await page.selectOption("#catacomb-haste", "0");
   await page.locator("#switch-back").click();
   await expect(page.locator("html")).not.toHaveClass(/catacombs/);
   await expect(page.locator("#height-label")).toHaveText("FLOOR");
@@ -115,6 +143,7 @@ try {
   await openMenu(page);
   await page.locator("#catacombs-button").click();
   await expect(page.locator("html")).toHaveClass(/catacombs/);
+  await expect(page.locator("#catacomb-haste")).toHaveValue("1");
   await page.keyboard.press("Escape");
   await expect(page.locator("html")).not.toHaveClass(/catacombs/);
   if (errors.length) throw new Error(errors.join("\n"));

@@ -65,6 +65,8 @@ export const cellIcon = (className = "cell-icon") =>
 export const spiritIcon = (rarity: string) => kitIcon(`catacomb-spirit-${rarity}`, "", `spirit-icon spirit-${rarity}`);
 /** Compact inventory ingots share their board pickup's metal palette. */
 export const ingotIcon = (ingot: string) => kitIcon(`catacomb-ingot-ui-${ingot}`, "", `ingot-icon ingot-${ingot}`);
+/** MXP, the Magician's experience: the MXP Drop's crystal. */
+export const mxpIcon = (className = "mxp-icon") => kitIcon("catacomb-buff-mxp", "", className);
 /** A Medal: a gold disc with a star, hung from a red ribbon. */
 export const medalIcon = (className = "medal-icon") =>
   kitIcon("medal", "", className);

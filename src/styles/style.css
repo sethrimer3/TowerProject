@@ -1015,9 +1015,9 @@ html.reduce-motion .review-prompt { animation: none; }
 .run-menu.instant .run-menu-items { transition: none; }
 /* Both rows tall even on a phone, where `.mini-action` sets a fixed height. */
 .run-menu .run-menu-end { grid-row: span 2; height: auto; }
-/* In the forest the hamburger stands alone, the Tournament's and Events'
-   buttons under it: its cells (Settings, Missions, Relics, Mail) in one row. */
-.run-menu.forest .run-menu-items { grid-template-rows: minmax(0, 1fr); }
+/* With nothing under the hamburger (the forest before the Tournament
+   opens), its cells fill one row (run-menu.ts). */
+.run-menu.single .run-menu-items { grid-template-rows: minmax(0, 1fr); }
 .run-menu-end small { font-size: 9px; letter-spacing: 1px; }
 .menu-icon { display: block; width: 16px; height: 16px; fill: currentColor; }
 /* Open, the hamburger's bars fold into an X that closes it: the outer two
@@ -1304,6 +1304,7 @@ html.reduce-motion .tile-trace { animation: none; }
 .inspect-box {
   position: absolute;
   z-index: 5;
+  width: max-content;
   max-width: 80%;
   background: #10151fe0;
   border: 1px solid #454e5f;
@@ -1390,7 +1391,8 @@ html.reduce-motion .tile-trace { animation: none; }
 .free-training-box[hidden] { display: none; }
 /* The boost table over the board's top-left corner: the temporary boosts
    running (the Level-up Boost, the Gold ad's, the Golden Scarabs'), a row
-   each, its icon and time left, in a bordered column (ui/boost-table.ts). */
+   each, its icon and time left, in a bordered column (ui/boost-table.ts).
+   Its rows take taps; the board around it keeps its own. */
 .boost-table {
   position: absolute;
   top: 6px;
@@ -1408,10 +1410,10 @@ html.reduce-motion .tile-trace { animation: none; }
   font-size: 10px;
   line-height: 12px;
   white-space: nowrap;
-  pointer-events: none;
 }
 .boost-table[hidden] { display: none; }
-.boost-row { display: flex; align-items: center; gap: 3px; }
+/* Tapped, a row says what its boost does (boost-table.ts). */
+.boost-row { display: flex; align-items: center; gap: 3px; cursor: pointer; }
 .boost-icon, .boost-icon img { width: 12px; height: 12px; }
 .boost-time { min-width: 28px; font-variant-numeric: tabular-nums; color: #fff; }
 /* A claimed Golden Scarab's drop: its boost's icon, value and time added. */
@@ -6092,14 +6094,24 @@ html.reduce-motion .card-level-up-glow::after { animation: card-level-glow 3s st
 html:not(.catacombs) .catacomb-only { display: none !important; }
 html.catacombs :is(#auto, #auto-speed, #enter-run, #section-pick, #stuck-end-run, #end-run, #run-shop, #catacombs-button,
   #hand, .hand-more, #run-drills, #training-bar, #drill-tip, #shield-readout, #shroud-stat, #combo-stat, #shrine-bar, #wings-ready, #overheal,
-  #run-earned, #best-reward, .silver-stat, #gold-bonus .gold-icon, #inspect-box, #route-box, #tile-highlight, #free-training-box, #boost-table,
+  #run-earned, #best-reward, .silver-stat, #gold-bonus, nav button[data-tab], #inspect-box, #route-box, #tile-highlight, #free-training-box, #boost-table,
   #tier-prev, #tier-next, #forest-sign, #review-prompt, #gem-ad, #gold-ad,
   #focus-stat, #ignore-stat, #target-stat, #bomb-stat, #heal-stat, #edge-stat, #guard-stat, #yellowKey-stat, #spark-stat, #skeleton-key) { display: none !important; }
 html.catacombs .keys { visibility: hidden; }
-html.catacombs nav button[data-tab] { visibility: hidden; }
-/* Switch Back: yellow where End Climb is red. */
+/* Switch Back: yellow where End Climb is red, an arrow back over its name. */
 .mini-action.switch-back { color: #ffe08a; border-color: #d9b45a; background: #2a2210; }
 .mini-action.switch-back small { color: #ffe08a; }
+.switch-back-icon { width: 14px; height: 14px; }
+/* The Spirit held, under the hall in the Gold bonus's place: two columns of three. */
+.catacomb-spirit { display: grid; grid-template-columns: repeat(2, auto); justify-content: center; gap: 1px 6px; font-size: 9px; line-height: 11px; color: #e6d6ff; font-variant-numeric: tabular-nums; }
+.catacomb-spirit > span { display: inline-flex; align-items: center; white-space: nowrap; }
+.catacomb-spirit .spirit-icon { width: 8px; height: 8px; margin-right: 2px; }
+.mxp-icon { display: inline-block; width: 16px; height: 16px; vertical-align: middle; }
+/* The undead table: each undead's picture after its rank chevrons, the Spirit's icon by its amount. */
+.enemy-odds-table .odds-undead { width: 18px; height: 18px; image-rendering: pixelated; flex-shrink: 0; }
+.enemy-odds-table thead .spirit-icon { width: 1.4em; height: 1.4em; margin: 0; vertical-align: middle; }
+.enemy-odds-table thead .mxp-icon { width: 1.4em; height: 1.4em; vertical-align: middle; }
+.catacomb-lore-bonus .cell-icon { width: 14px; height: 14px; vertical-align: -2px; }
 /* Unspent magic skill points: the training arrow, turned purple. */
 .magic-points { position: absolute; top: 1px; right: 2px; display: inline-flex; align-items: center; gap: 1px; color: #d7a8ff; font-size: 11px; line-height: 1; text-shadow: 0 1px 0 #000; }
 .magic-points .points-icon { width: 10px; height: 10px; }
@@ -6112,13 +6124,16 @@ html.catacombs .xp-track i { background: linear-gradient(90deg, #6b3fb0, #c99aff
 .catacomb-bank[hidden] { display: none !important; }
 .catacomb-bank .clock-icon { width: 12px; height: 12px; }
 .catacomb-bank select { font: inherit; font-size: 10px; padding: 0 2px; background: #161026; color: #e6d6ff; border: 1px solid #6b55a0; }
-/* The Catacomb screen's bottom row (ui/catacomb-menus.ts) takes the tab bar's place. */
-html.catacombs nav { display: none !important; }
-.catacomb-menus { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
-.catacomb-tabs { display: flex; gap: 0; background: #111722; border: 1px solid #36404f; }
-.catacomb-tabs button { flex: 1; min-height: 34px; font-size: 11px; border-radius: 0; }
-.catacomb-tabs button[aria-selected="true"] { color: #e6d6ff; border-color: #9a7ad9; background: #1d1530; }
-.catacomb-panel { display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px; min-height: 64px; }
+/* The Catacomb screen's menus (ui/catacomb-menus.ts): their tabs in the tab
+   bar in the hand's place, each the tab bar's own button, and over the bar
+   the open menu's panel, always as tall, so nothing moves as the tabs change. */
+.catacomb-menus { flex-shrink: 0; margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.catacomb-tabs { display: flex; flex: 1; min-width: 0; }
+html.catacombs nav .catacomb-tabs button { display: flex; }
+.catacomb-tabs button + button { margin-left: -1px; }
+.catacomb-tabs > button:first-of-type { border-radius: 8px 0 0 8px; }
+.catacomb-tabs > button:last-of-type { border-radius: 0 8px 8px 0; }
+.catacomb-panel { box-sizing: border-box; height: 132px; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-wrap: wrap; align-content: flex-start; align-items: stretch; gap: 6px; }
 .catacomb-table-button { min-width: 34px; font-size: 16px; padding: 0 6px; }
 .catacomb-stat { display: flex; align-items: stretch; border: 1px solid #5a4a7c; border-radius: 3px; background: #120e1c; }
 .catacomb-stat-head { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 3px; min-width: 64px; padding: 6px 8px; border: 0; background: none; }
@@ -6157,3 +6172,4 @@ html.catacombs nav { display: none !important; }
 .spirit-icon, .ingot-icon { display: inline-block; width: 18px; height: 18px; margin-right: 4px; vertical-align: middle; }
 .catacomb-tabs button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
 .catacomb-tab-icon { display: block; width: 24px; height: 24px; flex: none; }
+.catacomb-tabs button > small { font-size: 10px; line-height: 1.1; letter-spacing: 0.5px; }

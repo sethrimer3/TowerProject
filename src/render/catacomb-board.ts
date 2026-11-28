@@ -3,10 +3,11 @@
 // native PNGs, the hero, and a popup for each strike.
 // Presentation only: it reads the run and never changes it.
 import type { Tile } from "../entities.ts";
-import { paintContents, paintHero, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
+import { paintContents, paintHero, paintRingedSprite, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
 import { rankChevrons } from "./rank-chevrons.ts";
 import {undeadSprite, ingotSprite, buffSprite} from "../sprites/catacombs.ts";
 import { drawKit, kitUrl } from "../sprites/kit.ts";
+import { BAR_DRAIN_MS, BAR_FADE_MS, BAR_RISE, paintHpBar } from "./hp-bar.ts";
 import { HALL_SIZE, hallCell, type HallCell } from "../catacombs/hall.ts";
 import { hallTargets, SLOT_XS, CORRIDOR_ROW } from "../catacombs/hall.ts";
 import { DROP_IDS, undeadStats, type UndeadId } from "../catacombs/catalog.ts";
@@ -39,6 +40,11 @@ export const undeadIconUrl = (id: UndeadId) => kitUrl(undeadSprite(id));
 
 /** A strike's number rising off a tile. */
 type Popup = { x: number; y: number; text: string; color: string; at: number };
+/** An undead's HP bar as shown: draining from `from` to `to` since `at`,
+ * of its `full` MHP; `gone` once it is banished, fading after the drain. */
+type Bar = { from: number; to: number; at: number; full: number; gone?: boolean };
+/** The MHP a bar shows at `now`, partway through its drain. */
+const shownHp = (b: Bar, now: number) => b.from + (b.to - b.from) * Math.min(1, (now - b.at) / BAR_DRAIN_MS);
 
 export class CatacombBoard {
   private from: { x: number; y: number } | null = null;
@@ -47,6 +53,8 @@ export class CatacombBoard {
   private popups: Popup[] = [];
   private hitAt = -Infinity;
   private hitSlot = -1;
+  /** Each slot's HP bar, as a run's fights show theirs. */
+  private bars: (Bar | null)[] = [];
 
   constructor(private canvas: HTMLCanvasElement) {}
 
@@ -64,6 +72,8 @@ export class CatacombBoard {
     const at = { x: run.hero.x, y: run.hero.y };
     if (!this.to || this.to.x !== at.x || this.to.y !== at.y) {
       const descended = event?.kind === "descend" || event?.kind === "restart";
+      // A new hall's undead start with no bars.
+      if (descended) this.bars = [];
       this.from = descended || reduceMotion ? at : this.to ?? at;
       this.to = at;
       this.movedAt = now;
@@ -80,7 +90,8 @@ export class CatacombBoard {
     if (this.popups.length > 12) this.popups.splice(0, this.popups.length - 12);
   }
 
-  draw(run: CatacombRun, number: number, now: number, reduceMotion: boolean, styledSprites: boolean) {
+  /** Draws the hall; `bars` is the Enemy HP bars setting. */
+  draw(run: CatacombRun, number: number, now: number, reduceMotion: boolean, styledSprites: boolean, bars = true) {
     const box = this.canvas.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
     const width = N * S * Math.max(1, Math.ceil(box.width * dpr / (N * S)));
     if (this.canvas.width !== width) this.canvas.width = this.canvas.height = width;
@@ -113,14 +124,13 @@ export class CatacombBoard {
     // The undead, with their rank chevrons, their native Drop marks, what MHP they have left and their crosshairs.
     run.slots.forEach((slot, i) => {
       if (!slot) return;
-      const x = SLOT_XS[i]!, full = undeadStats(slot.id, slot.strength, hall, number).mhp;
+      const x = SLOT_XS[i]!;
       const shake = !reduceMotion && i === this.hitSlot && now - this.hitAt < 160 ? Math.round(Math.sin((now - this.hitAt) / 18) * 2) : 0;
       at(CORRIDOR_ROW, x, () => {
         const bob = reduceMotion || slot.id !== "wisp" && slot.id !== "ghost" ? 0 : Math.round(Math.sin(now / 300 + i) * 1.5);
-        drawKit(c, undeadSprite(slot.id), shake, bob, 24, 24);
+        // The red glow and black outline a run's enemy wears, brighter and gold-rimmed by rank.
+        paintRingedSprite(c, undeadSprite(slot.id), slot.strength, shake, bob);
         if (slot.strength !== "normal") rankChevrons(c, slot.strength, "#ffd85a", "#000000", 1, 1);
-        c.fillStyle = "#000000aa"; c.fillRect(3, 21, 18, 3);
-        c.fillStyle = "#c84aff"; c.fillRect(4, 22, Math.max(1, Math.round(16 * Math.min(1, slot.mhp / full))), 1);
         if (slot.mark) paintCrosshair(c, slot.mark === "gold", now, reduceMotion);
         // Slots are two tiles apart: two columns keep all four marks readable.
         DROP_IDS.filter((d) => slot.drops?.[d]).forEach((d, k) => {
@@ -138,6 +148,8 @@ export class CatacombBoard {
     glow.addColorStop(1, "rgba(5,7,10,0.55)");
     c.fillStyle = glow;
     c.fillRect(0, 0, N * S, N * S);
+    // Each struck undead's HP bar over it, draining to each strike as a run's does, fading once it is banished.
+    this.drawBars(run, hall, number, now, bars, scale);
     // The strikes' numbers, rising and fading.
     c.font = "bold 9px monospace";
     c.textAlign = "center";
@@ -153,10 +165,29 @@ export class CatacombBoard {
     c.globalAlpha = 1;
   }
 
-  /** Forgets the tween and popups, so the next hall shown starts still. */
+  /** Moves each slot's bar on to its MHP now and draws those struck. */
+  private drawBars(run: CatacombRun, hall: number, number: number, now: number, shown: boolean, scale: number) {
+    run.slots.forEach((slot, i) => {
+      let b = this.bars[i] ?? null;
+      if (slot) {
+        const full = undeadStats(slot.id, slot.strength, hall, number).mhp;
+        if (!b || b.gone || b.full !== full) b = { from: slot.mhp, to: slot.mhp, at: -Infinity, full };
+        else if (b.to !== slot.mhp) b = { from: shownHp(b, now), to: slot.mhp, at: now, full };
+      } else if (b && !b.gone) b = { from: shownHp(b, now), to: 0, at: now, full: b.full, gone: true };
+      if (b?.gone && now - b.at >= BAR_DRAIN_MS + BAR_FADE_MS) b = null;
+      this.bars[i] = b;
+      // Hidden until first struck, as in a run.
+      if (!b || !shown || (!b.gone && b.to >= b.full && now - b.at >= BAR_DRAIN_MS)) return;
+      const fading = b.gone ? now - b.at - BAR_DRAIN_MS : 0, alpha = fading > 0 ? 1 - fading / BAR_FADE_MS : 1;
+      paintHpBar(this.canvas.getContext("2d")!, { x: SLOT_XS[i]! * S + S / 2, y: CORRIDOR_ROW * S + S / 2 - BAR_RISE * S }, S, shownHp(b, now) / b.full, alpha, 3 / scale);
+    });
+  }
+
+  /** Forgets the tween, popups and bars, so the next hall shown starts still. */
   reset() {
     this.from = this.to = null;
     this.popups = [];
+    this.bars = [];
   }
 }
 

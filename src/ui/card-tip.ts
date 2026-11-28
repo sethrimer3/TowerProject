@@ -8,9 +8,10 @@ const hide = () => {
   if (tip) tip.hidden = true;
 };
 
-/** A note over hand card `card` (*No open path exists.*), for
+/** A note over hand card `card` (*No open path exists.*), or another small
+ * piece of the HUD (a boost's row, its name in bold over `detail`), for
  * `CARD_TIP_MS`, or until the next press anywhere. */
-export function showCardTip(card: HTMLElement, text: string) {
+export function showCardTip(card: HTMLElement, text: string, detail?: string) {
   if (!tip) {
     tip = document.createElement("div");
     tip.id = "card-tip";
@@ -21,6 +22,11 @@ export function showCardTip(card: HTMLElement, text: string) {
     document.addEventListener("pointerdown", hide, { capture: true });
   }
   tip.textContent = text;
+  if (detail) {
+    const name = document.createElement("b");
+    name.textContent = text;
+    tip.replaceChildren(name, document.createElement("br"), detail);
+  }
   tip.hidden = false;
   const box = card.getBoundingClientRect(), width = tip.offsetWidth;
   tip.style.left = `${Math.max(8, Math.min(innerWidth - width - 8, box.left + box.width / 2 - width / 2))}px`;

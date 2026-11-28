@@ -78,6 +78,21 @@ export function renderBatteryHud(game: Game) {
   const gems = document.getElementById("gem-ad") as HTMLButtonElement | null;
   if (gems && !gems.disabled && game.gemFinder.adReady && !document.documentElement.classList.contains("cinematic"))
     presses.push(press("gem-ad", "gem", gems.title || "Claim Gems", " battery-gems", `<b>${game.gemFinder.adBank.gems || game.gemFinder.adBank.each}</b>`));
-  const html = `<div class="battery-stats">${stats.join("")}</div><div class="battery-presses">${presses.join("")}</div>`;
-  if (hud.innerHTML !== html) hud.innerHTML = html;
+  // The stats and the presses are written apart: the stats change each step,
+  // and rewriting the buttons with them would swallow a press made meanwhile.
+  if (!hud.firstElementChild) {
+    hud.innerHTML = `<div class="battery-stats"></div><div class="battery-presses"></div>`;
+    written.clear();
+  }
+  write(hud.children[0]!, stats.join(""));
+  write(hud.children[1]!, presses.join(""));
+}
+
+/** What each row was last written with: the browser's own `innerHTML` reads
+ * back differently from what was written, so it can't say what changed. */
+const written = new Map<Element, string>();
+function write(row: Element, html: string) {
+  if (written.get(row) === html) return;
+  row.innerHTML = html;
+  written.set(row, html);
 }
