@@ -1267,6 +1267,37 @@ html.reduce-motion #stuck-end-run.lesson-flash { animation: none; }
     box-shadow: 0 0 14px 4px #ffd166d0, inset 0 0 14px 2px #ffd166a0;
   }
 }
+/* The traced outline (render/effects/tile-trace.ts): the box gives up its
+   border and glow to a canvas drawn just outside the tile, which, once the
+   trace has settled, pulses more gently than the old box. */
+.tile-highlight.traced {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+.tile-highlight.traced.active {
+  animation: none;
+}
+.tile-highlight.traced.active.fading {
+  animation: tile-info-fade 3s linear forwards;
+}
+/* The pulse starts once the slowest trace can have settled (TRACE_S and
+   SETTLE_S at their spreads' far ends: 1.6s). */
+.tile-trace {
+  position: absolute;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 1px #ffd16660);
+  animation: tile-trace-pulse 1.8s ease-in-out 1.6s infinite;
+}
+@keyframes tile-trace-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 1px #ffd16660);
+  }
+  50% {
+    filter: brightness(1.12) drop-shadow(0 0 3px #ffd166a0);
+  }
+}
+html.reduce-motion .tile-trace { animation: none; }
 .inspect-box {
   position: absolute;
   z-index: 5;

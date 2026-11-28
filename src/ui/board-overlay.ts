@@ -9,6 +9,8 @@ import { holdAmount } from "./hud.ts";
 import { litTorches } from "../board.ts";
 import { point } from "../entities.ts";
 import { routeTotalLines, tileInfo, tileInfoLine } from "./tile-info.ts";
+import { drawTrace, planTrace, TILE_CELLS, TRACE_LINES, traceSettled, type TracePlan } from "../render/effects/tile-trace.ts";
+import { stream } from "../random.ts";
 
 /** How long the free levels' box shows; its fade over the last half second
  * is in `style.css` (`free-training-fade`). */
@@ -48,6 +50,10 @@ export class BoardOverlay {
   /** The free levels last announced, and the timer that hides them. */
   private freeShown: Game["freeTrained"] = null;
   private freeTimer: ReturnType<typeof setTimeout> | undefined;
+  /** The highlighted tile's traced outline (`render/effects/tile-trace.ts`):
+   * its plan, when it began, the size it was last drawn at, and whether it
+   * has settled and been drawn still. Null while the old box shows. */
+  private trace: { plan: TracePlan; start: number; size: string; still: boolean } | null = null;
 
   /** `blacksmith` opens the Equipment screen (the forest's Blacksmith
    * tapped), `hall` the Tournament page (its Hall tapped), and `update`
@@ -135,6 +141,7 @@ export class BoardOverlay {
    * board frame; it does nothing while nothing moved. */
   track() {
     if (!this.highlighted) return;
+    this.drawTrace();
     const { x, y } = this.highlighted, r = this.renderer, n = r.density;
     const onScreen = x + 0.5 >= r.left && x + 0.5 <= r.left + n && y + 0.5 >= r.bottom && y + 0.5 <= r.bottom + n;
     const { left, top, s } = this.tileRect(x, y);
@@ -341,6 +348,57 @@ export class BoardOverlay {
     glow.hidden = false;
     glow.classList.remove("fade-out");
     glow.classList.add("active");
+    this.startTrace();
+  }
+
+  /** Whether the tapped tile wears the old glowing box: chosen in Settings
+   * (Legacy tile highlight), or under Battery saver, whose frames are too
+   * far apart to trace. */
+  private legacyGlow() {
+    const { legacyHighlight, batterySaver } = this.game.save.settings;
+    return legacyHighlight || batterySaver;
+  }
+
+  /** Starts a new traced outline on the highlight, or puts the old box back. */
+  private startTrace() {
+    const glow = el("tile-highlight"), legacy = this.legacyGlow();
+    glow.classList.toggle("traced", !legacy);
+    // A fresh canvas each tap restarts its pulse, which waits out the trace
+    // (`tile-trace-pulse`'s delay), so its HTML never changes as it plays.
+    glow.querySelector("canvas")?.remove();
+    if (legacy) {
+      this.trace = null;
+      return;
+    }
+    const canvas = document.createElement("canvas");
+    canvas.className = "tile-trace";
+    glow.append(canvas);
+    this.trace = { plan: planTrace(stream("effects")), start: performance.now(), size: "", still: false };
+    this.drawTrace();
+  }
+
+  /** Draws the traced outline as it stands now, sized to the tile; once it
+   * has settled it is drawn still once, its canvas pulsing by CSS. */
+  private drawTrace() {
+    const trace = this.trace, canvas = el("tile-highlight").querySelector("canvas");
+    if (!trace || !canvas) return;
+    if (this.legacyGlow()) return this.startTrace();
+    const s = this.renderer.size, dpr = window.devicePixelRatio || 1, cell = (s * dpr) / TILE_CELLS;
+    const reduce = this.game.save.settings.reduceMotion, t = (performance.now() - trace.start) / 1000;
+    const still = reduce || traceSettled(trace.plan, t), size = `${s}:${dpr}`;
+    if (still && trace.still && size === trace.size) return;
+    if (size !== trace.size) {
+      const span = Math.round((TILE_CELLS + 2 * TRACE_LINES) * cell), inset = Math.round(TRACE_LINES * cell) / dpr;
+      canvas.width = canvas.height = span;
+      canvas.style.width = canvas.style.height = `${span / dpr}px`;
+      canvas.style.left = canvas.style.top = `${-inset}px`;
+      trace.size = size;
+    }
+    const c = canvas.getContext("2d");
+    if (!c) return;
+    c.clearRect(0, 0, canvas.width, canvas.height);
+    drawTrace(c, cell, trace.plan, t, still);
+    trace.still = still;
   }
 
   private placeGlow(left: number, top: number, s: number) {

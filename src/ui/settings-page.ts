@@ -24,7 +24,7 @@ import { firstLevelOf } from "../cards/rarity.ts";
 /** The settings on the page, in order; each control comes from its row in
  * SETTINGS. */
 const PAGE = [
-  "experimentalAtlas", "legacyBorders", "legacyEnemies", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "pixelPerfect", "autoLandscape", "hand", "batterySaver", "batteryWhite", "reduceMotion",
+  "experimentalAtlas", "legacyBorders", "legacyEnemies", "legacyHighlight", "spriteAnimations", "squareDoors", "transition", "fightAnimation", "brightness", "decorOff", "pixelPerfect", "autoLandscape", "hand", "batterySaver", "batteryWhite", "reduceMotion",
   "infoDisplay", "cinematic", "cinematicIdle", "cinematicGems",
 ] as const satisfies readonly SettingKey[];
 /** The Sounds section's settings, in order: Master Sound, then (indented
