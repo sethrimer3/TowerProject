@@ -25,7 +25,7 @@ import { ambience, surroundingLevels, type Surroundings } from "../ambience.ts";
 import { CloudShadows } from "./cloud-shadows.ts";
 import { MODES } from "../modes.ts";
 import { torchAnimationFrame } from "../sprites/options.ts";
-import { towerTileset } from "../sprites/dungeon.ts";
+import { drawWallOutline, towerTileset } from "../sprites/dungeon.ts";
 import { paintHero, paintTile, paintTorch, type BoardLook } from "./tile-painters.ts";
 import type { AtmosphereConfig } from "./lighting-pass.ts";
 import { DungeonLight, type LitBoard } from "./dungeon-light.ts";
@@ -644,6 +644,20 @@ export class Renderer {
     const key = this.decor.key + (f.look.styledSprites ? `:kit:${spriteRevision()}` : "");
     this.decorCache.draw(f.c, f, f.dpr, key, f.now, CACHE_COLUMNS, (ctx, x, y) => this.decor.bakeTile(ctx, x, y, f.look.styledSprites));
     this.decor.drawGround(f.c, this.decorFrame(f), this.mirroredSprites(f));
+    this.drawWallOutlines(f);
+  }
+  /** The walls' one-pixel outlines again, over the moss and flora. */
+  private drawWallOutlines(f: FrameContext) {
+    const world = this.game.world, wallAt = (x: number, y: number) => world.tile(x, y)?.kind === "wall";
+    forEachViewTile(f, (x, y) => {
+      if (wallAt(x, y)) return;
+      const mask = (wallAt(x, y + 1) ? 1 : 0) | (wallAt(x + 1, y) ? 2 : 0) | (wallAt(x, y - 1) ? 4 : 0) | (wallAt(x - 1, y) ? 8 : 0);
+      if (!mask) return;
+      f.c.save();
+      toTileSpace(f.c, f, x, y);
+      drawWallOutline(f.c, mask);
+      f.c.restore();
+    });
   }
   /** The tiles, torches and hero, for the water to mirror. */
   private mirroredSprites(f: FrameContext): MirroredSprites {

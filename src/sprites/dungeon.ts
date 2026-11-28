@@ -198,32 +198,30 @@ function paintDungeonGround(c: CanvasRenderingContext2D, tile: TerrainTile, diag
       c.clip(); surface(frame); c.restore();
     }
   } else surface(frame);
-  if (tile.wall && (!profile || profile.depth === 0)) {
-    for (let corner = 0; corner < 4; corner++) {
-      const diagonal = diagonals[corner];
-      // A diagonal opening meets either two joined sides (concave) or two
-      // exposed sides (convex); a straight side keeps its existing lip.
-      const [a, b] = [[1, 8], [1, 2], [4, 2], [4, 8]][corner];
-      if (diagonal && diagonal !== "wall" && !!(mask & a) === !!(mask & b))
-        drawDungeonFrame(c, image, DUNGEON_CORNER_FRAME + corner);
-    }
-  }
   if (!tile.wall && mask) {
     drawDungeonFrame(c, edges, DUNGEON_CONTACT_FRAME + mask);
-    // A one-pixel outline along each side a wall stands on, drawn on the
-    // floor's own side: orthogonal only, so a wall's outer corner (a wall
-    // only diagonal to this tile) is never filled, like a sprite's rim.
-    c.fillStyle = WALL_OUTLINE;
-    if (mask & 1) c.fillRect(0, 0, 24, 1);
-    if (mask & 2) c.fillRect(23, 0, 1, 24);
-    if (mask & 4) c.fillRect(0, 23, 24, 1);
-    if (mask & 8) c.fillRect(0, 0, 1, 24);
+    drawWallOutline(c, mask);
   }
   return true;
 }
 
 /** The walls' outline: the same near-black as the enemies' own. */
 const WALL_OUTLINE = "#0b0a0e";
+
+/** A one-pixel outline along each side of a floor tile that a wall stands
+ * on (`mask`: 1 north, 2 east, 4 south, 8 west), drawn on the floor's own
+ * side in tile space: orthogonal only, so a wall's outer corner (a wall
+ * only diagonal to this tile) is never filled, like a sprite's rim. The
+ * ground draws it, and the board draws it again over the decor, so moss
+ * and flora never cover it. */
+export function drawWallOutline(c: CanvasRenderingContext2D, mask: number) {
+  if (!mask) return;
+  c.fillStyle = WALL_OUTLINE;
+  if (mask & 1) c.fillRect(0, 0, 24, 1);
+  if (mask & 2) c.fillRect(23, 0, 1, 24);
+  if (mask & 4) c.fillRect(0, 23, 24, 1);
+  if (mask & 8) c.fillRect(0, 0, 1, 24);
+}
 
 const floorImages = new Map<string, HTMLCanvasElement>();
 /** The literal selected floor PNG texels for torch relief, not the old

@@ -53,7 +53,7 @@ Each effect keeps its original renderer until its PNG is ready and when the effe
 `boardFont` in `sprites/font.ts` selects the original bundled Tower Pixel face for Classic kit annotations, damage/reward numbers, level-up text and forest signs; other Game themes preserve the original font strings.
 `EntityLighting` paints silhouettes from the active PNG contents and hero facing; both shadow and highlight caches clear immediately when the effective style or image revision changes.
 `sprites/pixel-outline.ts` generates cached one-pixel orthogonal (4-neighbour, never the diagonal corner) exterior contours from sprite alpha, rasterized at the size drawn: shaded gold for pickups/chests, blue for heroes/stairs/one-way markers and black for standard and square doors, torches (each animation frame too), barrels, crates and their wreckage.
-Floors beside a wall draw a one-pixel near-black line along each side a wall stands on (`WALL_OUTLINE` in `sprites/dungeon.ts`), so walls wear the same orthogonal outline; enemy rims (`dilated` in `render/tile-painters.ts`) grow in orthogonal steps, a diamond rather than a disc.
+Floors beside a wall draw a one-pixel near-black line along each side a wall stands on (`WALL_OUTLINE` in `sprites/dungeon.ts`), so walls wear the same orthogonal outline, and `Renderer.drawWallOutlines` draws it again after the decor ground so moss and flora never cover it; enemy rims (`dilated` in `render/tile-painters.ts`) grow in orthogonal steps, a diamond rather than a disc.
 An exterior-air flood fill leaves interior holes and all original texels untouched, including translucent pixels; three hard palette colors follow the kit's upper-left light and nearest-neighbor scaling.
 Only world painters request the contours, so inventory/control icons retain their original art; the hero's existing idle-frame alpha invariant lets all its frames share one contour per facing.
 `TileArt.outline: false` and `paintHero`'s fourth argument omit decorative contours when `EntityLighting` builds physical silhouettes and torch highlights, preserving their original size and light response.
@@ -104,7 +104,7 @@ A shared 96 × 216 atlas retains the original contact-shadow masks and soil refe
 `dungeonMaterialJoins` overlays the neighboring earth PNG through those masks on both floors and exposed stone walls, reusing the selected frame and preserving blocked boundaries.
 Masked material bakes are cached with a 512-entry limit; no gradients, soft alpha or runtime color interpolation are used.
 `dungeonDiagonals` reads the four actual diagonal tiles only in the active kit; the overlays address northwest, northeast, southeast and southwest inside their existing collision tile.
-Wall corners draw only where a diagonal opening meets two joined or two exposed sides; straight edges and missing diagonal terrain retain their existing lips.
+Wall corners are never cut: a diagonal opening leaves the wall tile square (the corner frames stay in the atlas, unused).
 Diagonal material patches draw where earth touches stone at a corner without an existing cardinal blend or a change between open floor and blocking wall.
 Walls expose shallow three-pixel north/side lips and eight-pixel south-facing facades, keeping a steep top-down angle inside the existing collision tile; joined sides have no facade.
 Exposed wall texture recedes through three hard shade levels, with connected two-pixel contours and a broad material body.
