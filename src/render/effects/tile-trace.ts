@@ -5,7 +5,7 @@
 // A line's head is bright and pale, and each third-of-a-pixel cell it
 // leaves behind settles to the highlight's gold, each a shade apart. Once
 // every cell has settled, the outline holds still and its canvas pulses
-// gently (`tile-trace-pulse` in `style.css`, whose 1.4s delay waits out
+// gently (`tile-trace-pulse` in `style.css`, whose 0.9s delay waits out
 // the slowest trace: keep it in step with TRACE_S and SETTLE_S).
 // The old glowing box stays as the fallback (`legacyHighlight`, and
 // Battery saver).
@@ -15,11 +15,11 @@ export const TRACE_LINES = 3;
 /** Third-of-a-pixel cells along a tile's side: 24 art pixels, three cells each. */
 export const TILE_CELLS = 72;
 /** How long a line takes to go round, before its own speed's spread. */
-export const TRACE_S = 1 / 1.4;
+export const TRACE_S = 1 / 2.8;
 /** How far a line's time may stray from TRACE_S either way (±30%). */
 const SPEED_SPREAD = 0.3;
 /** The trace's speed in tiles a second, a tile's perimeter over TRACE_S:
- * the slowest the route line draws (route-trace.ts). */
+ * route-trace.ts draws the route line ten times as fast. */
 export const TRACE_TILES_PER_S = 4 / TRACE_S;
 /** How long a cell takes to settle from the head's pale to its gold, and how
  * far a cell's own time may stray from it. */

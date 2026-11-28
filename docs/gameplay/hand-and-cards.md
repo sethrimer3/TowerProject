@@ -224,7 +224,8 @@ A link lasts until its diamond is pressed again or either card moves out of plac
 
 Inside a run, pressing a card in the hand under the board sends the hero to that card's closest target, ahead of the others: it glows white, the hand plays on (even if it was paused), and the card leads until the hero reaches its target, or until it has no path to one, when the hand's order leads again with Auto-Climb (without it, the hand waits for another press).
 A golden line runs along the path from the hero to the card's target, shrinking behind the hero as it steps, so you see each step it will take and what it is heading for.
-It draws out from the hero as three fine lines, pale at the front and settling to gold, always at least twice as fast as the hero walks, and ends in a small square that throws off a few tiny sparks as it appears.
+It shoots out from the hero as five fine lines, pale at the front and settling to gold, always at least twice as fast as the hero walks.
+A small square marks each turn, and one at the end throws off a few tiny sparks as it appears.
 Settings → Legacy highlight and path brings back the old glowing line.
 With Auto-Climb, the **Show path** toggle (Settings, Toggles) draws the same line for the card the hand chooses itself.
 It costs nothing and works from a new game's first run, a press being how the hand moves at all before Auto-Climb.
