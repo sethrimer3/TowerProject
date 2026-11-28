@@ -1,6 +1,5 @@
 import { TILE_PX, waterAt, type Blade, type Crate, type DecorSource, type Drip } from "./decor.ts";
-import { drawKit } from "../../sprites/kit.ts";
-import { drawPixelOutline } from "../../sprites/pixel-outline.ts";
+import { drawBoxProp, drawGridProp } from "../../sprites/half-props.ts";
 
 /** Painting shared by decor's live passes (ground, foreground, and the
  * mirrored copy in the water): crates, tall grass, ripple rings and drips,
@@ -62,18 +61,15 @@ export function drawCrates(c: CanvasRenderingContext2D, x: number, y: number, cr
     const wood = WOOD[k.tone % WOOD.length];
     const at = { bx: ox + k.x, top: oy + k.y - k.lift };
     if (broken) {
-      const wreck = { x: at.bx + Math.round((k.w - 12) / 2), y: at.top + k.h - 10, w: 12, h: 12 };
-      if (!k.lift && styled && outline) drawPixelOutline(c, `${k.kind}-broken`, "black", wreck);
-      if (!k.lift && !(styled && drawKit(c, `${k.kind}-broken`, at.bx + Math.round((k.w - 12) / 2), at.top + k.h - 10, 12, 12))) drawWreck(c, k, at, wood);
+      if (!k.lift && !(styled && drawGridProp(c, `${k.kind}-broken`, at.bx + Math.round((k.w - 12) / 2), at.top + k.h - 10, outline))) drawWreck(c, k, at, wood);
       continue;
     }
     if (!k.lift) {
       c.fillStyle = "rgba(0,0,0,0.32)";
       c.fillRect(at.bx + 1, at.top + k.h - 1, k.w, 2);
     }
-    const id = k.kind === "barrel" ? "barrel" : "crate";
-    if (styled && outline) drawPixelOutline(c, id, "black", { x: at.bx, y: at.top, w: k.w, h: k.h });
-    if (styled && drawKit(c, id, at.bx, at.top, k.w, k.h)) continue;
+    // Half-pixel art sized to the box itself, so box and outline always agree.
+    if (styled && drawBoxProp(c, k.kind, k.tone, at.bx, at.top, k.w, k.h, outline)) continue;
     if (k.kind === "barrel") drawBarrel(c, k, at, wood);
     else drawCrate(c, k, at, wood);
   }

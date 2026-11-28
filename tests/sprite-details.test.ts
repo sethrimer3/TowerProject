@@ -6,6 +6,7 @@ import { DETAIL_SPRITES } from "../src/sprites/kit.ts";
 import { DecorBaker, paintKitPlant } from "../src/render/decor/decor-bake.ts";
 import type { DecorSource, TileDecor } from "../src/render/decor/decor.ts";
 import { drawCrates } from "../src/render/decor/decor-sprites.ts";
+import { recorder, withPropDom, type FakeCanvas } from "./half-prop-dom.ts";
 
 test("all shared PNGs obey the shared palette, binary transparency and native grid", () => {
   const values = readFileSync(new URL("../assets/ui-sprites/palette.ppm", import.meta.url), "utf8")
@@ -72,67 +73,40 @@ test("all shared PNGs obey the shared palette, binary transparency and native gr
   }
 });
 
-test("decor keeps loading fallbacks and refreshes cached pixels after load and toggles", () => {
-  const originals = ["Image", "document"].map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)] as const);
-  const made: LoadingImage[] = [];
-  class LoadingImage {
-    src = ""; complete = false; naturalWidth = 0; onload?: () => void;
-    constructor() { made.push(this); }
-  }
-  const canvases: { draws: string[]; getContext: () => unknown }[] = [];
-  Object.defineProperty(globalThis, "Image", { configurable: true, value: LoadingImage });
-  Object.defineProperty(globalThis, "document", { configurable: true, value: { createElement() {
-    const draws: string[] = [];
-    const ctx = { createImageData: () => ({ data: new Uint8ClampedArray(24 * 24 * 4) }), putImageData() {}, save() {}, restore() {},
-      drawImage: (img: LoadingImage) => draws.push(img.src) };
-    const canvas = { draws, getContext: () => ctx };
-    canvases.push(canvas);
-    return canvas;
-  } } });
-  try {
+test("the kit's decor bakes its plants at twice the density, cached until the style changes", () => {
+  withPropDom((canvases) => {
     const src = { kind: () => "floor", seed: 1 } as DecorSource;
     const decor = { water: null, moss: null, vines: [], flowers: [], plants: [{ kind: "tuft", i: 12, j: 20, variant: 0 }] } as unknown as TileDecor;
     const baker = new DecorBaker();
-    const original = baker.bake(src, 0, 0, decor);
-    assert.equal(made.length, 0, "off never requests a replacement");
-    const loading = baker.bake(src, 0, 0, decor, true);
-    assert.notEqual(loading, original);
-    assert.equal(canvases.at(-1)?.draws.length, 0, "loading keeps procedural pixels");
-    assert.equal(baker.bake(src, 0, 0, decor, true), loading, "unchanged tiles stay cached");
-    made[0].complete = true; made[0].naturalWidth = 12; made[0].onload?.();
-    const ready = baker.bake(src, 0, 0, decor, true);
-    assert.notEqual(ready, loading);
-    assert.ok(canvases.at(-1)?.draws[0].endsWith("/tuft.png"));
-    const off = baker.bake(src, 0, 0, decor, false);
-    assert.notEqual(off, ready);
-    assert.equal(canvases.at(-1)?.draws.length, 0);
-  } finally {
-    for (const [name, descriptor] of originals) {
-      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
-      else Reflect.deleteProperty(globalThis, name);
-    }
-  }
+    const original = baker.bake(src, 0, 0, decor) as unknown as FakeCanvas;
+    assert.equal(original.width, 24, "the procedural plant stays on the native grid");
+    const styled = baker.bake(src, 0, 0, decor, true) as unknown as FakeCanvas;
+    assert.notEqual(styled, original);
+    assert.equal(styled.width, 48);
+    assert.equal(styled.draws.length, 2, "the native pixels scaled up, then the outlined tuft");
+    assert.deepEqual(styled.draws[1].slice(1), [5.5, 9.5, 13, 13]);
+    assert.equal(baker.bake(src, 0, 0, decor, true), styled, "unchanged tiles stay cached");
+    const off = baker.bake(src, 0, 0, decor, false) as unknown as FakeCanvas;
+    assert.equal(off.width, 24);
+    assert.ok(canvases.length > 3);
+  });
 });
 
-test("plants keep 1:1 pixels, webs follow corners and broken crates use their PNG", () => {
-  const original = Object.getOwnPropertyDescriptor(globalThis, "Image");
-  class ReadyImage { src = ""; complete = true; naturalWidth = 12; }
-  Object.defineProperty(globalThis, "Image", { configurable: true, value: ReadyImage });
-  const calls: unknown[][] = [];
-  const c = { save() {}, restore() {}, translate(...args: number[]) { calls.push(["translate", ...args]); }, rotate(angle: number) { calls.push(["rotate", angle]); },
-    drawImage(img: ReadyImage, ...args: number[]) { calls.push([img.src.split("/").at(-1), ...args]); } } as unknown as CanvasRenderingContext2D;
-  try {
+test("plants are half-pixel props, webs follow corners unoutlined, and crates fit their outlined box", () => {
+  withPropDom(() => {
+    const { c, calls } = recorder();
     paintKitPlant(c, { kind: "fern", i: 10, j: 20, variant: 0 });
-    assert.deepEqual(calls.at(-1), ["fern.png", 4, 10, 12, 12]);
+    assert.deepEqual(calls.at(-1), ["26x26", 3.5, 9.5, 13, 13]);
     for (let corner = 0; corner < 4; corner++) {
       paintKitPlant(c, { kind: "web", i: 0, j: 0, variant: 0, corner });
       assert.deepEqual(calls.at(-2), ["rotate", corner * Math.PI / 2]);
-      assert.deepEqual(calls.at(-1), ["web.png", 0, 0, 12, 12]);
+      assert.deepEqual(calls.at(-1), ["24x24", 0, 0, 12, 12]);
     }
     drawCrates(c, 0, 0, [{ x: 1, y: 2, w: 12, h: 12, lift: 0, tone: 0, kind: "crate" }], true, true);
-    assert.deepEqual(calls.at(-1), ["crate-broken.png", 1, 4, 12, 12]);
-  } finally {
-    if (original) Object.defineProperty(globalThis, "Image", original);
-    else Reflect.deleteProperty(globalThis, "Image");
-  }
+    assert.deepEqual(calls.at(-1), ["26x26", 0.5, 3.5, 13, 13]);
+    drawCrates(c, 0, 0, [{ x: 1, y: 2, w: 9, h: 9, lift: 0, tone: 1, kind: "crate" }], false, true);
+    assert.deepEqual(calls.at(-1), ["20x20", 0.5, 1.5, 10, 10], "18 half pixels and its rim, centred on the 9-pixel box");
+    drawCrates(c, 0, 0, [{ x: 1, y: 2, w: 9, h: 9, lift: 0, tone: 1, kind: "crate" }], false, true, false);
+    assert.deepEqual(calls.at(-1), ["18x18", 1, 2, 9, 9], "shadow casters take the sprite alone");
+  });
 });
