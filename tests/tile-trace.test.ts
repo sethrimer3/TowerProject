@@ -25,7 +25,7 @@ test("each line rings the tile from 12 o'clock clockwise, never covering it", ()
 test("the lines trace at slightly different speeds, pale at the head and gold once settled", () => {
   const plan = planTrace(random(7));
   assert.equal(new Set(plan.durations).size, TRACE_LINES);
-  for (const d of plan.durations) assert.ok(d > 0.8 && d < 1.2);
+  for (const d of plan.durations) assert.ok(d > 0.49 && d < 0.93);
   assert.equal(cellColor(plan, 0, 0, 0), null);
   const t = plan.durations[0] / 2, count = ringCells(0).length;
   let head = -1;
@@ -42,7 +42,7 @@ test("the lines trace at slightly different speeds, pale at the head and gold on
       assert.deepEqual(cellColor(plan, line, k, end), settledColor(plan.shade[line][k]));
 });
 
-test("even the slowest trace has settled before its pulse starts, 1.6s in (style.css)", () => {
-  assert.ok(traceSettled(planTrace(() => 1), 1.6));
-  assert.ok(traceSettled(planTrace(() => 0), 1.6));
+test("even the slowest trace has settled before its pulse starts, 1.4s in (style.css)", () => {
+  assert.ok(traceSettled(planTrace(() => 1), 1.4));
+  assert.ok(traceSettled(planTrace(() => 0), 1.4));
 });

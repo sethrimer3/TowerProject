@@ -16,8 +16,9 @@ export const SETTINGS = {
   experimentalAtlas: { kind: "toggle", default: true, page: { id: "experimental-atlas", label: "Experimental Atlas feature" } },
   legacyBorders: { kind: "toggle", default: false, page: { id: "legacy-borders", label: "LEGACY BORDERS" } },
   legacyEnemies: { kind: "toggle", default: false, page: { id: "legacy-enemies", label: "Legacy Enemies" } },
-  /** The tapped tile's old glowing box in place of its traced outline (ui/board-overlay.ts). */
-  legacyHighlight: { kind: "toggle", default: false, page: { id: "legacy-highlight", label: "Legacy tile highlight" } },
+  /** The tapped tile's old glowing box and the route's old glowing line in
+   * place of their traced looks (ui/board-overlay.ts, render/route-path.ts). */
+  legacyHighlight: { kind: "toggle", default: false, page: { id: "legacy-highlight", label: "Legacy highlight and path" } },
   spriteAnimations: { kind: "toggle", default: false, page: { id: "sprite-animations", label: "Animations" } },
   squareDoors: { kind: "toggle", default: false, page: { id: "square-doors", label: "Square doors" } },
   /** The Settings page's Sounds section: each kind of sound on or off on its

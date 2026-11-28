@@ -141,8 +141,8 @@ Monsters on manual routes are fought even when lethal.
 Missing keys stop movement at the necessary door, with a fading red X; unreachable wall targets get the same feedback at the tapped spot.
 Routing prefers an available detour over a door for which no key is held.
 Inside a run, where the hand moves the hero, a tap on a tile highlights it and shows what's there (a monster's stats, an item, a door's keys); it leaves the hand playing.
-The highlight is four fine gold lines that trace round the tile from 12 o'clock, clockwise, each at its own pace, pale at the front and settling to gold, then glowing softly.
-Settings → Legacy tile highlight brings back the old glowing box, which Battery saver always uses.
+The highlight is three fine gold lines that trace round the tile from 12 o'clock, clockwise, each at its own pace, pale at the front and settling to gold, then glowing softly.
+Settings → Legacy highlight and path brings back the old glowing box, which Battery saver always uses.
 With Dev mode on, the hero can also walk by hand inside a run: a second tap on the highlighted tile walks there, fighting monsters and collecting items along the route.
 A pickup's box shows what it gives with every bonus counted, as its icon and +N (a key's keys, a potion's full heal, a shard's ATK or DEF), and a lit torch's says Torch.
 Pressing play clears the highlight.
